@@ -1,9 +1,12 @@
-# Fabric Example Mod
+# KBackup-Fabric
 
-## Setup
+A simple backup mod for fabric Minecraft server.
 
-For setup instructions please see the [fabric wiki page](https://fabricmc.net/wiki/tutorial:setup) that relates to the IDE that you are using.
+Current Minecraft version: 1.14.4
 
-## License
+commands:
 
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+- */kb*  or */kb help*: show command list
+- */kb list*: show existing backups
+- */kb backup \[backup_name\]*: make a backup with given name or the current system time by default
+- */kb restore \<backup_name\>*: restore to a certain backup
