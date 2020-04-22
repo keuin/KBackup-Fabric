@@ -1,35 +1,31 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "kbackupfabric",
   "version": "${version}",
-
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "KBackup Fabric",
+  "description": "A simple backup mod for Minecraft fabric server",
   "authors": [
-    "Me!"
+    "Keuin"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://lab.keuin.cc/kbackup",
+    "sources": "https://github.com/keuin"
   },
-
-  "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
-
+  "license": "GPL V3",
+  "icon": "assets/kbackupfabric/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
+      "com.keuin.kbackupfabric.KBPluginInitializer"
     ]
   },
   "mixins": [
-    "modid.mixins.json"
   ],
 
   "depends": {
     "fabricloader": ">=0.7.4",
     "fabric": "*",
-    "minecraft": "1.15.x"
+    "minecraft": "1.14.x"
   },
   "suggests": {
     "flamingo": "*"
