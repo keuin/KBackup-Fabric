@@ -1,6 +1,8 @@
 package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.data.BackupMetadata;
+import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.BackupNameSuggestionProvider;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.server.ServerStartCallback;
 import net.fabricmc.fabric.api.registry.CommandRegistry;
@@ -24,18 +26,19 @@ import static org.apache.commons.io.FileUtils.forceDelete;
 public final class KBPluginEvents implements ModInitializer, ServerStartCallback {
     @Override
     public void onInitialize() {
-        System.out.println("Initializing KBackup...");
-        CommandRegistry.INSTANCE.register(false, KBRegister::registerCommands);
+        System.out.println("KBackup: Binding events and commands ...");
+        CommandRegistry.INSTANCE.register(false, KBCommandRegister::registerCommands);
         ServerStartCallback.EVENT.register(this);
     }
 
     @Override
     public void onStartServer(MinecraftServer server) {
-        // When the server starts, we check if we have just recovered from a backup.
-        // If so, then we print some message.
-        debug("KBackup onStartServer");
-        // TODO:
-        // Check
+        debug("KBackup: Initializing ...");
+
+        // Update backup suggestion list
+        BackupNameSuggestionProvider.setBackupSaveDirectory(BackupFilesystemUtil.getBackupSaveDirectory(server).getPath());
+
+        // Check if we have just recovered from a previous backup. If so, print message.
         try {
             File levelDirectory = new File(server.getRunDirectory(), server.getLevelName());
             File metadataFile = new File(levelDirectory, BackupMetadata.metadataFileName);

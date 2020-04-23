@@ -111,7 +111,7 @@ public final class KBCommands {
 
         // Update confirm pending variable
         restoreBackupNameToBeConfirmed = backupName;
-        msgWarn(context, String.format("WARNING: You will LOST YOUR CURRENT WORLD COMPLETELY! It will be replaced with the backup %s . Please use /kb confirm to proceed executing.", restoreBackupNameToBeConfirmed), true);
+        msgWarn(context, String.format("WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", restoreBackupNameToBeConfirmed), true);
         return SUCCESS;
     }
 
@@ -124,7 +124,7 @@ public final class KBCommands {
      */
     public static int backupWithDefaultName(CommandContext<ServerCommandSource> context) {
         //KBMain.backup("name")
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
         String timeString = LocalDateTime.now().format(formatter);
         return doBackup(context, timeString);
     }
