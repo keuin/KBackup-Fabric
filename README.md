@@ -19,4 +19,6 @@ To-Do List:
 - Optimize output format.
 - Add backup name completion.
 - Optimize the backup name output. (add datetime output automatically, name is essential and is separated from the datetime)
+- More thorough test.
+- Enhance ZipUtil for hashing sub-files and generating incremental diff-table (A:Add, M:Modification, D:Deletion)
 - Implement incremental backup.
