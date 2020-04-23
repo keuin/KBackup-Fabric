@@ -1,5 +1,7 @@
 package com.keuin.kbackupfabric.util;
 
+import com.keuin.kbackupfabric.data.BackupMetadata;
+
 import java.io.*;
 import java.util.Enumeration;
 import java.util.zip.*;
@@ -9,12 +11,12 @@ public final class ZipUtil {
     /**
      * 递归压缩文件夹
      *
-     * @param srcRootDir 压缩文件夹根目录的子路径
-     * @param file       当前递归压缩的文件或目录对象
-     * @param zos        压缩文件存储对象
+     * @param srcRootDir      压缩文件夹根目录的子路径
+     * @param file            当前递归压缩的文件或目录对象
+     * @param zipOutputStream 压缩文件存储对象
      * @throws IOException IO Error
      */
-    private static void zip(String srcRootDir, File file, ZipOutputStream zos) throws IOException {
+    private static void zip(String srcRootDir, File file, ZipOutputStream zipOutputStream) throws IOException {
         if (file == null) {
             return;
         }
@@ -31,13 +33,13 @@ public final class ZipUtil {
                 subPath = subPath.substring(srcRootDir.length() + File.separator.length());
             }
             ZipEntry entry = new ZipEntry(subPath);
-            zos.putNextEntry(entry);
-            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-            while ((count = bis.read(data, 0, bufferLen)) != -1) {
-                zos.write(data, 0, count);
+            zipOutputStream.putNextEntry(entry);
+            BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+            while ((count = inputStream.read(data, 0, bufferLen)) != -1) {
+                zipOutputStream.write(data, 0, count);
             }
-            bis.close();
-            zos.closeEntry();
+            inputStream.close();
+            zipOutputStream.closeEntry();
         }
         // 如果是目录，则压缩整个目录
         else {
@@ -45,10 +47,15 @@ public final class ZipUtil {
             File[] childFileList = file.listFiles();
             if (childFileList != null) {
                 for (File value : childFileList)
-                    zip(srcRootDir, value, zos);
+                    zip(srcRootDir, value, zipOutputStream);
             }
         }
     }
+
+//    public static void makeZipBackup(String srcPath, String zipPath, String zipFileName) throws IOException, ZipUtilException {
+//        zip(srcPath, zipPath, zipFileName, null);
+//    }
+
 
     /**
      * 对文件或文件目录进行压缩
@@ -59,12 +66,12 @@ public final class ZipUtil {
      * @throws IOException      IO Error
      * @throws ZipUtilException General exception, such as loop recursion or invalid input.
      */
-    public static void zip(String srcPath, String zipPath, String zipFileName) throws IOException, ZipUtilException {
+    public static void makeBackupZip(String srcPath, String zipPath, String zipFileName, BackupMetadata backupMetadata) throws IOException, ZipUtilException {
         if (srcPath.isEmpty() || zipPath.isEmpty() || zipFileName.isEmpty()) {
             throw new ZipUtilException("Parameter for zip() contains null.");
         }
-        CheckedOutputStream cos;
-        ZipOutputStream zos = null;
+        CheckedOutputStream checkedOutputStream;
+        ZipOutputStream zipOutputStream = null;
         try {
             File srcFile = new File(srcPath);
 
@@ -94,8 +101,18 @@ public final class ZipUtil {
                 }
             }
 
-            cos = new CheckedOutputStream(new FileOutputStream(zipFile), new CRC32());
-            zos = new ZipOutputStream(cos);
+            checkedOutputStream = new CheckedOutputStream(new FileOutputStream(zipFile), new CRC32());
+            zipOutputStream = new ZipOutputStream(checkedOutputStream);
+
+            // If with backup metadata, we serialize it and write it into file "kbackup_metadata"
+            ZipEntry metadataEntry = new ZipEntry(BackupMetadata.metadataFileName);
+            zipOutputStream.putNextEntry(metadataEntry);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(backupMetadata);
+            oos.close();
+            zipOutputStream.write(baos.toByteArray());
+            zipOutputStream.closeEntry();
 
             //如果只是压缩一个文件，则需要截取该文件的父目录
             String srcRootDir = srcPath;
@@ -106,12 +123,12 @@ public final class ZipUtil {
                 }
             }
             //调用递归压缩方法进行目录或文件压缩
-            zip(srcRootDir, srcFile, zos);
-            zos.flush();
+            zip(srcRootDir, srcFile, zipOutputStream);
+            zipOutputStream.flush();
         } finally {
             try {
-                if (zos != null) {
-                    zos.close();
+                if (zipOutputStream != null) {
+                    zipOutputStream.close();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -126,7 +143,6 @@ public final class ZipUtil {
      * @param unzipFilePath      解压后的文件保存的路径
      * @param includeZipFileName 解压后的文件保存的路径是否包含压缩文件的文件名。true-包含；false-不包含
      */
-    @SuppressWarnings("unchecked")
     public static void unzip(String zipFilePath, String unzipFilePath, boolean includeZipFileName) throws ZipUtilException, IOException {
         if (zipFilePath.isEmpty() || unzipFilePath.isEmpty()) {
             throw new ZipUtilException("Parameter for unzip() contains null.");

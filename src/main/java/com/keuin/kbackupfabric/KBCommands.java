@@ -1,5 +1,7 @@
 package com.keuin.kbackupfabric;
 
+import com.keuin.kbackupfabric.data.BackupMetadata;
+import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.worker.BackupWorker;
 import com.keuin.kbackupfabric.worker.RestoreWorker;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -13,10 +15,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
 import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
-import static com.keuin.kbackupfabric.util.PrintUtil.debug;
-import static com.keuin.kbackupfabric.util.PrintUtil.message;
+import static com.keuin.kbackupfabric.util.PrintUtil.*;
 
-public final class KBCommandHandler {
+public final class KBCommands {
 
 
     private static final int SUCCESS = 1;
@@ -33,18 +34,18 @@ public final class KBCommandHandler {
      * @return stat code.
      */
     public static int help(CommandContext<ServerCommandSource> context) {
-        message(context, "==== KBackup Manual ====");
-        message(context, "/kb   /kb help            Print help menu.");
-        message(context, "/kb list                  Show all backups.");
-        message(context, "/kb backup [backup_name]  Backup world, nether, end to backup_name. By default, the name is current system time.");
-        message(context, "/kb restore <backup_name> Delete current three worlds, restore the older version from given backup. By default, this command is identical with /kb list.");
-        message(context, "/kb confirm               Confirm and start restoring.");
-        message(context, "/kb cancel                Cancel the restoration to be confirmed. If cancelled, /kb confirm will not effect without another valid /kb restore command.");
+        msgInfo(context, "==== KBackup Manual ====");
+        msgInfo(context, "/kb       /kb help        Print help menu.");
+        msgInfo(context, "/kb list                  Show all backups.");
+        msgInfo(context, "/kb backup [backup_name]  Backup the whole level to backup_name. The default name is current system time.");
+        msgInfo(context, "/kb restore <backup_name> Delete the whole current level and restore from given backup. /kb restore is identical with /kb list.");
+        msgInfo(context, "/kb confirm               Confirm and start restoring.");
+        msgInfo(context, "/kb cancel                Cancel the restoration to be confirmed. If cancelled, /kb confirm will not run.");
         return SUCCESS;
     }
 
     public static int list(CommandContext<ServerCommandSource> context) {
-        message(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
+        msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
         MinecraftServer server = context.getSource().getMinecraftServer();
         File[] files = getBackupSaveDirectory(server).listFiles(
                 (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
@@ -56,7 +57,7 @@ public final class KBCommandHandler {
                 ++i;
                 String backupName = getBackupName(file.getName());
                 backupIndexNameMapper.put(i, backupName);
-                message(context, String.format("[%d] %s, size: %.1fMB", i, backupName, file.length() * 1.0 / 1024 / 1024));
+                msgInfo(context, String.format("[%d] %s, size: %.1fMB", i, backupName, file.length() * 1.0 / 1024 / 1024));
             }
         }
         return SUCCESS;
@@ -74,7 +75,7 @@ public final class KBCommandHandler {
         if (backupName.matches("[0-9]*")) {
             // Numeric param is not allowed
             backupName = String.format("a%s", backupName);
-            message(context, String.format("Pure numeric name is not allowed. Renamed to %s", backupName));
+            msgWarn(context, String.format("Pure numeric name is not allowed. Renamed to %s", backupName));
         }
         return doBackup(context, backupName);
     }
@@ -104,13 +105,13 @@ public final class KBCommandHandler {
         // Validate backupName
         if (!isBackupNameValid(backupName, server)) {
             // Invalid backupName
-            message(context, "Invalid backup name! Please check your input. The list index number is also valid.", false);
+            msgErr(context, "Invalid backup name! Please check your input. The list index number is also valid.", false);
             return FAILED;
         }
 
         // Update confirm pending variable
         restoreBackupNameToBeConfirmed = backupName;
-        message(context, String.format("WARNING: You will LOST YOUR CURRENT WORLD COMPLETELY! It will be replaced with the backup %s . Please use /kb confirm to proceed executing.", restoreBackupNameToBeConfirmed), true);
+        msgWarn(context, String.format("WARNING: You will LOST YOUR CURRENT WORLD COMPLETELY! It will be replaced with the backup %s . Please use /kb confirm to proceed executing.", restoreBackupNameToBeConfirmed), true);
         return SUCCESS;
     }
 
@@ -129,7 +130,8 @@ public final class KBCommandHandler {
     }
 
     private static int doBackup(CommandContext<ServerCommandSource> context, String backupName) {
-        BackupWorker.invoke(context, backupName);
+        BackupMetadata metadata = new BackupMetadata(System.currentTimeMillis(), backupName);
+        BackupWorker.invoke(context, backupName, metadata);
         return SUCCESS;
     }
 
@@ -141,22 +143,22 @@ public final class KBCommandHandler {
      */
     public static int confirm(CommandContext<ServerCommandSource> context) {
         if (restoreBackupNameToBeConfirmed == null) {
-            message(context, "Nothing to be confirmed. Please execute /kb restore <backup_name> first.");
+            msgInfo(context, "Nothing to be confirmed. Please execute /kb restore <backup_name> first.");
             return FAILED;
         }
 
         // do restore to backupName
         String backupName = restoreBackupNameToBeConfirmed;
-        message(context, String.format("Restoring worlds to %s ...", backupName), true);
+        PrintUtil.msgInfo(context, String.format("Restoring worlds to %s ...", backupName), true);
 
         // Get server
         MinecraftServer server = context.getSource().getMinecraftServer();
         String backupFileName = getBackupFileName(backupName);
         debug("Backup file name: " + backupFileName);
         File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
-        message(context, "Server will shutdown in a few seconds, depended on your world size and the disk speed, the restore progress may take seconds or minutes.", true);
-        message(context, "Please do not force the server stop, or the level would be broken.", true);
-        message(context, "After it shuts down, please restart the server manually.", true);
+        PrintUtil.msgInfo(context, "Server will shutdown in a few seconds, depended on your world size and the disk speed, the restore progress may take seconds or minutes.", true);
+        PrintUtil.msgInfo(context, "Please do not force the server stop, or the level would be broken.", true);
+        PrintUtil.msgInfo(context, "After it shuts down, please restart the server manually.", true);
         final int WAIT_SECONDS = 10;
         for (int i = 0; i < WAIT_SECONDS; ++i) {
             try {
@@ -164,7 +166,7 @@ public final class KBCommandHandler {
             } catch (InterruptedException ignored) {
             }
         }
-        message(context, "Shutting down ...", true);
+        PrintUtil.msgInfo(context, "Shutting down ...", true);
         RestoreWorker.invoke(server, backupFile.getPath(), getLevelPath(server));
         return SUCCESS;
     }
@@ -178,10 +180,10 @@ public final class KBCommandHandler {
     public static int cancel(CommandContext<ServerCommandSource> context) {
         if (restoreBackupNameToBeConfirmed != null) {
             restoreBackupNameToBeConfirmed = null;
-            message(context, "The restoration is cancelled.", true);
+            PrintUtil.msgInfo(context, "The restoration is cancelled.", true);
             return SUCCESS;
         } else {
-            message(context, "Nothing to cancel.");
+            msgErr(context, "Nothing to cancel.");
             return FAILED;
         }
     }
