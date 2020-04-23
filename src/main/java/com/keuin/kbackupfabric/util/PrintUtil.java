@@ -17,8 +17,8 @@ public final class PrintUtil {
     private static final Object syncInfo = new Object();
     private static final Object syncMessage = new Object();
 
-    public static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText) {
-        return message(context, messageText, false);
+    public static void message(CommandContext<ServerCommandSource> context, String messageText) {
+        message(context, messageText, false);
     }
 
     public static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
