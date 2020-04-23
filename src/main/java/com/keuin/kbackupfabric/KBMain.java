@@ -1,6 +1,6 @@
 package com.keuin.kbackupfabric;
 
-public class KBMain {
+public final class KBMain {
     /**
      * Perform real backup process.
      *

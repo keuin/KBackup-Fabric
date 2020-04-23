@@ -6,7 +6,7 @@ import net.minecraft.text.LiteralText;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IO {
+public final class PrintUtil {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final boolean printDebugMessages = true;
@@ -15,13 +15,16 @@ public class IO {
     private static final Object syncDebug = new Object();
     private static final Object syncError = new Object();
     private static final Object syncInfo = new Object();
+    private static final Object syncMessage = new Object();
 
     public static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText) {
         return message(context, messageText, false);
     }
 
     public static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
-        context.getSource().sendFeedback(new LiteralText("[KBackup] " + messageText), broadcastToOps);
+        synchronized (syncMessage) {
+            context.getSource().sendFeedback(new LiteralText("[KBackup] " + messageText), broadcastToOps);
+        }
         return context;
     }
 

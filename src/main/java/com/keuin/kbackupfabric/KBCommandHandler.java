@@ -1,32 +1,28 @@
 package com.keuin.kbackupfabric;
 
-import com.keuin.kbackupfabric.util.PostProgressRestoreThread;
-import com.keuin.kbackupfabric.util.ZipUtil;
-import com.keuin.kbackupfabric.util.ZipUtilException;
+import com.keuin.kbackupfabric.worker.BackupWorker;
+import com.keuin.kbackupfabric.worker.RestoreWorker;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.world.World;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.Map;
 
-import static com.keuin.kbackupfabric.util.IO.debug;
-import static com.keuin.kbackupfabric.util.IO.message;
+import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
+import static com.keuin.kbackupfabric.util.PrintUtil.debug;
+import static com.keuin.kbackupfabric.util.PrintUtil.message;
 
-public class KBCommandHandler {
+public final class KBCommandHandler {
 
 
     private static final int SUCCESS = 1;
     private static final int FAILED = -1;
 
-    private static final String backupSaveDirectoryName = "backups";
-    private static final String backupFileNamePrefix = "kbackup-";
+
     private static final HashMap<Integer, String> backupIndexNameMapper = new HashMap<>(); // index -> backupName
     private static String restoreBackupNameToBeConfirmed = null;
 
@@ -37,11 +33,13 @@ public class KBCommandHandler {
      * @return stat code.
      */
     public static int help(CommandContext<ServerCommandSource> context) {
-        message(context, "KBackup Manual");
-        message(context, "/kb | /kb help            Print help menu.");
+        message(context, "==== KBackup Manual ====");
+        message(context, "/kb   /kb help            Print help menu.");
         message(context, "/kb list                  Show all backups.");
         message(context, "/kb backup [backup_name]  Backup world, nether, end to backup_name. By default, the name is current system time.");
         message(context, "/kb restore <backup_name> Delete current three worlds, restore the older version from given backup. By default, this command is identical with /kb list.");
+        message(context, "/kb confirm               Confirm and start restoring.");
+        message(context, "/kb cancel                Cancel the restoration to be confirmed. If cancelled, /kb confirm will not effect without another valid /kb restore command.");
         return SUCCESS;
     }
 
@@ -49,7 +47,7 @@ public class KBCommandHandler {
         message(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
         MinecraftServer server = context.getSource().getMinecraftServer();
         File[] files = getBackupSaveDirectory(server).listFiles(
-                (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(backupFileNamePrefix)
+                (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
         );
         backupIndexNameMapper.clear();
         if (files != null) {
@@ -90,6 +88,7 @@ public class KBCommandHandler {
      */
     public static int restore(CommandContext<ServerCommandSource> context) {
         //KBMain.restore("name")
+        MinecraftServer server = context.getSource().getMinecraftServer();
         String backupName = StringArgumentType.getString(context, "backupName");
 
         if (backupName.matches("[0-9]*")) {
@@ -100,6 +99,13 @@ public class KBCommandHandler {
                 return list(context); // Show the list and return
             }
             backupName = realBackupName; // Replace input number with real backup name.
+        }
+
+        // Validate backupName
+        if (!isBackupNameValid(backupName, server)) {
+            // Invalid backupName
+            message(context, "Invalid backup name! Please check your input. The list index number is also valid.", false);
+            return FAILED;
         }
 
         // Update confirm pending variable
@@ -123,74 +129,8 @@ public class KBCommandHandler {
     }
 
     private static int doBackup(CommandContext<ServerCommandSource> context, String backupName) {
-        String destPathFolderName = "";
-        try {
-            message(context, String.format("Making backup %s, please wait ...", backupName), true);
-            Map<World, Boolean> oldWorldsSavingDisabled = new HashMap<>(); // old switch stat
-
-            // Get server
-            MinecraftServer server = context.getSource().getMinecraftServer();
-
-            // Save old autosave switch stat temporally
-            server.getWorlds().forEach(world -> {
-                oldWorldsSavingDisabled.put(world, world.savingDisabled);
-                world.savingDisabled = true;
-            });
-
-            // Force to save all player data and worlds
-            debug("Saving players ...");
-            server.getPlayerManager().saveAllPlayerData();
-            debug("Saving worlds ...");
-            server.save(true, true, true);
-
-            //// Do our main backup logic
-
-            // Create backup saving directory
-            File destPathFile = getBackupSaveDirectory(server);
-            destPathFolderName = destPathFile.getName();
-            if (!destPathFile.mkdir() && !destPathFile.isDirectory()) {
-                message(context, String.format("Failed to create backup saving directory: %s. Failed to backup.", destPathFolderName));
-                return FAILED;
-            }
-
-            // Make zip
-            String levelPath = getLevelPath(server);
-            debug(String.format("zip(srcPath=%s, destPath=%s)", levelPath, destPathFile.toString()));
-            ZipUtil.zip(levelPath, destPathFile.toString(), getBackupFileName(backupName));
-
-            // Restore old autosave switch stat
-            server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
-
-            message(context, "Done.", true);
-            return SUCCESS;
-        } catch (SecurityException e) {
-            message(context, String.format("Failed to create backup saving directory: %s. Failed to backup.", destPathFolderName));
-            return FAILED;
-        } catch (IOException | ZipUtilException e) {
-            message(context, "Failed to make zip: " + e.getMessage());
-            return FAILED;
-        }
-    }
-
-    private static String getBackupFileName(String backupName) {
-        return backupFileNamePrefix + backupName + ".zip";
-    }
-
-    private static String getBackupName(String backupFileName) {
-        try {
-            if (backupFileName.matches(backupFileNamePrefix + ".+\\.zip"))
-                return backupFileName.substring(backupFileNamePrefix.length(), backupFileName.length() - 4);
-        } catch (IndexOutOfBoundsException ignored) {
-        }
-        return backupFileName;
-    }
-
-    private static File getBackupSaveDirectory(MinecraftServer server) {
-        return new File(server.getRunDirectory(), backupSaveDirectoryName);
-    }
-
-    private static String getLevelPath(MinecraftServer server) {
-        return (new File(server.getRunDirectory(), server.getLevelName())).getAbsolutePath();
+        BackupWorker.invoke(context, backupName);
+        return SUCCESS;
     }
 
     /**
@@ -214,18 +154,35 @@ public class KBCommandHandler {
         String backupFileName = getBackupFileName(backupName);
         debug("Backup file name: " + backupFileName);
         File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
-        PostProgressRestoreThread postProgressRestoreThread = new PostProgressRestoreThread(server.getThread(), backupFile.getPath(), getLevelPath(server));
-        Thread postThread = new Thread(postProgressRestoreThread, "PostProgressRestoreThread");
-        postThread.start();
-        server.stop(false);
-        message(context, "Decompressing archive data. Server will shutdown to replace level data. Please do not restart the server.", true);
+        message(context, "Server will shutdown in a few seconds, depended on your world size and the disk speed, the restore progress may take seconds or minutes.", true);
+        message(context, "Please do not force the server stop, or the level would be broken.", true);
+        message(context, "After it shuts down, please restart the server manually.", true);
+        final int WAIT_SECONDS = 10;
+        for (int i = 0; i < WAIT_SECONDS; ++i) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {
+            }
+        }
+        message(context, "Shutting down ...", true);
+        RestoreWorker.invoke(server, backupFile.getPath(), getLevelPath(server));
         return SUCCESS;
     }
 
-    static boolean opPermissionValidator(ServerCommandSource commandSource) {
-        return commandSource.hasPermissionLevel(4);
+    /**
+     * Cancel the execution to be confirmed.
+     *
+     * @param context the context.
+     * @return stat code.
+     */
+    public static int cancel(CommandContext<ServerCommandSource> context) {
+        if (restoreBackupNameToBeConfirmed != null) {
+            restoreBackupNameToBeConfirmed = null;
+            message(context, "The restoration is cancelled.", true);
+            return SUCCESS;
+        } else {
+            message(context, "Nothing to cancel.");
+            return FAILED;
+        }
     }
-
-
-
 }

@@ -7,9 +7,9 @@ import java.lang.reflect.Method;
 /**
  * @Author 落叶飞翔的蜗牛
  * @Date 2018/3/10
- * @Description
+ * @Description 常用反射函数
  */
-public class ReflectionUtils {
+public final class ReflectionUtils {
 
     /**
      * 获取私有成员变量的值

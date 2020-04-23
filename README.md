@@ -16,6 +16,7 @@ commands:
 
 
 To-Do List:
-- Optimize lag during the backup process (use async I/O)
-- Optimize output format
-- Implement incremental backup
+- Optimize output format.
+- Add backup name completion.
+- Optimize the backup name output. (add datetime output automatically, name is essential and is separated from the datetime)
+- Implement incremental backup.

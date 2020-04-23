@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.Enumeration;
 import java.util.zip.*;
 
-public class ZipUtil {
+public final class ZipUtil {
 
     /**
      * 递归压缩文件夹
