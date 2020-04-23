@@ -8,6 +8,8 @@ import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.world.World;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
-import static com.keuin.kbackupfabric.util.PrintUtil.debug;
 import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
 
 /**
@@ -23,6 +24,8 @@ import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
  * To invoke this worker, simply call invoke() method.
  */
 public final class BackupWorker implements Runnable {
+
+    private static final Logger LOGGER = LogManager.getLogger();
     private final CommandContext<ServerCommandSource> context;
     private final String backupName;
     private final Map<World, Boolean> oldWorldsSavingDisabled;
@@ -53,9 +56,9 @@ public final class BackupWorker implements Runnable {
         });
 
         // Force to save all player data and worlds
-        debug("Saving players ...");
+        LOGGER.debug("Saving players ...");
         server.getPlayerManager().saveAllPlayerData();
-        debug("Saving worlds ...");
+        LOGGER.debug("Saving worlds ...");
         server.save(true, true, true);
 
         // Start threaded worker
@@ -82,7 +85,7 @@ public final class BackupWorker implements Runnable {
             // Make zip
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(backupName);
-            debug(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
+            LOGGER.debug(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
             ZipUtil.makeBackupZip(levelPath, backupSaveDirectoryFile.toString(), backupFileName, backupMetadata);
             File backupZipFile = new File(backupSaveDirectoryFile, backupFileName);
 

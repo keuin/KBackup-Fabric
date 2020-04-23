@@ -8,6 +8,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -23,6 +25,7 @@ public final class KBCommands {
     private static final int SUCCESS = 1;
     private static final int FAILED = -1;
 
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private static final HashMap<Integer, String> backupIndexNameMapper = new HashMap<>(); // index -> backupName
     private static String restoreBackupNameToBeConfirmed = null;
@@ -144,6 +147,7 @@ public final class KBCommands {
 
         // Do backup
         BackupMetadata metadata = new BackupMetadata(System.currentTimeMillis(), backupName);
+        LOGGER.info("Invoking backup worker ...");
         BackupWorker.invoke(context, backupName, metadata);
         return SUCCESS;
     }
@@ -167,7 +171,7 @@ public final class KBCommands {
         // Get server
         MinecraftServer server = context.getSource().getMinecraftServer();
         String backupFileName = getBackupFileName(backupName);
-        debug("Backup file name: " + backupFileName);
+        LOGGER.debug("Backup file name: " + backupFileName);
         File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
 
         PrintUtil.msgInfo(context, "Server will shutdown in a few seconds, depended on your world size and the disk speed, the restore progress may take seconds or minutes.", true);
