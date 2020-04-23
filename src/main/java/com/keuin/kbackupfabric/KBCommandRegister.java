@@ -22,6 +22,8 @@ public class KBCommandRegister {
         // register /kb restore <name> for performing restore. OP is required.
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("restore").then(CommandManager.argument("backupName", StringArgumentType.string()).requires(KBCommandHandler::opPermissionValidator).executes(KBCommandHandler::restore)).executes(KBCommandHandler::list)));
 
+        // register /kb confirm for confirming the execution
+        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("confirm").executes(KBCommandHandler::confirm)));
 
 //        LiteralCommandNode<ServerCommandSource> basenode = dispatcher.register(literal("findBiome")
 //                .then(argument("biome_identifier", identifier()).suggests(BiomeCompletionProvider.BIOMES) // We use Biome suggestions for identifier argument

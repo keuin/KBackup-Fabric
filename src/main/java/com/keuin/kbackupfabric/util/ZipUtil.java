@@ -12,7 +12,7 @@ public class ZipUtil {
      * @param srcRootDir 压缩文件夹根目录的子路径
      * @param file       当前递归压缩的文件或目录对象
      * @param zos        压缩文件存储对象
-     * @throws Exception
+     * @throws IOException IO Error
      */
     private static void zip(String srcRootDir, File file, ZipOutputStream zos) throws IOException {
         if (file == null) {
@@ -43,9 +43,9 @@ public class ZipUtil {
         else {
             // 压缩目录中的文件或子目录
             File[] childFileList = file.listFiles();
-            for (int n = 0; n < childFileList.length; n++) {
-                childFileList[n].getAbsolutePath().indexOf(file.getAbsolutePath());
-                zip(srcRootDir, childFileList[n], zos);
+            for (File value : childFileList) {
+                value.getAbsolutePath().indexOf(file.getAbsolutePath());
+                zip(srcRootDir, value, zos);
             }
         }
     }
@@ -94,7 +94,7 @@ public class ZipUtil {
 
             //如果只是压缩一个文件，则需要截取该文件的父目录
             String srcRootDir = srcPath;
-            if (srcFile.isFile() || true) { // Hack this stupid setting. We want to keep our least parent folder!
+            if (srcFile.isFile()) { // (Disabled) Hack this stupid setting. We want to keep our least parent folder!
                 int index = srcPath.lastIndexOf(File.separator);
                 if (index != -1) {
                     srcRootDir = srcPath.substring(0, index);
@@ -158,6 +158,7 @@ public class ZipUtil {
             entry = entries.nextElement();
             // 构建压缩包中一个文件解压后保存的文件全路径
             entryFilePath = unzipFilePath + File.separator + entry.getName();
+
             // 构建解压后保存的文件夹路径
             index = entryFilePath.lastIndexOf(File.separator);
             if (index != -1) {
@@ -180,15 +181,22 @@ public class ZipUtil {
                 // 删除已存在的目标文件
                 entryFile.delete();
             }
-
-            // 写入文件
-            bos = new BufferedOutputStream(new FileOutputStream(entryFile));
-            bis = new BufferedInputStream(zip.getInputStream(entry));
-            while ((count = bis.read(buffer, 0, bufferSize)) != -1) {
-                bos.write(buffer, 0, count);
+            if (entry.isDirectory()) {
+                // If the entry is a directory, we make its corresponding directory.
+                entryFile.mkdir();
+            } else {
+                // Is a file, we write the data
+                // 写入文件
+                bos = new BufferedOutputStream(new FileOutputStream(entryFile));
+                bis = new BufferedInputStream(zip.getInputStream(entry));
+                while ((count = bis.read(buffer, 0, bufferSize)) != -1) {
+                    bos.write(buffer, 0, count);
+                }
+                bos.flush();
+                bos.close();
             }
-            bos.flush();
-            bos.close();
+
+
         }
         zip.close();
     }
