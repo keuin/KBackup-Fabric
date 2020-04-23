@@ -19,10 +19,10 @@ public final class KBCommandRegister {
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("list").requires(PermissionValidator::op).executes(KBCommands::list)));
 
         // register /kb backup [name] for performing backup. OP is required.
-        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("backup").then(CommandManager.argument("backupName", StringArgumentType.string()).requires(PermissionValidator::op).executes(KBCommands::backup)).requires(PermissionValidator::op).executes(KBCommands::backupWithDefaultName)));
+        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("backup").then(CommandManager.argument("backupName", StringArgumentType.greedyString()).requires(PermissionValidator::op).executes(KBCommands::backup)).requires(PermissionValidator::op).executes(KBCommands::backupWithDefaultName)));
 
         // register /kb restore <name> for performing restore. OP is required.
-        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("restore").then(CommandManager.argument("backupName", StringArgumentType.string()).suggests(BackupNameSuggestionProvider.getSuggestionProvider()).requires(PermissionValidator::op).executes(KBCommands::restore)).executes(KBCommands::list)));
+        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("restore").then(CommandManager.argument("backupName", StringArgumentType.greedyString()).suggests(BackupNameSuggestionProvider.getSuggestionProvider()).requires(PermissionValidator::op).executes(KBCommands::restore)).executes(KBCommands::list)));
 
         // register /kb confirm for confirming the execution. OP is required.
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("confirm").requires(PermissionValidator::op).executes(KBCommands::confirm)));

@@ -75,7 +75,7 @@ public final class KBCommands {
         if (backupName.matches("[0-9]*")) {
             // Numeric param is not allowed
             backupName = String.format("a%s", backupName);
-            msgWarn(context, String.format("Pure numeric name is not allowed. Renamed to %s", backupName));
+            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", backupName));
         }
         return doBackup(context, backupName);
     }
@@ -123,13 +123,26 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int backupWithDefaultName(CommandContext<ServerCommandSource> context) {
+        return doBackup(context, "noname");
+    }
+
+    private static int doBackup(CommandContext<ServerCommandSource> context, String customName) {
+        // Real backup name (compatible with legacy backup): date_name, such as 2020-04-23_21-03-00_test
         //KBMain.backup("name")
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
         String timeString = LocalDateTime.now().format(formatter);
-        return doBackup(context, timeString);
-    }
+        String backupName = timeString + "_" + customName;
 
-    private static int doBackup(CommandContext<ServerCommandSource> context, String backupName) {
+        // Validate file name
+        final char[] ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
+        for (char c : ILLEGAL_CHARACTERS) {
+            if (backupName.contains(String.valueOf(c))) {
+                msgErr(context, String.format("Name cannot contain special character \"%c\".", c));
+                return FAILED;
+            }
+        }
+
+        // Do backup
         BackupMetadata metadata = new BackupMetadata(System.currentTimeMillis(), backupName);
         BackupWorker.invoke(context, backupName, metadata);
         return SUCCESS;
@@ -149,13 +162,14 @@ public final class KBCommands {
 
         // do restore to backupName
         String backupName = restoreBackupNameToBeConfirmed;
-        PrintUtil.msgInfo(context, String.format("Restoring worlds to %s ...", backupName), true);
+        PrintUtil.msgInfo(context, String.format("Restoring to previous world %s ...", backupName), true);
 
         // Get server
         MinecraftServer server = context.getSource().getMinecraftServer();
         String backupFileName = getBackupFileName(backupName);
         debug("Backup file name: " + backupFileName);
         File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
+
         PrintUtil.msgInfo(context, "Server will shutdown in a few seconds, depended on your world size and the disk speed, the restore progress may take seconds or minutes.", true);
         PrintUtil.msgInfo(context, "Please do not force the server stop, or the level would be broken.", true);
         PrintUtil.msgInfo(context, "After it shuts down, please restart the server manually.", true);

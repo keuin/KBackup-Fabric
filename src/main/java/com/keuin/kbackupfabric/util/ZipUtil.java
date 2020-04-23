@@ -172,7 +172,7 @@ public final class ZipUtil {
         BufferedInputStream bis;
         BufferedOutputStream bos;
         ZipFile zip = new ZipFile(zipFile);
-        Enumeration<ZipEntry> entries = (Enumeration<ZipEntry>) zip.entries();
+        Enumeration<? extends ZipEntry> entries = zip.entries();
         // 循环对压缩包里的每一个文件进行解压
         while (entries.hasMoreElements()) {
             entry = entries.nextElement();

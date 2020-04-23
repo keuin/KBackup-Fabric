@@ -52,7 +52,7 @@ public final class PrintUtil {
         return message(context, messageText, broadcastToOps, errorStyle);
     }
 
-    public static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps, Style style) {
+    private static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps, Style style) {
         synchronized (syncMessage) {
             Text text = new LiteralText(messageText);
             text.setStyle(style);
