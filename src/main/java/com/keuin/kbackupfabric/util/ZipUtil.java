@@ -43,9 +43,9 @@ public class ZipUtil {
         else {
             // 压缩目录中的文件或子目录
             File[] childFileList = file.listFiles();
-            for (File value : childFileList) {
-                value.getAbsolutePath().indexOf(file.getAbsolutePath());
-                zip(srcRootDir, value, zos);
+            if(childFileList != null) {
+                for (File value : childFileList)
+                    zip(srcRootDir, value, zos);
             }
         }
     }
@@ -56,26 +56,29 @@ public class ZipUtil {
      * @param srcPath     要压缩的源文件路径。如果是目录，则将递归压缩这个目录及其所有子文件、子目录树。
      * @param zipPath     压缩文件保存的路径。注意：zipPath不能是srcPath路径下的子文件夹
      * @param zipFileName 压缩文件名
-     * @throws Exception
+     * @throws IOException IO Error
+     * @throws ZipUtilException General exception, such as loop recursion or invalid input.
      */
     public static void zip(String srcPath, String zipPath, String zipFileName) throws IOException, ZipUtilException {
         if (srcPath.isEmpty() || zipPath.isEmpty() || zipFileName.isEmpty()) {
             throw new ZipUtilException("Parameter for zip() contains null.");
         }
-        CheckedOutputStream cos = null;
+        CheckedOutputStream cos;
         ZipOutputStream zos = null;
         try {
             File srcFile = new File(srcPath);
 
             //判断压缩文件保存的路径是否为源文件路径的子文件夹，如果是，则抛出异常（防止无限递归压缩的发生）
-            if (srcFile.isDirectory() && zipPath.indexOf(srcPath) != -1) {
+            if (srcFile.isDirectory() && zipPath.contains(srcPath)) {
                 throw new ZipUtilException("Detected loop recursion in directory structure, please check symlink linking to parent directories.");
             }
 
             //判断压缩文件保存的路径是否存在，如果不存在，则创建目录
             File zipDir = new File(zipPath);
             if (!zipDir.exists() || !zipDir.isDirectory()) {
-                zipDir.mkdirs();
+                if(!zipDir.mkdirs()) {
+                    throw new IOException(String.format("Failed to make directory tree %s",zipDir.toString()));
+                }
             }
 
             //创建压缩文件保存的文件对象
@@ -86,7 +89,9 @@ public class ZipUtil {
                 SecurityManager securityManager = new SecurityManager();
                 securityManager.checkDelete(zipFilePath);
                 //删除已存在的目标文件
-                zipFile.delete();
+                if(!zipFile.delete()) {
+                    throw new IOException(String.format("Failed to delete existing file %s",zipFile.toString()));
+                }
             }
 
             cos = new CheckedOutputStream(new FileOutputStream(zipFile), new CRC32());
@@ -103,8 +108,6 @@ public class ZipUtil {
             //调用递归压缩方法进行目录或文件压缩
             zip(srcRootDir, srcFile, zos);
             zos.flush();
-        } catch (Exception e) {
-            throw e;
         } finally {
             try {
                 if (zos != null) {
@@ -140,17 +143,18 @@ public class ZipUtil {
         // 创建解压缩文件保存的路径
         File unzipFileDir = new File(unzipFilePath);
         if (!unzipFileDir.exists() || !unzipFileDir.isDirectory()) {
-            unzipFileDir.mkdirs();
+            if(!unzipFileDir.mkdirs())
+                throw new IOException(String.format("Failed to make directory tree %s",unzipFileDir.toString()));
         }
 
         // 开始解压
-        ZipEntry entry = null;
-        String entryFilePath = null, entryDirPath = null;
-        File entryFile = null, entryDir = null;
-        int index = 0, count = 0, bufferSize = 1024;
+        ZipEntry entry;
+        String entryFilePath, entryDirPath;
+        File entryFile, entryDir;
+        int index, count, bufferSize = 1024;
         byte[] buffer = new byte[bufferSize];
-        BufferedInputStream bis = null;
-        BufferedOutputStream bos = null;
+        BufferedInputStream bis;
+        BufferedOutputStream bos;
         ZipFile zip = new ZipFile(zipFile);
         Enumeration<ZipEntry> entries = (Enumeration<ZipEntry>) zip.entries();
         // 循环对压缩包里的每一个文件进行解压
@@ -169,7 +173,8 @@ public class ZipUtil {
             entryDir = new File(entryDirPath);
             // 如果文件夹路径不存在，则创建文件夹
             if (!entryDir.exists() || !entryDir.isDirectory()) {
-                entryDir.mkdirs();
+                if(!entryDir.mkdirs())
+                    throw new IOException(String.format("Failed to make directory tree %s",entryDir.toString()));
             }
 
             // 创建解压文件
@@ -179,11 +184,13 @@ public class ZipUtil {
                 SecurityManager securityManager = new SecurityManager();
                 securityManager.checkDelete(entryFilePath);
                 // 删除已存在的目标文件
-                entryFile.delete();
+                if(!entryFile.delete())
+                    throw new IOException(String.format("Failed to delete existing file %s",entryFile.toString()));
             }
             if (entry.isDirectory()) {
                 // If the entry is a directory, we make its corresponding directory.
-                entryFile.mkdir();
+                if(!entryFile.mkdir())
+                    throw new IOException(String.format("Failed to create directory %s",entryFile.toString()));
             } else {
                 // Is a file, we write the data
                 // 写入文件
@@ -200,30 +207,4 @@ public class ZipUtil {
         }
         zip.close();
     }
-
-//        public static void main(String[] args)   
-//        {  
-//            String zipPath = "d:\\ziptest\\zipPath";  
-//            String dir = "d:\\ziptest\\rawfiles";  
-//            String zipFileName = "test.zip";  
-//            try  
-//            {  
-//                zip(dir, zipPath, zipFileName);  
-//            }   
-//            catch (Exception e)  
-//            {  
-//                e.printStackTrace();  
-//            }  
-//              
-//            String zipFilePath = "D:\\ziptest\\zipPath\\test.zip";  
-//            String unzipFilePath = "D:\\ziptest\\zipPath";  
-//            try   
-//            {  
-//                unzip(zipFilePath, unzipFilePath, true);  
-//            }  
-//            catch (Exception e)  
-//            {  
-//                e.printStackTrace();  
-//            }  
-//        }  
 }

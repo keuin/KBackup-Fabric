@@ -16,7 +16,6 @@ commands:
 
 
 To-Do List:
-- Optimize ZipUtil
 - Optimize lag during the backup process (use async I/O)
 - Optimize output format
 - Implement incremental backup
