@@ -19,9 +19,8 @@ commands:
 
 To-Do List:
 
-- Restoration of player data may not be correct.
-- Optimize log output, normal output and op broadcast output.
 - More thorough test.
 - Enhance ZipUtil for hashing sub-files and generating incremental diff-table. (A:Add, M:Modification, D:Deletion)
 - Optimize help menu. (colored command help menu)
+- Add op login hint in the next start after restoring.
 - Implement incremental backup.

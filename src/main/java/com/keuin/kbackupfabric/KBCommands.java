@@ -1,6 +1,7 @@
 package com.keuin.kbackupfabric;
 
-import com.keuin.kbackupfabric.data.BackupMetadata;
+import com.keuin.kbackupfabric.metadata.BackupMetadata;
+import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.operation.AbstractConfirmableOperation;
 import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.util.BackupNameTimeFormatter;
@@ -48,6 +49,27 @@ public final class KBCommands {
         return SUCCESS;
     }
 
+    /**
+     * Print the help menu. (May show extra info during the first run after restoring)
+     *
+     * @param context the context.
+     * @return stat code.
+     */
+    public static int kb(CommandContext<ServerCommandSource> context) {
+        int statCode = list(context);
+        if (MetadataHolder.hasMetadata()) {
+            // Output metadata info
+            msgStress(context, "Restored from backup " + MetadataHolder.getMetadata().getBackupName());
+        }
+        return statCode;
+    }
+
+    /**
+     * List all existing backups.
+     *
+     * @param context the context.
+     * @return stat code.
+     */
     public static int list(CommandContext<ServerCommandSource> context) {
         msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
         MinecraftServer server = context.getSource().getMinecraftServer();

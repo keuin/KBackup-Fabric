@@ -1,6 +1,6 @@
 package com.keuin.kbackupfabric.worker;
 
-import com.keuin.kbackupfabric.data.BackupMetadata;
+import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.ZipUtil;
 import com.keuin.kbackupfabric.util.ZipUtilException;

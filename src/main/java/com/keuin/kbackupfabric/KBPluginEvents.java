@@ -1,6 +1,7 @@
 package com.keuin.kbackupfabric;
 
-import com.keuin.kbackupfabric.data.BackupMetadata;
+import com.keuin.kbackupfabric.metadata.BackupMetadata;
+import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.util.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.util.PrintUtil;
@@ -46,7 +47,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
             File metadataFile = new File(levelDirectory, BackupMetadata.metadataFileName);
             if (metadataFile.exists()) {
                 // Metadata exists. Deserialize.
-                BackupMetadata metadata = null;
+                BackupMetadata metadata;
                 FileInputStream fileInputStream = new FileInputStream(metadataFile);
                 ObjectInputStream in = new ObjectInputStream(fileInputStream);
                 metadata = (BackupMetadata) in.readObject();
@@ -54,6 +55,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
                 fileInputStream.close();
 
                 // Print metadata
+                MetadataHolder.setMetadata(metadata);
                 PrintUtil.info("Recovered from previous backup:");
                 PrintUtil.info("Backup Name: " + metadata.getBackupName());
                 PrintUtil.info("Create Time: " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date(metadata.getBackupTime())));

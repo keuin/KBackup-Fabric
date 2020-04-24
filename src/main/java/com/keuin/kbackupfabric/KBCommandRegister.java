@@ -12,7 +12,7 @@ public final class KBCommandRegister {
     public static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
         // register /kb and /kb help for help menu
 
-        dispatcher.register(CommandManager.literal("kb").executes(KBCommands::help));
+        dispatcher.register(CommandManager.literal("kb").executes(KBCommands::kb));
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("help").executes(KBCommands::help)));
 
         // register /kb list for showing the backup list. OP is required.

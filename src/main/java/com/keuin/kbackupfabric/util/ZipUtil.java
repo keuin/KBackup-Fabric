@@ -1,6 +1,6 @@
 package com.keuin.kbackupfabric.util;
 
-import com.keuin.kbackupfabric.data.BackupMetadata;
+import com.keuin.kbackupfabric.metadata.BackupMetadata;
 
 import java.io.*;
 import java.util.Enumeration;
@@ -20,6 +20,9 @@ public final class ZipUtil {
         if (file == null) {
             return;
         }
+
+        if (file.getName().equals(BackupMetadata.metadataFileName))
+            return; // Reject
 
         // 如果是文件，则直接压缩该文件
         if (file.isFile()) {

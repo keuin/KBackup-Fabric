@@ -15,10 +15,15 @@ public final class PrintUtil {
     private static final Object syncMessage = new Object();
 
     private static final Style infoStyle = new Style().setColor(Formatting.WHITE);
+    private static final Style stressStyle = new Style().setColor(Formatting.AQUA).setBold(true);
     private static final Style warnStyle = new Style().setColor(Formatting.YELLOW);
     private static final Style errorStyle = new Style().setColor(Formatting.DARK_RED);
 
     private static final Logger LOGGER = LogManager.getLogger();
+
+    public static CommandContext<ServerCommandSource> msgStress(CommandContext<ServerCommandSource> context, String messageText) {
+        return msgStress(context, messageText, false);
+    }
 
     public static CommandContext<ServerCommandSource> msgInfo(CommandContext<ServerCommandSource> context, String messageText) {
         return msgInfo(context, messageText, false);
@@ -30,6 +35,10 @@ public final class PrintUtil {
 
     public static CommandContext<ServerCommandSource> msgErr(CommandContext<ServerCommandSource> context, String messageText) {
         return msgErr(context, messageText, false);
+    }
+
+    public static CommandContext<ServerCommandSource> msgStress(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
+        return message(context, messageText, broadcastToOps, stressStyle);
     }
 
     public static CommandContext<ServerCommandSource> msgInfo(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
