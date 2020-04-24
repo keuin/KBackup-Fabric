@@ -33,5 +33,7 @@ public final class KBCommandRegister {
         // register /kb cancel for cancelling the execution to be confirmed. OP is required.
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("cancel").requires(PermissionValidator::op).executes(KBCommands::cancel)));
 
+        // register /kb prev for showing the latest backup.
+        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("prev").requires(PermissionValidator::op).executes(KBCommands::prev)));
     }
 }

@@ -5,6 +5,8 @@ import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.world.World;
 
 import java.io.File;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Functions deal with file name, directory name about Minecraft saves.
@@ -49,5 +51,28 @@ public final class BackupFilesystemUtil {
 
     public static String getBackupFileNamePrefix() {
         return backupFileNamePrefix;
+    }
+
+    public static long getBackupTimeFromBackupFileName(String backupFileName) {
+        Matcher matcher = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}").matcher(backupFileName);
+        if (matcher.find()) {
+            String timeString = matcher.group(0);
+            long timeStamp = BackupNameTimeFormatter.timeStringToEpochSeconds(timeString);
+            System.out.println(backupFileName + " -> " + timeStamp);
+            return timeStamp;
+        } else {
+            System.err.println("Failed to extract time from " + backupFileName);
+        }
+        return -1;
+    }
+
+    public static String humanFileSize(long size) {
+        double fileSize = size * 1.0 / 1024 / 1024; // Default unit is MB
+        if (fileSize > 1000)
+            //msgInfo(context, String.format("File size: %.2fGB", fileSize / 1024));
+            return String.format("%.2fGB", fileSize / 1024);
+        else
+            //msgInfo(context, String.format("File size: %.2fMB", fileSize));
+            return String.format("%.2fMB", fileSize);
     }
 }

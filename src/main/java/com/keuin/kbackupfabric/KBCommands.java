@@ -2,6 +2,8 @@ package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.data.BackupMetadata;
 import com.keuin.kbackupfabric.data.PendingOperation;
+import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.BackupNameTimeFormatter;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.worker.BackupWorker;
 import com.keuin.kbackupfabric.worker.RestoreWorker;
@@ -14,9 +16,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.*;
@@ -30,7 +33,7 @@ public final class KBCommands {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final HashMap<Integer, String> backupIndexNameMapper = new HashMap<>(); // index -> backupName
+    private static final List<String> backupNameList = new ArrayList<>(); // index -> backupName
     private static PendingOperation pendingOperation = null;
 
     /**
@@ -56,13 +59,13 @@ public final class KBCommands {
         File[] files = getBackupSaveDirectory(server).listFiles(
                 (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
         );
-        backupIndexNameMapper.clear();
+        backupNameList.clear();
         if (files != null) {
             int i = 0;
             for (File file : files) {
                 ++i;
                 String backupName = getBackupName(file.getName());
-                backupIndexNameMapper.put(i, backupName);
+                backupNameList.add(backupName);
                 msgInfo(context, String.format("[%d] %s, size: %.1fMB", i, backupName, file.length() * 1.0 / 1024 / 1024));
             }
         }
@@ -160,9 +163,7 @@ public final class KBCommands {
     private static int doBackup(CommandContext<ServerCommandSource> context, String customName) {
         // Real backup name (compatible with legacy backup): date_name, such as 2020-04-23_21-03-00_test
         //KBMain.backup("name")
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-        String timeString = LocalDateTime.now().format(formatter);
-        String backupName = timeString + "_" + customName;
+        String backupName = BackupNameTimeFormatter.getTimeString() + "_" + customName;
 
         // Validate file name
         final char[] ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
@@ -265,14 +266,51 @@ public final class KBCommands {
         }
     }
 
-    private static String parseBackupName(CommandContext<ServerCommandSource> context, String userInput) {
-        MinecraftServer server = context.getSource().getMinecraftServer();
-        String backupName = StringArgumentType.getString(context, "backupName");
+    /**
+     * Show the most recent backup.
+     * If there is no available backup, print specific info.
+     *
+     * @param context the context.
+     * @return stat code.
+     */
+    public static int prev(CommandContext<ServerCommandSource> context) {
+        try {
+            // List all backups
+            MinecraftServer server = context.getSource().getMinecraftServer();
+            List<File> files = Arrays.asList(Objects.requireNonNull(getBackupSaveDirectory(server).listFiles()));
+            files.removeIf(f -> !f.getName().startsWith(BackupFilesystemUtil.getBackupFileNamePrefix()));
+            files.sort((x, y) -> (int) (BackupFilesystemUtil.getBackupTimeFromBackupFileName(y.getName()) - BackupFilesystemUtil.getBackupTimeFromBackupFileName(x.getName())));
+            File prevBackupFile = files.get(0);
+            String backupName = getBackupName(prevBackupFile.getName());
+            int i = backupNameList.indexOf(backupName);
+            if (i == -1) {
+                backupNameList.add(backupName);
+                i = backupNameList.size();
+            } else {
+                ++i;
+            }
+            msgInfo(context, String.format("The most recent backup: [%d] %s , size: %s", i, backupName, humanFileSize(prevBackupFile.length())));
+        } catch (NullPointerException e) {
+            msgInfo(context, "There are no backups available.");
+        } catch (SecurityException ignored) {
+            msgErr(context, "Failed to read file.");
+            return FAILED;
+        }
+        return SUCCESS;
+    }
 
-        if (backupName.matches("[0-9]*")) {
-            // If numeric input
-            Integer index = Integer.parseInt(backupName);
-            return backupIndexNameMapper.get(index); // Replace input number with real backup name.
+
+    private static String parseBackupName(CommandContext<ServerCommandSource> context, String userInput) {
+        try {
+            MinecraftServer server = context.getSource().getMinecraftServer();
+            String backupName = StringArgumentType.getString(context, "backupName");
+
+            if (backupName.matches("[0-9]*")) {
+                // If numeric input
+                int index = Integer.parseInt(backupName) - 1;
+                return backupNameList.get(index); // Replace input number with real backup name.
+            }
+        } catch (NumberFormatException | IndexOutOfBoundsException ignored) {
         }
         return userInput;
     }

@@ -29,14 +29,14 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
 
     @Override
     public void onInitialize() {
-        System.out.println("KBackup: Binding events and commands ...");
+        System.out.println("[KBackup] Binding events and commands ...");
         CommandRegistry.INSTANCE.register(false, KBCommandRegister::registerCommands);
         ServerStartCallback.EVENT.register(this);
     }
 
     @Override
     public void onStartServer(MinecraftServer server) {
-        LOGGER.debug("KBackup: Initializing ...");
+        LOGGER.debug("[KBackup] Initializing ...");
 
         // Update backup suggestion list
         BackupNameSuggestionProvider.setBackupSaveDirectory(BackupFilesystemUtil.getBackupSaveDirectory(server).getPath());
@@ -55,7 +55,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
                 fileInputStream.close();
 
                 // Print metadata
-                LOGGER.info("Recovered from previous backup:");
+                LOGGER.info("[KBackup] Recovered from previous backup:");
                 LOGGER.info("Backup Name: " + metadata.getBackupName());
                 LOGGER.info("Create Time: " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date(metadata.getBackupTime())));
 

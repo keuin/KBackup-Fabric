@@ -56,9 +56,9 @@ public final class BackupWorker implements Runnable {
         });
 
         // Force to save all player data and worlds
-        LOGGER.debug("Saving players ...");
+        LOGGER.info("Saving players ...");
         server.getPlayerManager().saveAllPlayerData();
-        LOGGER.debug("Saving worlds ...");
+        LOGGER.info("Saving worlds ...");
         server.save(true, true, true);
 
         // Start threaded worker
@@ -86,6 +86,7 @@ public final class BackupWorker implements Runnable {
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(backupName);
             LOGGER.debug(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
+            LOGGER.info("Compressing level ...");
             ZipUtil.makeBackupZip(levelPath, backupSaveDirectoryFile.toString(), backupFileName, backupMetadata);
             File backupZipFile = new File(backupSaveDirectoryFile, backupFileName);
 
@@ -96,11 +97,7 @@ public final class BackupWorker implements Runnable {
             long timeEscapedMillis = System.currentTimeMillis() - startTime;
             msgInfo(context, String.format("Backup finished. (%.2fs)", timeEscapedMillis / 1000.0), true);
             try {
-                double fileSize = backupZipFile.length() * 1.0 / 1024 / 1024;
-                if (fileSize > 1000)
-                    msgInfo(context, String.format("File size: %.2fGB", fileSize / 1024));
-                else
-                    msgInfo(context, String.format("File size: %.2fMB", fileSize));
+                msgInfo(context, String.format("File size: %s", humanFileSize(backupZipFile.length())));
             } catch (SecurityException ignored) {
             }
 

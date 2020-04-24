@@ -14,10 +14,13 @@ commands:
 - **/kb restore \<backup_name\>**: restore to a certain backup. This command needs a confirm to execute.
 - **/kb confirm**: confirm executing restore operation. The operation is irreversible.
 - **/kb delete**: delete an existing backup.
+- **/kb prev**: Find and select the most recent backup file.
 
 
 To-Do List:
 
+- Add /kb prev command for easily select previous backup.
+- Use OCP to refactor pending task.
 - Optimize log output, normal output and op broadcast output.
 - More thorough test.
 - Enhance ZipUtil for hashing sub-files and generating incremental diff-table. (A:Add, M:Modification, D:Deletion)
