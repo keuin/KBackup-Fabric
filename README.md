@@ -19,8 +19,7 @@ commands:
 
 To-Do List:
 
-- Add /kb prev command for easily select previous backup.
-- Use OCP to refactor pending task.
+- Restoration of player data may not be correct.
 - Optimize log output, normal output and op broadcast output.
 - More thorough test.
 - Enhance ZipUtil for hashing sub-files and generating incremental diff-table. (A:Add, M:Modification, D:Deletion)
