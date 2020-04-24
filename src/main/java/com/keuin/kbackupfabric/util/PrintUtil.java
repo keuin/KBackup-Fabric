@@ -1,6 +1,7 @@
 package com.keuin.kbackupfabric.util;
 
 import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.server.PlayerManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
@@ -13,13 +14,30 @@ import org.apache.logging.log4j.Logger;
 public final class PrintUtil {
 
     private static final Object syncMessage = new Object();
+    private static final Object syncBroadcast = new Object();
 
+    private static final Style broadcastStyle = new Style().setColor(Formatting.AQUA);
     private static final Style infoStyle = new Style().setColor(Formatting.WHITE);
-    private static final Style stressStyle = new Style().setColor(Formatting.AQUA).setBold(true);
+    private static final Style stressStyle = new Style().setColor(Formatting.AQUA);
     private static final Style warnStyle = new Style().setColor(Formatting.YELLOW);
     private static final Style errorStyle = new Style().setColor(Formatting.DARK_RED);
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static PlayerManager fuckMojang = null;
+
+    public static void setPlayerManager(PlayerManager playerManager) {
+        if (fuckMojang == null)
+            fuckMojang = playerManager;
+    }
+
+    public static void broadcast(String message) {
+        synchronized (syncBroadcast) {
+            if (fuckMojang != null)
+                fuckMojang.sendToAll(new LiteralText(message).setStyle(broadcastStyle));
+            else
+                PrintUtil.error("Error in PrintUtil.broadcast: PlayerManager is not initialized.");
+        }
+    }
 
     public static CommandContext<ServerCommandSource> msgStress(CommandContext<ServerCommandSource> context, String messageText) {
         return msgStress(context, messageText, false);

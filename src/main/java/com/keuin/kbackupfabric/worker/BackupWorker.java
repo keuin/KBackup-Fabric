@@ -41,7 +41,7 @@ public final class BackupWorker implements Runnable {
     public static void invoke(CommandContext<ServerCommandSource> context, String backupName, BackupMetadata backupMetadata) {
         //// Save world, save old autosave configs
 
-        PrintUtil.msgInfo(context, String.format("Making backup %s, please wait ...", backupName), true);
+        PrintUtil.broadcast(String.format("Making backup %s, please wait ...", backupName));
         Map<World, Boolean> oldWorldsSavingDisabled = new HashMap<>(); // old switch stat
 
         // Get server
@@ -54,9 +54,9 @@ public final class BackupWorker implements Runnable {
         });
 
         // Force to save all player data and worlds
-        PrintUtil.info("Saving players ...");
+        PrintUtil.msgInfo(context, "Saving players ...");
         server.getPlayerManager().saveAllPlayerData();
-        PrintUtil.info("Saving worlds ...");
+        PrintUtil.msgInfo(context, "Saving worlds ...");
         server.save(true, true, true);
 
         // Start threaded worker
@@ -83,7 +83,7 @@ public final class BackupWorker implements Runnable {
             // Make zip
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(backupName);
-            PrintUtil.debug(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
+            PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
             PrintUtil.info("Compressing level ...");
             ZipUtil.makeBackupZip(levelPath, backupSaveDirectoryFile.toString(), backupFileName, backupMetadata);
             File backupZipFile = new File(backupSaveDirectoryFile, backupFileName);
@@ -92,12 +92,13 @@ public final class BackupWorker implements Runnable {
             server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
 
             // Print finish message: time elapsed and file size
-            long timeEscapedMillis = System.currentTimeMillis() - startTime;
-            msgInfo(context, String.format("Backup finished. (%.2fs)", timeEscapedMillis / 1000.0), true);
+            long timeElapsedMillis = System.currentTimeMillis() - startTime;
+            String msgText = String.format("Backup finished. Time elapsed: %.2fs.", timeElapsedMillis / 1000.0);
             try {
-                msgInfo(context, String.format("File size: %s", humanFileSize(backupZipFile.length())));
+                msgText += String.format(" File size: %s.", humanFileSize(backupZipFile.length()));
             } catch (SecurityException ignored) {
             }
+            PrintUtil.msgInfo(context, msgText, true);
 
         } catch (SecurityException e) {
             msgInfo(context, String.format("Failed to create backup saving directory: %s. Failed to backup.", backupSaveDirectory));

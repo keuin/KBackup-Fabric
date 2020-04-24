@@ -25,7 +25,7 @@ class RestoreOperation extends AbstractConfirmableOperation {
     public boolean confirm() {
         // do restore to backupName
         MinecraftServer server = context.getSource().getMinecraftServer();
-        PrintUtil.msgInfo(context, String.format("Restoring to previous world %s ...", backupName), true);
+        PrintUtil.broadcast(String.format("Restoring to previous world %s ...", backupName));
 
         String backupFileName = getBackupFileName(backupName);
         PrintUtil.debug("Backup file name: " + backupFileName);
@@ -41,7 +41,7 @@ class RestoreOperation extends AbstractConfirmableOperation {
             } catch (InterruptedException ignored) {
             }
         }
-        PrintUtil.msgInfo(context, "Shutting down ...", true);
+        PrintUtil.broadcast("Shutting down ...");
         RestoreWorker.invoke(server, backupFile.getPath(), getLevelPath(server));
         return true;
     }

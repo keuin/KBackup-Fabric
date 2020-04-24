@@ -38,6 +38,9 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
     public void onStartServer(MinecraftServer server) {
         PrintUtil.debug("Initializing ...");
 
+        // Initialize player manager reference
+        PrintUtil.setPlayerManager(server.getPlayerManager());
+
         // Update backup suggestion list
         BackupNameSuggestionProvider.setBackupSaveDirectory(BackupFilesystemUtil.getBackupSaveDirectory(server).getPath());
 

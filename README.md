@@ -19,8 +19,13 @@ commands:
 
 To-Do List:
 
+- Refactor code.
 - More thorough test.
-- Enhance ZipUtil for hashing sub-files and generating incremental diff-table. (A:Add, M:Modification, D:Deletion)
+- Implement incremental backup.
+    + Restore: trace-back (recursively, then generate file dependence tree)
+        - Implement unZipRecursively (unzip a .zip.inc file recursively until reaches the root (i.e. the last full backup).)
+    + Backup: base-diff (select most recently backup as the base, then diff)
+        - Implement zipDiff (make a new zip with the latest backup as the base, store diff-table in zip comment (A:Add, M:Modification, D:Deletion))
 - Optimize help menu. (colored command help menu)
 - Add op login hint in the next start after restoring.
 - Implement incremental backup.

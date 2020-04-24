@@ -4,6 +4,7 @@ import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.operation.AbstractConfirmableOperation;
 import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.util.BackupNameTimeFormatter;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.worker.BackupWorker;
@@ -209,9 +210,16 @@ public final class KBCommands {
             msgWarn(context, "Nothing to be confirmed. Please execute /kb restore <backup_name> first.");
             return FAILED;
         }
+
         AbstractConfirmableOperation operation = pendingOperation;
         pendingOperation = null;
-        return operation.confirm() ? SUCCESS : FAILED; // block compiler's complain.
+
+        boolean returnValue = operation.confirm();
+
+        // By the way, update suggestion list.
+        BackupNameSuggestionProvider.updateCandidateList();
+
+        return returnValue ? SUCCESS : FAILED; // block compiler's complain.
     }
 
     /**

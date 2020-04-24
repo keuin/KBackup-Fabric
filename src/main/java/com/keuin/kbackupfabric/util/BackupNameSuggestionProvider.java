@@ -15,8 +15,8 @@ public class BackupNameSuggestionProvider {
 
     private static final List<String> candidateCacheList = new ArrayList<>();
     private static final Object syncSetDirectory = new Object();
-    private static final Object syncUpdate = new Object();
-    private static final long CACHE_TTL = 10000;
+    private static final Object syncCache = new Object();
+    private static final long CACHE_TTL = 8000;
     private static String backupSaveDirectory;
     private static long cacheUpdateTime = 0;
 
@@ -24,12 +24,12 @@ public class BackupNameSuggestionProvider {
         synchronized (syncSetDirectory) {
             BackupNameSuggestionProvider.backupSaveDirectory = backupSaveDirectory;
         }
-        // Immediately perform a update
+        // Immediately perform an update
         updateCandidateList();
     }
 
     public static void updateCandidateList() {
-        synchronized (syncUpdate) {
+        synchronized (syncCache) {
             try {
                 File file = new File(backupSaveDirectory);
                 candidateCacheList.clear();
@@ -57,20 +57,21 @@ public class BackupNameSuggestionProvider {
         if (isCacheExpired())
             updateCandidateList();
         String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
+        synchronized (syncCache) {
+            if (candidateCacheList.isEmpty()) { // If the list is empty then return no suggestions
+                return Suggestions.empty(); // No suggestions
+            }
 
-        if (candidateCacheList.isEmpty()) { // If the list is empty then return no suggestions
-            return Suggestions.empty(); // No suggestions
-        }
-
-        for (String string : candidateCacheList) { // Iterate through the supplied list
-            if (string.toLowerCase(Locale.ROOT).startsWith(remaining)) {
-                builder.suggest(string); // Add every single entry to suggestions list.
+            for (String string : candidateCacheList) { // Iterate through the supplied list
+                if (string.toLowerCase(Locale.ROOT).startsWith(remaining)) {
+                    builder.suggest(string); // Add every single entry to suggestions list.
+                }
             }
         }
         return builder.buildFuture(); // Create the CompletableFuture containing all the suggestions
     }
 
     private static boolean isCacheExpired() {
-        return System.currentTimeMillis() - cacheUpdateTime > CACHE_TTL;
+        return System.currentTimeMillis() - cacheUpdateTime > CACHE_TTL || cacheUpdateTime == 0;
     }
 }
