@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 public class BackupNameSuggestionProvider {
+
     private static final List<String> candidateCacheList = new ArrayList<>();
     private static final Object syncSetDirectory = new Object();
     private static final Object syncUpdate = new Object();
@@ -48,7 +49,7 @@ public class BackupNameSuggestionProvider {
 //        candidateList.addAll(stringCollection);
 //    }
 
-    public static SuggestionProvider<ServerCommandSource> getSuggestionProvider() {
+    public static SuggestionProvider<ServerCommandSource> getProvider() {
         return (context, builder) -> getCompletableFuture(builder);
     }
 

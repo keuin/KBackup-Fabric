@@ -13,11 +13,13 @@ commands:
 - **/kb backup \[backup_name\]**: make a backup with given name or the current system time by default
 - **/kb restore \<backup_name\>**: restore to a certain backup. This command needs a confirm to execute.
 - **/kb confirm**: confirm executing restore operation. The operation is irreversible.
+- **/kb delete**: delete an existing backup.
 
 
 To-Do List:
 
+- Optimize log output, normal output and op broadcast output.
 - More thorough test.
-- Enhance ZipUtil for hashing sub-files and generating incremental diff-table (A:Add, M:Modification, D:Deletion)
+- Enhance ZipUtil for hashing sub-files and generating incremental diff-table. (A:Add, M:Modification, D:Deletion)
 - Optimize help menu. (colored command help menu)
 - Implement incremental backup.

@@ -1,6 +1,7 @@
 package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.data.BackupMetadata;
+import com.keuin.kbackupfabric.data.PendingOperation;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.worker.BackupWorker;
 import com.keuin.kbackupfabric.worker.RestoreWorker;
@@ -12,12 +13,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
 import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.*;
+import static org.apache.commons.io.FileUtils.forceDelete;
 
 public final class KBCommands {
 
@@ -28,7 +31,7 @@ public final class KBCommands {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final HashMap<Integer, String> backupIndexNameMapper = new HashMap<>(); // index -> backupName
-    private static String restoreBackupNameToBeConfirmed = null;
+    private static PendingOperation pendingOperation = null;
 
     /**
      * Print the help menu.
@@ -84,6 +87,36 @@ public final class KBCommands {
     }
 
     /**
+     * Delete an existing backup with context parameter backupName.
+     * Simply set the pending backupName to given backupName, for the second confirmation.
+     *
+     * @param context the context.
+     * @return stat code.
+     */
+    public static int delete(CommandContext<ServerCommandSource> context) {
+
+        String backupName = parseBackupName(context, StringArgumentType.getString(context, "backupName"));
+        MinecraftServer server = context.getSource().getMinecraftServer();
+
+        if (backupName == null)
+            return list(context); // Show the list and return
+
+        // Validate backupName
+        if (!isBackupNameValid(backupName, server)) {
+            // Invalid backupName
+            msgErr(context, "Invalid backup name! Please check your input. The list index number is also valid.");
+            return FAILED;
+        }
+
+        // Update pending task
+        pendingOperation = PendingOperation.deleteOperation(backupName);
+
+        msgWarn(context, String.format("DELETION WARNING: The deletion is irreversible! You will lose the backup %s permanently. Use /kb confirm to start or /kb cancel to abort.", pendingOperation.getBackupName()), true);
+        return SUCCESS;
+    }
+
+
+    /**
      * Restore with context parameter backupName.
      * Simply set the pending backupName to given backupName, for the second confirmation.
      *
@@ -93,17 +126,11 @@ public final class KBCommands {
     public static int restore(CommandContext<ServerCommandSource> context) {
         //KBMain.restore("name")
         MinecraftServer server = context.getSource().getMinecraftServer();
-        String backupName = StringArgumentType.getString(context, "backupName");
+        String backupName = parseBackupName(context, StringArgumentType.getString(context, "backupName"));
+        backupName = parseBackupName(context, backupName);
 
-        if (backupName.matches("[0-9]*")) {
-            // If numeric input
-            Integer index = Integer.parseInt(backupName);
-            String realBackupName = backupIndexNameMapper.get(index);
-            if (realBackupName == null) {
-                return list(context); // Show the list and return
-            }
-            backupName = realBackupName; // Replace input number with real backup name.
-        }
+        if (backupName == null)
+            return list(context); // Show the list and return
 
         // Validate backupName
         if (!isBackupNameValid(backupName, server)) {
@@ -112,9 +139,10 @@ public final class KBCommands {
             return FAILED;
         }
 
-        // Update confirm pending variable
-        restoreBackupNameToBeConfirmed = backupName;
-        msgWarn(context, String.format("WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", restoreBackupNameToBeConfirmed), true);
+        // Update pending task
+        pendingOperation = PendingOperation.restoreOperation(backupName);
+
+        msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", pendingOperation.getBackupName()), true);
         return SUCCESS;
     }
 
@@ -159,34 +187,65 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int confirm(CommandContext<ServerCommandSource> context) {
-        if (restoreBackupNameToBeConfirmed == null) {
-            msgInfo(context, "Nothing to be confirmed. Please execute /kb restore <backup_name> first.");
+        if (pendingOperation == null) {
+            msgWarn(context, "Nothing to be confirmed. Please execute /kb restore <backup_name> first.");
             return FAILED;
         }
 
-        // do restore to backupName
-        String backupName = restoreBackupNameToBeConfirmed;
-        PrintUtil.msgInfo(context, String.format("Restoring to previous world %s ...", backupName), true);
-
-        // Get server
         MinecraftServer server = context.getSource().getMinecraftServer();
-        String backupFileName = getBackupFileName(backupName);
-        LOGGER.debug("Backup file name: " + backupFileName);
-        File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
 
-        PrintUtil.msgInfo(context, "Server will shutdown in a few seconds, depended on your world size and the disk speed, the restore progress may take seconds or minutes.", true);
-        PrintUtil.msgInfo(context, "Please do not force the server stop, or the level would be broken.", true);
-        PrintUtil.msgInfo(context, "After it shuts down, please restart the server manually.", true);
-        final int WAIT_SECONDS = 10;
-        for (int i = 0; i < WAIT_SECONDS; ++i) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
+        // Restore
+        if (pendingOperation.isRestore()) {
+            // do restore to backupName
+            String backupName = pendingOperation.getBackupName();
+            PrintUtil.msgInfo(context, String.format("Restoring to previous world %s ...", backupName), true);
+
+            String backupFileName = getBackupFileName(backupName);
+            LOGGER.debug("Backup file name: " + backupFileName);
+            File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
+
+            PrintUtil.msgInfo(context, "Server will shutdown in a few seconds, depended on your world size and the disk speed, the restore progress may take seconds or minutes.", true);
+            PrintUtil.msgInfo(context, "Please do not force the server stop, or the level would be broken.", true);
+            PrintUtil.msgInfo(context, "After it shuts down, please restart the server manually.", true);
+            final int WAIT_SECONDS = 10;
+            for (int i = 0; i < WAIT_SECONDS; ++i) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                }
             }
+            PrintUtil.msgInfo(context, "Shutting down ...", true);
+            RestoreWorker.invoke(server, backupFile.getPath(), getLevelPath(server));
+            return SUCCESS;
         }
-        PrintUtil.msgInfo(context, "Shutting down ...", true);
-        RestoreWorker.invoke(server, backupFile.getPath(), getLevelPath(server));
-        return SUCCESS;
+
+        // Delete
+        if (pendingOperation.isDelete()) {
+            String backupName = pendingOperation.getBackupName();
+            String backupFileName = getBackupFileName(backupName);
+            LOGGER.info("Deleting backup " + backupName);
+            File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
+            int tryCounter = 0;
+            do {
+                if (tryCounter == 5) {
+                    String msg = "Failed to delete file " + backupFileName;
+                    LOGGER.error(msg);
+                    msgErr(context, msg);
+                    return FAILED;
+                }
+                try {
+                    if (!backupFile.delete())
+                        forceDelete(backupFile);
+                } catch (SecurityException | NullPointerException | IOException ignored) {
+                }
+                ++tryCounter;
+            } while (backupFile.exists());
+            LOGGER.info("Deleted backup " + backupName);
+            msgInfo(context, "Deleted backup " + backupName);
+            return SUCCESS;
+        }
+
+        return SUCCESS; // block compiler's complain.
     }
 
     /**
@@ -196,13 +255,25 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int cancel(CommandContext<ServerCommandSource> context) {
-        if (restoreBackupNameToBeConfirmed != null) {
-            restoreBackupNameToBeConfirmed = null;
-            PrintUtil.msgInfo(context, "The restoration is cancelled.", true);
+        if (pendingOperation != null) {
+            PrintUtil.msgInfo(context, String.format("The %s has been cancelled.", pendingOperation.toString()), true);
+            pendingOperation = null;
             return SUCCESS;
         } else {
             msgErr(context, "Nothing to cancel.");
             return FAILED;
         }
+    }
+
+    private static String parseBackupName(CommandContext<ServerCommandSource> context, String userInput) {
+        MinecraftServer server = context.getSource().getMinecraftServer();
+        String backupName = StringArgumentType.getString(context, "backupName");
+
+        if (backupName.matches("[0-9]*")) {
+            // If numeric input
+            Integer index = Integer.parseInt(backupName);
+            return backupIndexNameMapper.get(index); // Replace input number with real backup name.
+        }
+        return userInput;
     }
 }
