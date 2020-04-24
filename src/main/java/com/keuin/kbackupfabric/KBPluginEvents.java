@@ -3,12 +3,11 @@ package com.keuin.kbackupfabric;
 import com.keuin.kbackupfabric.data.BackupMetadata;
 import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.util.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.util.PrintUtil;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.server.ServerStartCallback;
 import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.minecraft.server.MinecraftServer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,18 +24,18 @@ import static org.apache.commons.io.FileUtils.forceDelete;
  */
 public final class KBPluginEvents implements ModInitializer, ServerStartCallback {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    //private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
     public void onInitialize() {
-        System.out.println("[KBackup] Binding events and commands ...");
+        System.out.println("Binding events and commands ...");
         CommandRegistry.INSTANCE.register(false, KBCommandRegister::registerCommands);
         ServerStartCallback.EVENT.register(this);
     }
 
     @Override
     public void onStartServer(MinecraftServer server) {
-        LOGGER.debug("[KBackup] Initializing ...");
+        PrintUtil.debug("Initializing ...");
 
         // Update backup suggestion list
         BackupNameSuggestionProvider.setBackupSaveDirectory(BackupFilesystemUtil.getBackupSaveDirectory(server).getPath());
@@ -55,9 +54,9 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
                 fileInputStream.close();
 
                 // Print metadata
-                LOGGER.info("[KBackup] Recovered from previous backup:");
-                LOGGER.info("Backup Name: " + metadata.getBackupName());
-                LOGGER.info("Create Time: " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date(metadata.getBackupTime())));
+                PrintUtil.info("Recovered from previous backup:");
+                PrintUtil.info("Backup Name: " + metadata.getBackupName());
+                PrintUtil.info("Create Time: " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date(metadata.getBackupTime())));
 
                 // Delete metadata file
                 if (!metadataFile.delete()) {

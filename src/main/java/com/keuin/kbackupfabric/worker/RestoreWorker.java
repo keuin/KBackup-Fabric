@@ -1,10 +1,9 @@
 package com.keuin.kbackupfabric.worker;
 
+import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.ZipUtil;
 import com.keuin.kbackupfabric.util.ZipUtilException;
 import net.minecraft.server.MinecraftServer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +16,7 @@ import static org.apache.commons.io.FileUtils.forceDelete;
  */
 public final class RestoreWorker implements Runnable {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    //private static final Logger LOGGER = LogManager.getLogger();
 
     private final Thread serverThread;
     private final String backupFilePath;
@@ -44,7 +43,7 @@ public final class RestoreWorker implements Runnable {
     public void run() {
         try {
             // Wait server thread die
-            LOGGER.info("Waiting for the server thread to exit ...");
+            PrintUtil.info("Waiting for the server thread to exit ...");
             while (serverThread.isAlive()) {
                 try {
                     serverThread.join();
@@ -52,14 +51,14 @@ public final class RestoreWorker implements Runnable {
                 }
             }
 
-            LOGGER.info("Wait for 5 seconds ...");
+            PrintUtil.info("Wait for 5 seconds ...");
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException ignored) {
             }
 
             // Delete old level
-            LOGGER.info("Server stopped. Deleting old level ...");
+            PrintUtil.info("Server stopped. Deleting old level ...");
             File levelDirFile = new File(levelDirectory);
             long startTime = System.currentTimeMillis();
 
@@ -80,17 +79,17 @@ public final class RestoreWorker implements Runnable {
                 }
             }
             if (levelDirFile.exists()) {
-                LOGGER.error(String.format("Cannot restore: failed to delete old level %s .", levelDirFile.getName()));
+                PrintUtil.error(String.format("Cannot restore: failed to delete old level %s .", levelDirFile.getName()));
                 return;
             }
 
             // Decompress archive
-            LOGGER.info("Decompressing archived level");
+            PrintUtil.info("Decompressing archived level");
             ZipUtil.unzip(backupFilePath, levelDirectory, false);
             long endTime = System.currentTimeMillis();
-            LOGGER.info(String.format("Restore complete! (%.2fs) Please restart the server manually.", (endTime - startTime) / 1000.0));
+            PrintUtil.info(String.format("Restore complete! (%.2fs) Please restart the server manually.", (endTime - startTime) / 1000.0));
         } catch (SecurityException | IOException | ZipUtilException e) {
-            LOGGER.error("An exception occurred while restoring: " + e.getMessage());
+            PrintUtil.error("An exception occurred while restoring: " + e.getMessage());
         }
     }
 }

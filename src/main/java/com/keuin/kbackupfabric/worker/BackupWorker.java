@@ -8,8 +8,6 @@ import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.world.World;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +23,7 @@ import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
  */
 public final class BackupWorker implements Runnable {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    //private static final Logger LOGGER = LogManager.getLogger();
     private final CommandContext<ServerCommandSource> context;
     private final String backupName;
     private final Map<World, Boolean> oldWorldsSavingDisabled;
@@ -56,9 +54,9 @@ public final class BackupWorker implements Runnable {
         });
 
         // Force to save all player data and worlds
-        LOGGER.info("Saving players ...");
+        PrintUtil.info("Saving players ...");
         server.getPlayerManager().saveAllPlayerData();
-        LOGGER.info("Saving worlds ...");
+        PrintUtil.info("Saving worlds ...");
         server.save(true, true, true);
 
         // Start threaded worker
@@ -85,8 +83,8 @@ public final class BackupWorker implements Runnable {
             // Make zip
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(backupName);
-            LOGGER.debug(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
-            LOGGER.info("Compressing level ...");
+            PrintUtil.debug(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
+            PrintUtil.info("Compressing level ...");
             ZipUtil.makeBackupZip(levelPath, backupSaveDirectoryFile.toString(), backupFileName, backupMetadata);
             File backupZipFile = new File(backupSaveDirectoryFile, backupFileName);
 

@@ -6,6 +6,9 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 public final class PrintUtil {
 
@@ -15,6 +18,7 @@ public final class PrintUtil {
     private static final Style warnStyle = new Style().setColor(Formatting.YELLOW);
     private static final Style errorStyle = new Style().setColor(Formatting.DARK_RED);
 
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static CommandContext<ServerCommandSource> msgInfo(CommandContext<ServerCommandSource> context, String messageText) {
         return msgInfo(context, messageText, false);
@@ -47,5 +51,21 @@ public final class PrintUtil {
             context.getSource().sendFeedback(text, broadcastToOps);
         }
         return context;
+    }
+
+    public static void debug(String string) {
+        LOGGER.debug("[KBackup] " + string);
+    }
+
+    public static void info(String string) {
+        LOGGER.info("[KBackup] " + string);
+    }
+
+    public static void warn(String string) {
+        LOGGER.warn("[KBackup] " + string);
+    }
+
+    public static void error(String string) {
+        LOGGER.error("[KBackup] " + string);
     }
 }

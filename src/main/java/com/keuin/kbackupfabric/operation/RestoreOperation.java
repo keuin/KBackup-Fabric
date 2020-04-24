@@ -5,16 +5,14 @@ import com.keuin.kbackupfabric.worker.RestoreWorker;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
 import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
 
-class RestoreOperation extends Confirmable {
+class RestoreOperation extends AbstractConfirmableOperation {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    //private static final Logger LOGGER = LogManager.getLogger();
     private final String backupName;
     private final CommandContext<ServerCommandSource> context;
 
@@ -30,7 +28,7 @@ class RestoreOperation extends Confirmable {
         PrintUtil.msgInfo(context, String.format("Restoring to previous world %s ...", backupName), true);
 
         String backupFileName = getBackupFileName(backupName);
-        LOGGER.debug("Backup file name: " + backupFileName);
+        PrintUtil.debug("Backup file name: " + backupFileName);
         File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
 
         PrintUtil.msgInfo(context, "Server will shutdown in a few seconds, depended on your world size and the disk speed, the restore progress may take seconds or minutes.", true);

@@ -1,7 +1,7 @@
 package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.data.BackupMetadata;
-import com.keuin.kbackupfabric.operation.Confirmable;
+import com.keuin.kbackupfabric.operation.AbstractConfirmableOperation;
 import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.util.BackupNameTimeFormatter;
 import com.keuin.kbackupfabric.util.PrintUtil;
@@ -10,8 +10,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -28,10 +26,10 @@ public final class KBCommands {
     private static final int SUCCESS = 1;
     private static final int FAILED = -1;
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    //private static final Logger LOGGER = LogManager.getLogger();
 
     private static final List<String> backupNameList = new ArrayList<>(); // index -> backupName
-    private static Confirmable pendingOperation = null;
+    private static AbstractConfirmableOperation pendingOperation = null;
 
     /**
      * Print the help menu.
@@ -109,7 +107,7 @@ public final class KBCommands {
         }
 
         // Update pending task
-        pendingOperation = Confirmable.createDeleteOperation(context, backupName);
+        pendingOperation = AbstractConfirmableOperation.createDeleteOperation(context, backupName);
 
         msgWarn(context, String.format("DELETION WARNING: The deletion is irreversible! You will lose the backup %s permanently. Use /kb confirm to start or /kb cancel to abort.", backupName), true);
         return SUCCESS;
@@ -140,7 +138,7 @@ public final class KBCommands {
         }
 
         // Update pending task
-        pendingOperation = Confirmable.createRestoreOperation(context, backupName);
+        pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
 
         msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", backupName), true);
         return SUCCESS;
@@ -173,7 +171,7 @@ public final class KBCommands {
 
         // Do backup
         BackupMetadata metadata = new BackupMetadata(System.currentTimeMillis(), backupName);
-        LOGGER.info("Invoking backup worker ...");
+        PrintUtil.info("Invoking backup worker ...");
         BackupWorker.invoke(context, backupName, metadata);
         return SUCCESS;
     }
@@ -189,9 +187,9 @@ public final class KBCommands {
             msgWarn(context, "Nothing to be confirmed. Please execute /kb restore <backup_name> first.");
             return FAILED;
         }
-        Confirmable confirmable = pendingOperation;
+        AbstractConfirmableOperation operation = pendingOperation;
         pendingOperation = null;
-        return confirmable.confirm() ? SUCCESS : FAILED; // block compiler's complain.
+        return operation.confirm() ? SUCCESS : FAILED; // block compiler's complain.
     }
 
     /**
