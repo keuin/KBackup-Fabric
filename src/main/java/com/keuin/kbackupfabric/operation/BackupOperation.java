@@ -1,6 +1,7 @@
-package com.keuin.kbackupfabric.worker;
+package com.keuin.kbackupfabric.operation;
 
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
+import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.ZipUtil;
 import com.keuin.kbackupfabric.util.ZipUtilException;
@@ -17,56 +18,24 @@ import java.util.Map;
 import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
 
-/**
- * The backup worker
- * To invoke this worker, simply call invoke() method.
- */
-public final class BackupWorker implements Runnable {
+public class BackupOperation extends InvokableAsyncBlockingOperation {
 
-    //private static final Logger LOGGER = LogManager.getLogger();
     private final CommandContext<ServerCommandSource> context;
     private final String backupName;
-    private final Map<World, Boolean> oldWorldsSavingDisabled;
+    private final Map<World, Boolean> oldWorldsSavingDisabled = new HashMap<>();
     private final BackupMetadata backupMetadata;
-    private final long startTime;
+    private long startTime;
 
-    private BackupWorker(CommandContext<ServerCommandSource> context, String backupName, Map<World, Boolean> oldWorldsSavingDisabled, BackupMetadata backupMetadata, long startTime) {
+
+    public BackupOperation(CommandContext<ServerCommandSource> context, String backupName, BackupMetadata backupMetadata) {
+        super("BackupWorker");
         this.context = context;
         this.backupName = backupName;
-        this.oldWorldsSavingDisabled = oldWorldsSavingDisabled;
         this.backupMetadata = backupMetadata;
-        this.startTime = startTime;
-    }
-
-    public static void invoke(CommandContext<ServerCommandSource> context, String backupName, BackupMetadata backupMetadata) {
-        //// Save world, save old autosave configs
-
-        PrintUtil.broadcast(String.format("Making backup %s, please wait ...", backupName));
-        Map<World, Boolean> oldWorldsSavingDisabled = new HashMap<>(); // old switch stat
-
-        // Get server
-        MinecraftServer server = context.getSource().getMinecraftServer();
-
-        // Save old autosave switch stat temporally
-        server.getWorlds().forEach(world -> {
-            oldWorldsSavingDisabled.put(world, world.savingDisabled);
-            world.savingDisabled = true;
-        });
-
-        // Force to save all player data and worlds
-        PrintUtil.msgInfo(context, "Saving players ...");
-        server.getPlayerManager().saveAllPlayerData();
-        PrintUtil.msgInfo(context, "Saving worlds ...");
-        server.save(true, true, true);
-
-        // Start threaded worker
-        BackupWorker worker = new BackupWorker(context, backupName, oldWorldsSavingDisabled, backupMetadata, System.currentTimeMillis());
-        Thread workerThread = new Thread(worker, "BackupWorker");
-        workerThread.start();
     }
 
     @Override
-    public void run() {
+    protected void async() {
         String backupSaveDirectory = "";
         MinecraftServer server = context.getSource().getMinecraftServer();
         try {
@@ -105,5 +74,32 @@ public final class BackupWorker implements Runnable {
         } catch (IOException | ZipUtilException e) {
             msgInfo(context, "Failed to make zip: " + e.getMessage());
         }
+    }
+
+    @Override
+    protected boolean sync() {
+        //// Save world, save old autosave configs
+
+        PrintUtil.broadcast(String.format("Making backup %s, please wait ...", backupName));
+
+        // Get server
+        MinecraftServer server = context.getSource().getMinecraftServer();
+
+        // Save old autosave switch stat temporally
+        oldWorldsSavingDisabled.clear();
+        server.getWorlds().forEach(world -> {
+            oldWorldsSavingDisabled.put(world, world.savingDisabled);
+            world.savingDisabled = true;
+        });
+
+        // Force to save all player data and worlds
+        PrintUtil.msgInfo(context, "Saving players ...");
+        server.getPlayerManager().saveAllPlayerData();
+        PrintUtil.msgInfo(context, "Saving worlds ...");
+        server.save(true, true, true);
+
+        // Log start time
+        startTime = System.currentTimeMillis();
+        return true;
     }
 }

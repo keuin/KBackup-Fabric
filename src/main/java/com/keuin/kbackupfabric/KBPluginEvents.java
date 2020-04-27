@@ -59,7 +59,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
 
                 // Print metadata
                 MetadataHolder.setMetadata(metadata);
-                PrintUtil.info("Recovered from previous backup:");
+                PrintUtil.info("Restored from a previous backup:");
                 PrintUtil.info("Backup Name: " + metadata.getBackupName());
                 PrintUtil.info("Create Time: " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date(metadata.getBackupTime())));
 

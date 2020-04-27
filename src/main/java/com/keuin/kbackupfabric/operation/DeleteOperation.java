@@ -1,5 +1,7 @@
 package com.keuin.kbackupfabric.operation;
 
+import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
+import com.keuin.kbackupfabric.util.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
@@ -14,19 +16,30 @@ import static com.keuin.kbackupfabric.util.PrintUtil.msgErr;
 import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
 import static org.apache.commons.io.FileUtils.forceDelete;
 
-class DeleteOperation extends AbstractConfirmableOperation {
+public class DeleteOperation extends InvokableAsyncBlockingOperation {
 
     //private static final Logger LOGGER = LogManager.getLogger();
     private final String backupName;
     private final CommandContext<ServerCommandSource> context;
 
-    DeleteOperation(CommandContext<ServerCommandSource> context, String backupName) {
+    public DeleteOperation(CommandContext<ServerCommandSource> context, String backupName) {
+        super("BackupDeletingWorker");
         this.backupName = backupName;
         this.context = context;
     }
 
     @Override
-    public boolean confirm() {
+    public String toString() {
+        return String.format("deletion of %s", backupName);
+    }
+
+    @Override
+    protected void async() {
+        delete();
+        BackupNameSuggestionProvider.updateCandidateList();
+    }
+
+    private void delete() {
         MinecraftServer server = context.getSource().getMinecraftServer();
         String backupFileName = getBackupFileName(backupName);
         PrintUtil.info("Deleting backup " + backupName);
@@ -37,7 +50,7 @@ class DeleteOperation extends AbstractConfirmableOperation {
                 String msg = "Failed to delete file " + backupFileName;
                 PrintUtil.error(msg);
                 msgErr(context, msg);
-                return false;
+                return;
             }
             try {
                 if (!backupFile.delete())
@@ -48,11 +61,5 @@ class DeleteOperation extends AbstractConfirmableOperation {
         } while (backupFile.exists());
         PrintUtil.info("Deleted backup " + backupName);
         msgInfo(context, "Deleted backup " + backupName);
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("deletion of %s", backupName);
     }
 }

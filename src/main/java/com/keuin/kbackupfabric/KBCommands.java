@@ -2,12 +2,14 @@ package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
-import com.keuin.kbackupfabric.operation.AbstractConfirmableOperation;
+import com.keuin.kbackupfabric.operation.BackupOperation;
+import com.keuin.kbackupfabric.operation.DeleteOperation;
+import com.keuin.kbackupfabric.operation.RestoreOperation;
+import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
 import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.util.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.util.BackupNameTimeFormatter;
 import com.keuin.kbackupfabric.util.PrintUtil;
-import com.keuin.kbackupfabric.worker.BackupWorker;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
@@ -31,7 +33,7 @@ public final class KBCommands {
     //private static final Logger LOGGER = LogManager.getLogger();
 
     private static final List<String> backupNameList = new ArrayList<>(); // index -> backupName
-    private static AbstractConfirmableOperation pendingOperation = null;
+    private static Invokable pendingOperation = null;
 
     /**
      * Print the help menu.
@@ -130,7 +132,8 @@ public final class KBCommands {
         }
 
         // Update pending task
-        pendingOperation = AbstractConfirmableOperation.createDeleteOperation(context, backupName);
+        //pendingOperation = AbstractConfirmableOperation.createDeleteOperation(context, backupName);
+        pendingOperation = new DeleteOperation(context, backupName);
 
         msgWarn(context, String.format("DELETION WARNING: The deletion is irreversible! You will lose the backup %s permanently. Use /kb confirm to start or /kb cancel to abort.", backupName), true);
         return SUCCESS;
@@ -161,7 +164,9 @@ public final class KBCommands {
         }
 
         // Update pending task
-        pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
+        //pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
+        File backupFile = new File(getBackupSaveDirectory(server), getBackupFileName(backupName));
+        pendingOperation = new RestoreOperation(context, backupFile.getAbsolutePath(), getLevelPath(server), backupName);
 
         msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", backupName), true);
         return SUCCESS;
@@ -195,8 +200,14 @@ public final class KBCommands {
         // Do backup
         BackupMetadata metadata = new BackupMetadata(System.currentTimeMillis(), backupName);
         PrintUtil.info("Invoking backup worker ...");
-        BackupWorker.invoke(context, backupName, metadata);
-        return SUCCESS;
+        //BackupWorker.invoke(context, backupName, metadata);
+        BackupOperation operation = new BackupOperation(context, backupName, metadata);
+        if (operation.invoke()) {
+            return SUCCESS;
+        } else if (operation.isBlocked()) {
+            msgWarn(context, "Another task is running, cannot issue new backup at once.");
+        }
+        return FAILED;
     }
 
     /**
@@ -207,14 +218,14 @@ public final class KBCommands {
      */
     public static int confirm(CommandContext<ServerCommandSource> context) {
         if (pendingOperation == null) {
-            msgWarn(context, "Nothing to be confirmed. Please execute /kb restore <backup_name> first.");
+            msgWarn(context, "Nothing to confirm.");
             return FAILED;
         }
 
-        AbstractConfirmableOperation operation = pendingOperation;
+        Invokable operation = pendingOperation;
         pendingOperation = null;
 
-        boolean returnValue = operation.confirm();
+        boolean returnValue = operation.invoke();
 
         // By the way, update suggestion list.
         BackupNameSuggestionProvider.updateCandidateList();
