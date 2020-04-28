@@ -1,5 +1,6 @@
 package com.keuin.kbackupfabric.util;
 
+import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 
 import java.io.*;

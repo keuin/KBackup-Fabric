@@ -4,7 +4,7 @@ import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.ZipUtil;
-import com.keuin.kbackupfabric.util.ZipUtilException;
+import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;

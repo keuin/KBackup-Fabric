@@ -1,4 +1,4 @@
-package com.keuin.kbackupfabric.util;
+package com.keuin.kbackupfabric.exception;
 
 public class ZipUtilException extends Exception {
     public ZipUtilException() {

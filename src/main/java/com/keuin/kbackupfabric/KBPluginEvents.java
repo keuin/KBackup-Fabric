@@ -36,7 +36,6 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
 
     @Override
     public void onStartServer(MinecraftServer server) {
-        PrintUtil.debug("Initializing ...");
 
         // Initialize player manager reference
         PrintUtil.setPlayerManager(server.getPlayerManager());
@@ -71,5 +70,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
             }
         } catch (IOException | ClassNotFoundException ignored) {
         }
+
+        PrintUtil.info("Started.");
     }
 }

@@ -10,8 +10,8 @@ import net.minecraft.server.command.ServerCommandSource;
 public final class KBCommandRegister {
     // First make method to register
     public static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
-        // register /kb and /kb help for help menu
 
+        // register /kb and /kb help for help menu
         dispatcher.register(CommandManager.literal("kb").executes(KBCommands::kb));
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("help").executes(KBCommands::help)));
 
