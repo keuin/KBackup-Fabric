@@ -71,6 +71,6 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
         } catch (IOException | ClassNotFoundException ignored) {
         }
 
-        PrintUtil.info("Started.");
+        PrintUtil.info("KBackup is a free software. Project home: https://github.com/keuin/KBackup-Fabric");
     }
 }
