@@ -1,9 +1,9 @@
 package com.keuin.kbackupfabric.operation;
 
+import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.operation.abstracts.InvokableBlockingOperation;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.ZipUtil;
-import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -121,6 +121,16 @@ public class RestoreOperation extends InvokableBlockingOperation {
                 ZipUtil.unzip(backupFilePath, levelDirectory, false);
                 long endTime = System.currentTimeMillis();
                 PrintUtil.info(String.format("Restore complete! (%.2fs) Please restart the server manually.", (endTime - startTime) / 1000.0));
+                PrintUtil.info("If you want to restart automatically after restoring, please visit the project manual at: https://github.com/keuin/KBackup-Fabric/blob/master/README.md");
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                }
+
+                //ServerRestartUtil.forkAndRestart();
+                System.exit(111);
+
             } catch (SecurityException | IOException | ZipUtilException e) {
                 PrintUtil.error("An exception occurred while restoring: " + e.getMessage());
             }

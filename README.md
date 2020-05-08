@@ -19,6 +19,7 @@ commands:
 
 To-Do List:
 
+- New version checker.
 - Refactor code.
 - More thorough test.
 - Implement incremental backup.

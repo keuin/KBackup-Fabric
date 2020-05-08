@@ -1,10 +1,10 @@
 package com.keuin.kbackupfabric.operation;
 
+import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.ZipUtil;
-import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -53,6 +53,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(backupName);
             PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
+            msgInfo(context, "Compressing worlds ...");
             PrintUtil.info("Compressing level ...");
             ZipUtil.makeBackupZip(levelPath, backupSaveDirectoryFile.toString(), backupFileName, backupMetadata);
             File backupZipFile = new File(backupSaveDirectoryFile, backupFileName);

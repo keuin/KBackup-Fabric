@@ -13,11 +13,11 @@ public abstract class AbstractBlockingOperation extends AbstractSerializedOperat
     protected final boolean operate() {
         synchronized (sync) {
             if (isBlocking) {
-                System.out.println("blocked.");
+//                System.out.println("blocked.");
                 wasBlocked = true;
                 return false;
             } else {
-                System.out.println("not blocked.");
+//                System.out.println("not blocked.");
                 wasBlocked = false;
                 isBlocking = true;
             }
