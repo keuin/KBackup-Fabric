@@ -19,7 +19,9 @@ Minecraft version: 1.14.4
 ## 2. Script for auto-restart after restoring
 
 Due to the nature of JVM: the Java language's running environment, there is no elegant way to restart Minecraft server in a server plugin. In order to achieve auto restarting, the outer system-based script is required, i.e the script is a batch or a shell script.
-KBackup exit JVM with a special code `111` after successfully restored the level. The startup script just check the exit code and restart Minecraft server if the code is `111`.
+
+KBackup exit JVM with a special code `111` after restoring the level successfully. The startup script just check the exit code and restart Minecraft server if the code is `111`.
+
 I will give examples for some popular operating systems. To use these scripts, you should replace your start.bat or start.sh script with given code lines.
 
 ### 2.1 Script for Windows
