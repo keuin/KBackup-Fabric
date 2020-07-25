@@ -74,13 +74,17 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int list(CommandContext<ServerCommandSource> context) {
-        msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
         MinecraftServer server = context.getSource().getMinecraftServer();
         File[] files = getBackupSaveDirectory(server).listFiles(
                 (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
         );
         backupNameList.clear();
         if (files != null) {
+            if (files.length != 0) {
+                msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
+            } else {
+                msgInfo(context, "There are no available backups. To make a new backup, check /kb backup.");
+            }
             int i = 0;
             for (File file : files) {
                 ++i;
@@ -88,6 +92,8 @@ public final class KBCommands {
                 backupNameList.add(backupName);
                 msgInfo(context, String.format("[%d] %s, size: %.1fMB", i, backupName, file.length() * 1.0 / 1024 / 1024));
             }
+        } else {
+            msgErr(context, "Error: failed to list files in backup folder.");
         }
         return SUCCESS;
     }
