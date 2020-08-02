@@ -80,18 +80,34 @@ public final class PrintUtil {
         return context;
     }
 
+    /**
+     * Print debug message on the server console.
+     * @param string the message.
+     */
     public static void debug(String string) {
         LOGGER.debug("[KBackup] " + string);
     }
 
+    /**
+     * Print informative message on the server console.
+     * @param string the message.
+     */
     public static void info(String string) {
         LOGGER.info("[KBackup] " + string);
     }
 
+    /**
+     * Print warning message on the server console.
+     * @param string the message.
+     */
     public static void warn(String string) {
         LOGGER.warn("[KBackup] " + string);
     }
 
+    /**
+     * Print error message on the server console.
+     * @param string the message.
+     */
     public static void error(String string) {
         LOGGER.error("[KBackup] " + string);
     }

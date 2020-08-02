@@ -3,9 +3,12 @@ package com.keuin.kbackupfabric.operation;
 import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
+import com.keuin.kbackupfabric.operation.backup.BackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
-import com.keuin.kbackupfabric.util.ZipUtil;
+import com.keuin.kbackupfabric.util.backup.builder.BackupFileNameBuilder;
+import com.keuin.kbackupfabric.util.backup.formatter.BackupFileNameFormatter;
 import com.mojang.brigadier.context.CommandContext;
+import com.sun.istack.internal.NotNull;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.world.World;
@@ -15,7 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
+import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
 
 public class BackupOperation extends InvokableAsyncBlockingOperation {
@@ -23,15 +26,15 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
     private final CommandContext<ServerCommandSource> context;
     private final String backupName;
     private final Map<World, Boolean> oldWorldsSavingDisabled = new HashMap<>();
-    private final BackupMetadata backupMetadata;
+    private final BackupMethod backupMethod;
     private long startTime;
 
 
-    public BackupOperation(CommandContext<ServerCommandSource> context, String backupName, BackupMetadata backupMetadata) {
+    public BackupOperation(@NotNull CommandContext<ServerCommandSource> context, @NotNull String backupName, @NotNull BackupMethod backupMethod, @NotNull BackupFileNameBuilder backupFileNameBuilder, @NotNull BackupFileNameFormatter backupFileNameFormatter) {
         super("BackupWorker");
         this.context = context;
         this.backupName = backupName;
-        this.backupMetadata = backupMetadata;
+        this.backupMethod = backupMethod;
     }
 
     @Override
@@ -52,11 +55,8 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             // Make zip
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(backupName);
-            PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectoryFile.toString()));
-            msgInfo(context, "Compressing worlds ...");
-            PrintUtil.info("Compressing level ...");
-            ZipUtil.makeBackupZip(levelPath, backupSaveDirectoryFile.toString(), backupFileName, backupMetadata);
-            File backupZipFile = new File(backupSaveDirectoryFile, backupFileName);
+
+            backupMethod.backup(backupName,levelPath,backupSaveDirectory);
 
             // Restore old autosave switch stat
             server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
@@ -64,6 +64,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             // Print finish message: time elapsed and file size
             long timeElapsedMillis = System.currentTimeMillis() - startTime;
             String msgText = String.format("Backup finished. Time elapsed: %.2fs.", timeElapsedMillis / 1000.0);
+            File backupZipFile = new File(backupSaveDirectory, backupFileName);
             try {
                 msgText += String.format(" File size: %s.", humanFileSize(backupZipFile.length()));
             } catch (SecurityException ignored) {
@@ -72,7 +73,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
 
         } catch (SecurityException e) {
             msgInfo(context, String.format("Failed to create backup saving directory: %s. Failed to backup.", backupSaveDirectory));
-        } catch (IOException | ZipUtilException e) {
+        } catch (IOException e) {
             msgInfo(context, "Failed to make zip: " + e.getMessage());
         }
     }

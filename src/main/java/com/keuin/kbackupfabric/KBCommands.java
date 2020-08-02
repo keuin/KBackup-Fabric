@@ -6,9 +6,10 @@ import com.keuin.kbackupfabric.operation.BackupOperation;
 import com.keuin.kbackupfabric.operation.DeleteOperation;
 import com.keuin.kbackupfabric.operation.RestoreOperation;
 import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
-import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
-import com.keuin.kbackupfabric.util.BackupNameSuggestionProvider;
-import com.keuin.kbackupfabric.util.BackupNameTimeFormatter;
+import com.keuin.kbackupfabric.operation.backup.BackupMethod;
+import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.backup.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.util.backup.BackupNameTimeFormatter;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -16,12 +17,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.*;
+import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.*;
 
 public final class KBCommands {
@@ -78,6 +76,7 @@ public final class KBCommands {
         File[] files = getBackupSaveDirectory(server).listFiles(
                 (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
         );
+
         backupNameList.clear();
         if (files != null) {
             if (files.length != 0) {
@@ -112,7 +111,7 @@ public final class KBCommands {
             backupName = String.format("a%s", backupName);
             msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", backupName));
         }
-        return doBackup(context, backupName);
+        return doBackup(context, backupName, BackupMethod);
     }
 
     /**
@@ -189,10 +188,10 @@ public final class KBCommands {
         return doBackup(context, "noname");
     }
 
-    private static int doBackup(CommandContext<ServerCommandSource> context, String customName) {
+    private static int doBackup(CommandContext<ServerCommandSource> context, String customBackupName, BackupMethod backupMethod) {
         // Real backup name (compatible with legacy backup): date_name, such as 2020-04-23_21-03-00_test
         //KBMain.backup("name")
-        String backupName = BackupNameTimeFormatter.getTimeString() + "_" + customName;
+        String backupName = BackupNameTimeFormatter.getTimeString() + "_" + customBackupName;
 
         // Validate file name
         final char[] ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
@@ -204,10 +203,9 @@ public final class KBCommands {
         }
 
         // Do backup
-        BackupMetadata metadata = new BackupMetadata(System.currentTimeMillis(), backupName);
         PrintUtil.info("Invoking backup worker ...");
         //BackupWorker.invoke(context, backupName, metadata);
-        BackupOperation operation = new BackupOperation(context, backupName, metadata);
+        BackupOperation operation = new BackupOperation(context, backupName, backupMethod);
         if (operation.invoke()) {
             return SUCCESS;
         } else if (operation.isBlocked()) {

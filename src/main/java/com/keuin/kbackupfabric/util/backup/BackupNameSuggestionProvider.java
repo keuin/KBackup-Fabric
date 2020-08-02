@@ -1,4 +1,4 @@
-package com.keuin.kbackupfabric.util;
+package com.keuin.kbackupfabric.util.backup;
 
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;

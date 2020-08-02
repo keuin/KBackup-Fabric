@@ -68,11 +68,11 @@ public final class ZipUtil {
      * @param zipPath     压缩文件保存的路径。注意：zipPath不能是srcPath路径下的子文件夹
      * @param zipFileName 压缩文件名
      * @throws IOException      IO Error
-     * @throws ZipUtilException General exception, such as loop recursion or invalid input.
+     * @throws ZipUtilException General exception, such as loop recursion.
      */
     public static void makeBackupZip(String srcPath, String zipPath, String zipFileName, BackupMetadata backupMetadata) throws IOException, ZipUtilException {
-        if (srcPath.isEmpty() || zipPath.isEmpty() || zipFileName.isEmpty()) {
-            throw new ZipUtilException("Parameter for zip() contains null.");
+        if (srcPath == null || zipPath == null || zipFileName == null || backupMetadata == null || srcPath.isEmpty() || zipPath.isEmpty() || zipFileName.isEmpty()) {
+            throw new IllegalArgumentException("Parameter for zip() contains null.");
         }
         CheckedOutputStream checkedOutputStream;
         ZipOutputStream zipOutputStream = null;

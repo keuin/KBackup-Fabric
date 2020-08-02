@@ -2,8 +2,8 @@ package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
-import com.keuin.kbackupfabric.util.BackupFilesystemUtil;
-import com.keuin.kbackupfabric.util.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.backup.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.server.ServerStartCallback;

@@ -1,5 +1,6 @@
-package com.keuin.kbackupfabric.util;
+package com.keuin.kbackupfabric.util.backup;
 
+import com.keuin.kbackupfabric.util.ReflectionUtils;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.world.World;
@@ -16,10 +17,16 @@ public final class BackupFilesystemUtil {
     private static final String backupSaveDirectoryName = "backups";
     private static final String backupFileNamePrefix = "kbackup-";
 
+    public static String getBackupFileNamePrefix() {
+        return backupFileNamePrefix;
+    }
+
+    @Deprecated
     public static String getBackupFileName(String backupName) {
         return backupFileNamePrefix + backupName + ".zip";
     }
 
+    @Deprecated
     public static String getBackupName(String backupFileName) {
         try {
             if (backupFileName.matches(backupFileNamePrefix + ".+\\.zip"))
@@ -49,10 +56,7 @@ public final class BackupFilesystemUtil {
         return saveDir.getName();
     }
 
-    public static String getBackupFileNamePrefix() {
-        return backupFileNamePrefix;
-    }
-
+    @Deprecated
     public static long getBackupTimeFromBackupFileName(String backupFileName) {
         Matcher matcher = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}").matcher(backupFileName);
         if (matcher.find()) {

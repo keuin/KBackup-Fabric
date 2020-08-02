@@ -11,8 +11,8 @@ import net.minecraft.server.command.ServerCommandSource;
 import java.io.File;
 import java.io.IOException;
 
-import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.getBackupFileName;
-import static com.keuin.kbackupfabric.util.BackupFilesystemUtil.getBackupSaveDirectory;
+import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupFileName;
+import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupSaveDirectory;
 import static org.apache.commons.io.FileUtils.forceDelete;
 
 public class RestoreOperation extends InvokableBlockingOperation {
