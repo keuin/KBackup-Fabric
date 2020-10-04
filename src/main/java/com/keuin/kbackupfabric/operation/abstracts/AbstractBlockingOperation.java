@@ -2,7 +2,7 @@ package com.keuin.kbackupfabric.operation.abstracts;
 
 import com.keuin.kbackupfabric.operation.abstracts.i.Blocking;
 
-public abstract class AbstractBlockingOperation extends AbstractSerializedOperation implements Blocking {
+public abstract class AbstractBlockingOperation extends AbstractSerialOperation implements Blocking {
 
     private static final Object sync = new Object();
     private static boolean isBlocking = false;

@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class PrimitiveBackupMehtod implements BackupMethod {
+public class PrimitiveBackupMethod implements BackupMethod {
     @Override
     public boolean backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException {
         try {

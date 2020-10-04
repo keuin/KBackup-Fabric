@@ -56,21 +56,23 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(backupName);
 
-            backupMethod.backup(backupName,levelPath,backupSaveDirectory);
+            if(backupMethod.backup(backupName,levelPath,backupSaveDirectory)) {
+                // Restore old autosave switch stat
+                server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
 
-            // Restore old autosave switch stat
-            server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
-
-            // Print finish message: time elapsed and file size
-            long timeElapsedMillis = System.currentTimeMillis() - startTime;
-            String msgText = String.format("Backup finished. Time elapsed: %.2fs.", timeElapsedMillis / 1000.0);
-            File backupZipFile = new File(backupSaveDirectory, backupFileName);
-            try {
-                msgText += String.format(" File size: %s.", humanFileSize(backupZipFile.length()));
-            } catch (SecurityException ignored) {
+                // Print finish message: time elapsed and file size
+                long timeElapsedMillis = System.currentTimeMillis() - startTime;
+                String msgText = String.format("Backup finished. Time elapsed: %.2fs.", timeElapsedMillis / 1000.0);
+                File backupZipFile = new File(backupSaveDirectory, backupFileName);
+                try {
+                    msgText += String.format(" File size: %s.", humanFileSize(backupZipFile.length()));
+                } catch (SecurityException ignored) {
+                }
+                PrintUtil.msgInfo(context, msgText, true);
+            } else {
+                // failed
+                PrintUtil.msgErr(context, "Backup operation failed. No further information.");
             }
-            PrintUtil.msgInfo(context, msgText, true);
-
         } catch (SecurityException e) {
             msgInfo(context, String.format("Failed to create backup saving directory: %s. Failed to backup.", backupSaveDirectory));
         } catch (IOException e) {

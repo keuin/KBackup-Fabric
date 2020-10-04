@@ -4,7 +4,6 @@ public abstract class InvokableAsyncOperation extends InvokableOperation {
 
     private final AbstractAsyncOperation asyncOperation;
 
-
     public InvokableAsyncOperation(String name) {
         asyncOperation = new AbstractAsyncOperation(name) {
             @Override

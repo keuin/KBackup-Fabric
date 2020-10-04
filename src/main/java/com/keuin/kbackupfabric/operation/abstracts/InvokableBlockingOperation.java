@@ -27,6 +27,7 @@ public abstract class InvokableBlockingOperation extends InvokableOperation impl
         operation.block(blockState);
     }
 
+    @Deprecated
     protected void noUnblocking(boolean b) {
         operation.noUnblocking(b);
     }

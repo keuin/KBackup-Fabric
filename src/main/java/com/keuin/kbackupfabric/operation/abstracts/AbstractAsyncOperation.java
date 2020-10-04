@@ -1,6 +1,10 @@
 package com.keuin.kbackupfabric.operation.abstracts;
 
-public abstract class AbstractAsyncOperation extends AbstractSerializedOperation {
+/**
+ * A basic async operation, but not invokable.
+ * If you want a invokable interface (InvokableOperation), use InvokableAsyncOperation instead.
+ */
+public abstract class AbstractAsyncOperation extends AbstractSerialOperation {
 
     private final Thread thread;
     private final String name;
@@ -14,7 +18,7 @@ public abstract class AbstractAsyncOperation extends AbstractSerializedOperation
     /**
      * Start the worker thread.
      *
-     * @return true if succeed starting, false if already started.
+     * @return true if succeed starting, false if this operation is already started, or the sync method failed.
      */
     @Override
     protected final boolean operate() {
@@ -30,13 +34,16 @@ public abstract class AbstractAsyncOperation extends AbstractSerializedOperation
 
     /**
      * Implement your async operation here.
-     * When this method returns, the operation must finish.
+     * After starting the operation, this method will be run in another thread after the sync method returns.
+     * When this method returns, the operation must have been finished.
      */
     protected abstract void async();
 
     /**
      * If necessary, implement your sync operations here.
      * It will be invoked before starting the async thread.
+     * If this method failed, the async method will not be invoked.
+     * @return whether this method succeed.
      */
     protected boolean sync() {
         return true;
