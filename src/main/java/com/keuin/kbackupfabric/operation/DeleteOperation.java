@@ -1,7 +1,7 @@
 package com.keuin.kbackupfabric.operation;
 
 import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
-import com.keuin.kbackupfabric.util.backup.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;

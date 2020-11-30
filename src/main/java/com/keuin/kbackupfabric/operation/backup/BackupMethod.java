@@ -2,10 +2,12 @@ package com.keuin.kbackupfabric.operation.backup;
 
 import com.keuin.kbackupfabric.util.backup.builder.BackupFileNameBuilder;
 import com.keuin.kbackupfabric.util.backup.formatter.BackupFileNameFormatter;
-import com.sun.istack.internal.NotNull;
 
 import java.io.IOException;
 
+/**
+ * Provide specific backup method, which is implemented statelessly.
+ */
 public interface BackupMethod {
 
     /**
@@ -14,10 +16,29 @@ public interface BackupMethod {
      * @param backupName the backup name.
      * @return if the backup operation succeed.
      */
-    boolean backup(@NotNull String backupName, @NotNull String levelPath, @NotNull String backupSaveDirectory) throws IOException;
+    BackupResult backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
+
+    boolean restore(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
 
     BackupFileNameBuilder getBackupFileNameBuilder();
 
     BackupFileNameFormatter getBackupFileNameFormatter();
 
+    class BackupResult {
+        private final boolean success;
+        private final long backupSizeBytes;
+
+        public BackupResult(boolean success, long backupSizeBytes) {
+            this.success = success;
+            this.backupSizeBytes = backupSizeBytes;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public long getBackupSizeBytes() {
+            return backupSizeBytes;
+        }
+    }
 }

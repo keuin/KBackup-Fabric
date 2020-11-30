@@ -3,7 +3,7 @@ package com.keuin.kbackupfabric;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
-import com.keuin.kbackupfabric.util.backup.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.server.ServerStartCallback;
@@ -30,7 +30,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
     @Override
     public void onInitialize() {
         System.out.println("Binding events and commands ...");
-        CommandRegistry.INSTANCE.register(false, KBCommandRegister::registerCommands);
+        CommandRegistry.INSTANCE.register(false, KBCommandsRegister::registerCommands);
         ServerStartCallback.EVENT.register(this);
     }
 
@@ -58,7 +58,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
 
                 // Print metadata
                 MetadataHolder.setMetadata(metadata);
-                PrintUtil.info("Restored from a previous backup:");
+                PrintUtil.info("Restored world from a previous backup:");
                 PrintUtil.info("Backup Name: " + metadata.getBackupName());
                 PrintUtil.info("Create Time: " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date(metadata.getBackupTime())));
 

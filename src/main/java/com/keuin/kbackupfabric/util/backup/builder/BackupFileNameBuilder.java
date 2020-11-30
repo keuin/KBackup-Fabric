@@ -1,6 +1,5 @@
 package com.keuin.kbackupfabric.util.backup.builder;
 
-import com.sun.istack.internal.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -20,6 +19,6 @@ public interface BackupFileNameBuilder {
      * @param backupName the custom name of this backup. Note that this should be a valid file name in current file system.
      * @return the backup file name string.
      */
-    String build(@NotNull LocalDateTime time, @NotNull String backupName);
+    String build(LocalDateTime time, String backupName);
 
 }

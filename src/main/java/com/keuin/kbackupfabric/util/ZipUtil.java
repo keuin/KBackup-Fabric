@@ -147,9 +147,9 @@ public final class ZipUtil {
      * @param unzipFilePath      解压后的文件保存的路径
      * @param includeZipFileName 解压后的文件保存的路径是否包含压缩文件的文件名。true-包含；false-不包含
      */
-    public static void unzip(String zipFilePath, String unzipFilePath, boolean includeZipFileName) throws ZipUtilException, IOException {
+    public static void unzip(String zipFilePath, String unzipFilePath, boolean includeZipFileName) throws IOException {
         if (zipFilePath.isEmpty() || unzipFilePath.isEmpty()) {
-            throw new ZipUtilException("Parameter for unzip() contains null.");
+            throw new IllegalArgumentException("Parameter for unzip() contains null.");
         }
         File zipFile = new File(zipFilePath);
         // 如果解压后的文件保存路径包含压缩文件的文件名，则追加该文件名到解压路径

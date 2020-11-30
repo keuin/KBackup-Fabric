@@ -2,8 +2,6 @@ package com.keuin.kbackupfabric.util.backup.formatter;
 
 import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.util.backup.BackupNameTimeFormatter;
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 
 import java.time.LocalDateTime;
 import java.util.regex.Matcher;
@@ -18,13 +16,12 @@ public class PrimitiveZipBackupFileNameFormatter implements BackupFileNameFormat
     }
 
     @Override
-    public BackupFileNameFormatter.BackupFileName format(@NotNull String fileName) {
+    public BackupFileNameFormatter.BackupFileName format(String fileName) {
         LocalDateTime time = getTime(fileName);
         String name = getBackupName(fileName);
         return new BackupFileNameFormatter.BackupFileName(time,name);
     }
 
-    @Nullable
     private LocalDateTime getTime(String fileName) {
         Matcher matcher = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}").matcher(fileName);
         if (matcher.find()) {

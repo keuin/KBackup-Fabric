@@ -1,14 +1,16 @@
 package com.keuin.kbackupfabric;
 
-import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.operation.BackupOperation;
 import com.keuin.kbackupfabric.operation.DeleteOperation;
 import com.keuin.kbackupfabric.operation.RestoreOperation;
 import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
 import com.keuin.kbackupfabric.operation.backup.BackupMethod;
+import com.keuin.kbackupfabric.operation.backup.IncrementalBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.PrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
-import com.keuin.kbackupfabric.util.backup.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.util.backup.BackupType;
+import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.util.backup.BackupNameTimeFormatter;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -27,11 +29,13 @@ public final class KBCommands {
 
     private static final int SUCCESS = 1;
     private static final int FAILED = -1;
+    private static final String DEFAULT_BACKUP_NAME = "noname";
 
     //private static final Logger LOGGER = LogManager.getLogger();
 
     private static final List<String> backupNameList = new ArrayList<>(); // index -> backupName
     private static Invokable pendingOperation = null;
+    //private static BackupMethod activatedBackupMethod = new PrimitiveBackupMethod(); // The backup method we currently using
 
     /**
      * Print the help menu.
@@ -41,12 +45,12 @@ public final class KBCommands {
      */
     public static int help(CommandContext<ServerCommandSource> context) {
         msgInfo(context, "==== KBackup Manual ====");
-        msgInfo(context, "/kb       /kb help        Print help menu.");
-        msgInfo(context, "/kb list                  Show all backups.");
-        msgInfo(context, "/kb backup [backup_name]  Backup the whole level to backup_name. The default name is current system time.");
-        msgInfo(context, "/kb restore <backup_name> Delete the whole current level and restore from given backup. /kb restore is identical with /kb list.");
-        msgInfo(context, "/kb confirm               Confirm and start restoring.");
-        msgInfo(context, "/kb cancel                Cancel the restoration to be confirmed. If cancelled, /kb confirm will not run.");
+        msgInfo(context, "/kb , /kb help - Print help menu.");
+        msgInfo(context, "/kb list - Show all backups.");
+        msgInfo(context, "/kb backup [incremental/zip] [backup_name] - Backup the whole level to backup_name. The default name is current system time.");
+        msgInfo(context, "/kb restore <backup_name> - Delete the whole current level and restore from given backup. /kb restore is identical with /kb list.");
+        msgInfo(context, "/kb confirm - Confirm and start restoring.");
+        msgInfo(context, "/kb cancel - Cancel the restoration to be confirmed. If cancelled, /kb confirm will not run.");
         return SUCCESS;
     }
 
@@ -103,7 +107,7 @@ public final class KBCommands {
      * @param context the context.
      * @return stat code.
      */
-    public static int backup(CommandContext<ServerCommandSource> context) {
+    public static int primitiveBackup(CommandContext<ServerCommandSource> context) {
         //KBMain.backup("name")
         String backupName = StringArgumentType.getString(context, "backupName");
         if (backupName.matches("[0-9]*")) {
@@ -111,7 +115,32 @@ public final class KBCommands {
             backupName = String.format("a%s", backupName);
             msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", backupName));
         }
-        return doBackup(context, backupName, BackupMethod);
+        return doBackup(context, backupName, PrimitiveBackupMethod.getInstance());
+    }
+
+    /**
+     * Backup with default name.
+     *
+     * @param context the context.
+     * @return stat code.
+     */
+    public static int primitiveBackupWithDefaultName(CommandContext<ServerCommandSource> context) {
+        return doBackup(context, DEFAULT_BACKUP_NAME, PrimitiveBackupMethod.getInstance());
+    }
+
+    public static int incrementalBackup(CommandContext<ServerCommandSource> context) {
+        //KBMain.backup("name")
+        String backupName = StringArgumentType.getString(context, "backupName");
+        if (backupName.matches("[0-9]*")) {
+            // Numeric param is not allowed
+            backupName = String.format("a%s", backupName);
+            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", backupName));
+        }
+        return doBackup(context, backupName, IncrementalBackupMethod.getInstance());
+    }
+
+    public static int incrementalBackupWithDefaultName(CommandContext<ServerCommandSource> context) {
+        return doBackup(context, DEFAULT_BACKUP_NAME, IncrementalBackupMethod.getInstance());
     }
 
     /**
@@ -168,6 +197,9 @@ public final class KBCommands {
             return FAILED;
         }
 
+        // Detect backup type
+
+
         // Update pending task
         //pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
         File backupFile = new File(getBackupSaveDirectory(server), getBackupFileName(backupName));
@@ -175,17 +207,6 @@ public final class KBCommands {
 
         msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", backupName), true);
         return SUCCESS;
-    }
-
-
-    /**
-     * Backup with default name.
-     *
-     * @param context the context.
-     * @return stat code.
-     */
-    public static int backupWithDefaultName(CommandContext<ServerCommandSource> context) {
-        return doBackup(context, "noname");
     }
 
     private static int doBackup(CommandContext<ServerCommandSource> context, String customBackupName, BackupMethod backupMethod) {
@@ -284,6 +305,26 @@ public final class KBCommands {
             msgErr(context, "Failed to read file.");
             return FAILED;
         }
+        return SUCCESS;
+    }
+
+    /**
+     * Select the backup method we use.
+     * @param context the context.
+     * @return stat code.
+     */
+    public static int setMethod(CommandContext<ServerCommandSource> context) {
+        String desiredMethodName = StringArgumentType.getString(context, "backupMethod");
+        List<BackupType> backupMethods = Arrays.asList(BackupType.PRIMITIVE_ZIP_BACKUP, BackupType.OBJECT_TREE_BACKUP);
+        for (BackupType method : backupMethods) {
+            if(method.getName().equals(desiredMethodName)) {
+                // Incremental backup
+//                activatedBackupMethod =
+                msgInfo(context, String.format("Backup method is set to: %s", desiredMethodName));
+                return SUCCESS;
+            }
+        }
+
         return SUCCESS;
     }
 

@@ -1,7 +1,6 @@
 package com.keuin.kbackupfabric.util.backup.formatter;
 
 import com.keuin.kbackupfabric.util.backup.BackupNameTimeFormatter;
-import com.sun.istack.internal.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.regex.Matcher;
@@ -9,7 +8,7 @@ import java.util.regex.Pattern;
 
 public interface BackupFileNameFormatter {
 
-    BackupFileName format(@NotNull String fileName);
+    BackupFileName format(String fileName);
 
     class BackupFileName {
         public final LocalDateTime time;

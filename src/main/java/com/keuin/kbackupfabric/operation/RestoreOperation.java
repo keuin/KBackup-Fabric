@@ -84,54 +84,21 @@ public class RestoreOperation extends InvokableBlockingOperation {
                     }
                 }
 
-                PrintUtil.info("Wait for 5 seconds ...");
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ignored) {
-                }
-
-                // Delete old level
-                PrintUtil.info("Server stopped. Deleting old level ...");
-                File levelDirFile = new File(levelDirectory);
-                long startTime = System.currentTimeMillis();
-
-                int failedCounter = 0;
-                final int MAX_RETRY_TIMES = 20;
-                while (failedCounter < MAX_RETRY_TIMES) {
-                    System.gc();
-                    if (!levelDirFile.delete() && levelDirFile.exists()) {
-                        System.gc();
-                        forceDelete(levelDirFile); // Try to force delete.
-                    }
-                    if (!levelDirFile.exists())
-                        break;
-                    ++failedCounter;
-                    try {
-                        Thread.sleep(500);
+                int cnt = 5;
+                do {
+                    PrintUtil.info(String.format("Wait %d seconds ...", cnt));
+                    try{
+                        Thread.sleep(1000);
                     } catch (InterruptedException ignored) {
                     }
-                }
-                if (levelDirFile.exists()) {
-                    PrintUtil.error(String.format("Cannot restore: failed to delete old level %s .", levelDirFile.getName()));
-                    return;
-                }
+                }while(--cnt > 0);
 
-                // Decompress archive
-                PrintUtil.info("Decompressing archived level ...");
-                ZipUtil.unzip(backupFilePath, levelDirectory, false);
-                long endTime = System.currentTimeMillis();
-                PrintUtil.info(String.format("Restore complete! (%.2fs) Please restart the server manually.", (endTime - startTime) / 1000.0));
-                PrintUtil.info("If you want to restart automatically after restoring, please visit the project manual at: https://github.com/keuin/KBackup-Fabric/blob/master/README.md");
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ignored) {
-                }
+                ////////////////////
 
                 //ServerRestartUtil.forkAndRestart();
                 System.exit(111);
 
-            } catch (SecurityException | IOException | ZipUtilException e) {
+            } catch (SecurityException e) {
                 PrintUtil.error("An exception occurred while restoring: " + e.getMessage());
             }
         }

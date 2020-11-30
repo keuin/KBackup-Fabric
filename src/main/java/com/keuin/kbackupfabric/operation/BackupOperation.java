@@ -8,7 +8,6 @@ import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.backup.builder.BackupFileNameBuilder;
 import com.keuin.kbackupfabric.util.backup.formatter.BackupFileNameFormatter;
 import com.mojang.brigadier.context.CommandContext;
-import com.sun.istack.internal.NotNull;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.world.World;
@@ -30,7 +29,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
     private long startTime;
 
 
-    public BackupOperation(@NotNull CommandContext<ServerCommandSource> context, @NotNull String backupName, @NotNull BackupMethod backupMethod, @NotNull BackupFileNameBuilder backupFileNameBuilder, @NotNull BackupFileNameFormatter backupFileNameFormatter) {
+    public BackupOperation(CommandContext<ServerCommandSource> context, String backupName, BackupMethod backupMethod) {
         super("BackupWorker");
         this.context = context;
         this.backupName = backupName;
@@ -56,7 +55,8 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(backupName);
 
-            if(backupMethod.backup(backupName,levelPath,backupSaveDirectory)) {
+            BackupMethod.BackupResult result = backupMethod.backup(backupName,levelPath,backupSaveDirectory);
+            if(result.isSuccess()) {
                 // Restore old autosave switch stat
                 server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
 
@@ -64,10 +64,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
                 long timeElapsedMillis = System.currentTimeMillis() - startTime;
                 String msgText = String.format("Backup finished. Time elapsed: %.2fs.", timeElapsedMillis / 1000.0);
                 File backupZipFile = new File(backupSaveDirectory, backupFileName);
-                try {
-                    msgText += String.format(" File size: %s.", humanFileSize(backupZipFile.length()));
-                } catch (SecurityException ignored) {
-                }
+                msgText += String.format(" File size: %s.", humanFileSize(result.getBackupSizeBytes()));
                 PrintUtil.msgInfo(context, msgText, true);
             } else {
                 // failed
