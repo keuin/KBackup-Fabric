@@ -8,21 +8,24 @@ import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
 import com.keuin.kbackupfabric.operation.backup.BackupMethod;
 import com.keuin.kbackupfabric.operation.backup.IncrementalBackupMethod;
 import com.keuin.kbackupfabric.operation.backup.PrimitiveBackupMethod;
+import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.backup.BackupNameTimeFormatter;
 import com.keuin.kbackupfabric.util.backup.BackupType;
 import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
-import com.keuin.kbackupfabric.util.backup.BackupNameTimeFormatter;
-import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.*;
+import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 
 public final class KBCommands {
 
@@ -298,7 +301,7 @@ public final class KBCommands {
             } else {
                 ++i;
             }
-            msgInfo(context, String.format("The most recent backup: [%d] %s , size: %s", i, backupName, humanFileSize(prevBackupFile.length())));
+            msgInfo(context, String.format("The most recent backup: [%d] %s , size: %s", i, backupName, getFriendlyFileSizeString(prevBackupFile.length())));
         } catch (NullPointerException e) {
             msgInfo(context, "There are no backups available.");
         } catch (SecurityException ignored) {

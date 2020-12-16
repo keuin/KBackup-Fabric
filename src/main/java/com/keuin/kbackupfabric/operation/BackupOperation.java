@@ -1,12 +1,8 @@
 package com.keuin.kbackupfabric.operation;
 
-import com.keuin.kbackupfabric.exception.ZipUtilException;
-import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
 import com.keuin.kbackupfabric.operation.backup.BackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
-import com.keuin.kbackupfabric.util.backup.builder.BackupFileNameBuilder;
-import com.keuin.kbackupfabric.util.backup.formatter.BackupFileNameFormatter;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -17,8 +13,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
+import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 
 public class BackupOperation extends InvokableAsyncBlockingOperation {
 
@@ -64,7 +60,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
                 long timeElapsedMillis = System.currentTimeMillis() - startTime;
                 String msgText = String.format("Backup finished. Time elapsed: %.2fs.", timeElapsedMillis / 1000.0);
                 File backupZipFile = new File(backupSaveDirectory, backupFileName);
-                msgText += String.format(" File size: %s.", humanFileSize(result.getBackupSizeBytes()));
+                msgText += String.format(" File size: %s.", getFriendlyFileSizeString(result.getBackupSizeBytes()));
                 PrintUtil.msgInfo(context, msgText, true);
             } else {
                 // failed

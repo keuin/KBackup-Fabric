@@ -70,7 +70,7 @@ public final class BackupFilesystemUtil {
         return -1;
     }
 
-    public static String humanFileSize(long size) {
+    public static String getFriendlyFileSizeString(long size) {
         double fileSize = size * 1.0 / 1024 / 1024; // Default unit is MB
         if (fileSize > 1000)
             //msgInfo(context, String.format("File size: %.2fGB", fileSize / 1024));
