@@ -18,6 +18,7 @@ import static org.apache.commons.io.FileUtils.forceDelete;
 public class PrimitiveBackupMethod implements BackupMethod {
 
     private static final PrimitiveBackupMethod INSTANCE = new PrimitiveBackupMethod();
+    private static int zipLevel = 9;
 
     public static PrimitiveBackupMethod getInstance() {
         return INSTANCE;
@@ -31,7 +32,7 @@ public class PrimitiveBackupMethod implements BackupMethod {
 
             PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectory));
             PrintUtil.info("Compressing level ...");
-            ZipUtil.makeBackupZip(levelPath, backupSaveDirectory, backupFileName, backupMetadata);
+            ZipUtil.makeBackupZip(levelPath, backupSaveDirectory, backupFileName, backupMetadata, zipLevel);
 
         } catch (ZipUtilException exception) {
             PrintUtil.info("Infinite recursive of directory tree detected, backup was aborted.");

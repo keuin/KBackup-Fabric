@@ -7,6 +7,8 @@ import java.io.*;
 import java.util.Enumeration;
 import java.util.zip.*;
 
+import static java.util.zip.Deflater.DEFAULT_COMPRESSION;
+
 public final class ZipUtil {
 
     /**
@@ -70,7 +72,7 @@ public final class ZipUtil {
      * @throws IOException      IO Error
      * @throws ZipUtilException General exception, such as loop recursion.
      */
-    public static void makeBackupZip(String srcPath, String zipPath, String zipFileName, BackupMetadata backupMetadata) throws IOException, ZipUtilException {
+    public static void makeBackupZip(String srcPath, String zipPath, String zipFileName, BackupMetadata backupMetadata, int zipLevel) throws IOException, ZipUtilException {
         if (srcPath == null || zipPath == null || zipFileName == null || backupMetadata == null || srcPath.isEmpty() || zipPath.isEmpty() || zipFileName.isEmpty()) {
             throw new IllegalArgumentException("Parameter for zip() contains null.");
         }
@@ -107,6 +109,7 @@ public final class ZipUtil {
 
             checkedOutputStream = new CheckedOutputStream(new FileOutputStream(zipFile), new CRC32());
             zipOutputStream = new ZipOutputStream(checkedOutputStream);
+            zipOutputStream.setLevel(zipLevel);
 
             // If with backup metadata, we serialize it and write it into file "kbackup_metadata"
             ZipEntry metadataEntry = new ZipEntry(BackupMetadata.metadataFileName);
@@ -138,6 +141,10 @@ public final class ZipUtil {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static void makeBackupZip(String srcPath, String zipPath, String zipFileName, BackupMetadata backupMetadata) throws IOException, ZipUtilException {
+        makeBackupZip(srcPath, zipPath, zipFileName, backupMetadata, DEFAULT_COMPRESSION);
     }
 
     /**
