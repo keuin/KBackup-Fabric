@@ -1,4 +1,4 @@
-package com.keuin.kbackupfabric.util.backup.inc.identifier;
+package com.keuin.kbackupfabric.util.backup.incremental.identifier;
 
 /**
  * The identifier distinguishing files in the object collection.
@@ -6,4 +6,5 @@ package com.keuin.kbackupfabric.util.backup.inc.identifier;
  * All identifiers should be immutable and implement their own equals method.
  */
 public interface ObjectIdentifier {
+    String getIdentification();
 }

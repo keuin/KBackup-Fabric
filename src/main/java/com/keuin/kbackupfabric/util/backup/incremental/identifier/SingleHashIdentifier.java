@@ -1,6 +1,9 @@
-package com.keuin.kbackupfabric.util.backup.inc.identifier;
+package com.keuin.kbackupfabric.util.backup.incremental.identifier;
+
+import com.keuin.kbackupfabric.util.BytesUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -20,7 +23,12 @@ public abstract class SingleHashIdentifier implements ObjectIdentifier {
      * @param file the file to be hashed.
      * @return the hash bytes.
      */
-    protected abstract byte[] hash(File file);
+    protected abstract byte[] hash(File file) throws IOException;
+
+    @Override
+    public String getIdentification() {
+        return BytesUtil.bytesToHex(hash);
+    }
 
     @Override
     public boolean equals(Object obj) {
