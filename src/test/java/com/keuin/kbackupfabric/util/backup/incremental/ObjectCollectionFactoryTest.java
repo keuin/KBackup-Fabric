@@ -72,7 +72,6 @@ public class ObjectCollectionFactoryTest {
             // check `12`
             validate(collection.getSubCollectionMap().get("1").getSubCollectionMap().get("12"), Collections.emptyList(), Collections.emptyMap());
 
-
         } catch (IOException e) {
             e.printStackTrace();
             fail();

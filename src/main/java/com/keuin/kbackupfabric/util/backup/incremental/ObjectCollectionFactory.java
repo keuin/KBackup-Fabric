@@ -16,6 +16,7 @@ import java.util.*;
  * The identifier should use hashes that are strong enough, to prevent possible collisions.
  */
 public class ObjectCollectionFactory <T extends ObjectIdentifier> {
+
     private final FileIdentifierFactory<T> identifierFactory;
 
     public ObjectCollectionFactory(FileIdentifierFactory<T> identifierFactory) {

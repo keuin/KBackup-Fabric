@@ -1,8 +1,9 @@
 package com.keuin.kbackupfabric.util.backup.incremental;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class ObjectCollection {
+public class ObjectCollection implements Serializable {
     private final String name;
     private final Map<String, ObjectElement> elements;
     private final Map<String, ObjectCollection> subCollections;

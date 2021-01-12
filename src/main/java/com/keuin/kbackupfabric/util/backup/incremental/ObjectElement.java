@@ -2,13 +2,14 @@ package com.keuin.kbackupfabric.util.backup.incremental;
 
 import com.keuin.kbackupfabric.util.backup.incremental.identifier.ObjectIdentifier;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Representing a file in a ObjectCollection.
  * Immutable.
  */
-public class ObjectElement {
+public class ObjectElement implements Serializable {
     private final String name;
     private final ObjectIdentifier identifier;
 

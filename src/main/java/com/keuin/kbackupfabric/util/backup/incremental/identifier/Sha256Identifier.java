@@ -41,27 +41,28 @@ public class Sha256Identifier extends SingleHashIdentifier {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-            FileInputStream inputStream = new FileInputStream(file);
-
-            // This does not work. I don't know why
+            try (FileInputStream inputStream = new FileInputStream(file)) {
+                // This does not work. I don't know why
 //            FileChannel channel = inputStream.getChannel();
 //            ByteBuffer buffer = ByteBuffer.allocate(128);
 //            int readLength;
 //            while ((readLength = channel.read(buffer)) > 0)
 //                digest.update(buffer);
 
-            // This also works, without warnings
-            byte[] readBuffer = new byte[1024 * 1024];
-            int readLength;
-            while ((readLength = inputStream.read(readBuffer)) > 0)
-                digest.update(readBuffer,0, readLength);
+                // This also works, without warnings
+                byte[] readBuffer = new byte[1024 * 1024];
+                int readLength;
+                while ((readLength = inputStream.read(readBuffer)) > 0)
+                    digest.update(readBuffer, 0, readLength);
 
-            // The below lines also works, but the IDE will complain about the while loop
+                // The below lines also works, but the IDE will complain about the while loop
 //            DigestInputStream digestInputStream = new DigestInputStream(inputStream, digest);
 //            while(digestInputStream.read() > 0)
 //                ;
 
-            return digest.digest();
+                return digest.digest();
+            }
+
         } catch (NoSuchAlgorithmException ignored) {
             // this shouldn't happen
             return new byte[SHA256_LENGTH];
