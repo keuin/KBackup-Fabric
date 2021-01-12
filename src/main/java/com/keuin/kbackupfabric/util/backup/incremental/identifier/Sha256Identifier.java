@@ -7,6 +7,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
+/**
+ * Identifier based on sha256.
+ * Immutable.
+ */
 public class Sha256Identifier extends SingleHashIdentifier {
 
     private static final int SHA256_LENGTH = 32;

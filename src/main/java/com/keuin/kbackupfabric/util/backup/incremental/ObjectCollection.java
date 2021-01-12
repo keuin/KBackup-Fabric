@@ -1,31 +1,50 @@
 package com.keuin.kbackupfabric.util.backup.incremental;
 
-import com.keuin.kbackupfabric.util.backup.incremental.identifier.ObjectIdentifier;
-
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class ObjectCollection {
     private final String name;
-    private final Set<ObjectIdentifier> elements;
-    private final Set<ObjectCollection> subCollections;
+    private final Map<String, ObjectElement> elements;
+    private final Map<String, ObjectCollection> subCollections;
 
-    ObjectCollection(String name, Set<ObjectIdentifier> elements, Set<ObjectCollection> subCollections) {
+    ObjectCollection(String name, Set<ObjectElement> elements, Map<String, ObjectCollection> subCollections) {
         this.name = Objects.requireNonNull(name);
-        this.elements = Objects.requireNonNull(elements);
-        this.subCollections = Objects.requireNonNull(subCollections);
+        this.elements = new HashMap<>();
+        for (ObjectElement e : elements) {
+            Objects.requireNonNull(e);
+            if (this.elements.put(e.getName(), e) != null) {
+                throw new IllegalStateException("elements conflict with the same name");
+            }
+        }
+        this.subCollections = new HashMap<>(Objects.requireNonNull(subCollections));
     }
 
     public String getName() {
         return name;
     }
 
-    public Set<ObjectIdentifier> getElements() {
-        return elements;
+    public Set<ObjectElement> getElementSet() {
+        return new HashSet<>(elements.values());
     }
 
-    public Set<ObjectCollection> getSubCollections() {
-        return subCollections;
+    public Map<String, ObjectElement> getElementMap() {
+        return Collections.unmodifiableMap(elements);
+    }
+
+    public ObjectElement getElement(String name) {
+        return elements.get(name);
+    }
+
+    public Set<ObjectCollection> getSubCollectionSet() {
+        return new HashSet<>(subCollections.values());
+    }
+
+    public Map<String, ObjectCollection> getSubCollectionMap() {
+        return Collections.unmodifiableMap(subCollections);
+    }
+
+    public ObjectCollection getSubCollection(String name) {
+        return subCollections.get(name);
     }
 
     @Override

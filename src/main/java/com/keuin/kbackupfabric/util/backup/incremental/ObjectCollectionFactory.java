@@ -7,10 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Incremental backup is implemented as git-like file collection.
@@ -26,19 +23,21 @@ public class ObjectCollectionFactory <T extends ObjectIdentifier> {
     }
 
     public ObjectCollection fromDirectory(File directory) throws IOException {
-        final Set<ObjectIdentifier> subFiles = new HashSet<>();
-        final Set<ObjectCollection> subCollections = new HashSet<>();
+        final Set<ObjectElement> subFiles = new HashSet<>();
+        final Map<String, ObjectCollection> subCollections = new HashMap<>();
 
         if (!Objects.requireNonNull(directory).isDirectory())
             throw new IllegalArgumentException("given file is not a directory");
 
-        for (Iterator<Path> iter = Files.walk(directory.toPath()).iterator(); iter.hasNext();) {
+        for (Iterator<Path> iter = Files.walk(directory.toPath(), 1).iterator(); iter.hasNext();) {
             Path path = iter.next();
+            if (Files.isSameFile(path, directory.toPath()))
+                continue;
             File file = path.toFile();
             if (file.isDirectory()) {
-                subCollections.add(fromDirectory(file));
+                subCollections.put(file.getName(), fromDirectory(file));
             } else {
-                subFiles.add(identifierFactory.fromFile(file));
+                subFiles.add(new ObjectElement(file.getName(), identifierFactory.fromFile(file)));
             }
         }
 

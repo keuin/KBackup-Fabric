@@ -8,6 +8,7 @@ import java.util.Arrays;
 
 /**
  * A simple identifier based on a single hash function.
+ * Immutable.
  */
 public abstract class SingleHashIdentifier implements ObjectIdentifier {
 
