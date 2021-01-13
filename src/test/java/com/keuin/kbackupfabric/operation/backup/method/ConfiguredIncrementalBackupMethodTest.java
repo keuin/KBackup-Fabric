@@ -20,7 +20,7 @@ public class ConfiguredIncrementalBackupMethodTest {
     private final String indexFileName = "index";
 
     private final double directoryFactor = 0.4;
-    private final double fileFactor = 0.1;
+    private final double fileFactor = 0.02;
     private final int maxRandomFileSizeBytes = 1024 * 1024;
     private final Function<Integer, Integer> scaleDecayFunc = (x) -> x - 1;
 
@@ -94,7 +94,7 @@ public class ConfiguredIncrementalBackupMethodTest {
         for (int i = 0; i < subFileCount; i++) {
             String subFile = null;
             while (subFile == null || new File(path, subFile).exists())
-                subFile = getRandomString((int) (Math.random() * 16 + 1));
+                subFile = getRandomString((int) (Math.random() * 16 + 4));
             createRandomFile(new File(path, subFile), maxRandomFileSizeBytes);
         }
 
@@ -103,7 +103,7 @@ public class ConfiguredIncrementalBackupMethodTest {
         for (int i = 0; i < subDirCount; i++) {
             String subDir = null;
             while (subDir == null || new File(path, subDir).exists())
-                subDir = getRandomString((int) (Math.random() * 16 + 1));
+                subDir = getRandomString((int) (Math.random() * 16 + 4));
             createRandomDirectoryTree(new File(path, subDir).getAbsolutePath(), scaleDecayFunc.apply(scale));
         }
     }
