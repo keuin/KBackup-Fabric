@@ -1,6 +1,6 @@
-package com.keuin.kbackupfabric.operation.backup;
+package com.keuin.kbackupfabric.operation.backup.method;
 
-import com.keuin.kbackupfabric.operation.backup.feedback.PrimitiveBackupFeedback;
+import com.keuin.kbackupfabric.operation.backup.feedback.BackupFeedback;
 
 import java.io.IOException;
 
@@ -15,7 +15,7 @@ public interface BackupMethod {
      * @param backupName the backup name.
      * @return if the backup operation succeed.
      */
-    PrimitiveBackupFeedback backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
+    BackupFeedback backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
 
     boolean restore(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
 

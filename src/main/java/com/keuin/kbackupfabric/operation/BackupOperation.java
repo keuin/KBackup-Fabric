@@ -1,8 +1,8 @@
 package com.keuin.kbackupfabric.operation;
 
 import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
-import com.keuin.kbackupfabric.operation.backup.BackupMethod;
-import com.keuin.kbackupfabric.operation.backup.feedback.PrimitiveBackupFeedback;
+import com.keuin.kbackupfabric.operation.backup.feedback.BackupFeedback;
+import com.keuin.kbackupfabric.operation.backup.method.BackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
@@ -52,7 +52,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(customBackupName);
 
-            PrimitiveBackupFeedback result = backupMethod.backup(customBackupName,levelPath,backupSaveDirectory);
+            BackupFeedback result = backupMethod.backup(customBackupName,levelPath,backupSaveDirectory);
             if(result.isSuccess()) {
                 // Restore old auto-save switch stat
                 server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));

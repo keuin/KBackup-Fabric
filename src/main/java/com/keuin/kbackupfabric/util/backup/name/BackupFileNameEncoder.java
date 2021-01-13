@@ -1,6 +1,7 @@
 package com.keuin.kbackupfabric.util.backup.name;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Encode and decode backup file name for a specific backup type.
@@ -38,12 +39,20 @@ public interface BackupFileNameEncoder {
     }
 
     class BackupBasicInformation {
+
         public final String customName;
         public final LocalDateTime time;
+
+        private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm.ss");
 
         BackupBasicInformation(String customName, LocalDateTime time) {
             this.customName = customName;
             this.time = time;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s, %s", customName, time.format(formatter));
         }
     }
 }

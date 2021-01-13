@@ -1,8 +1,8 @@
 package com.keuin.kbackupfabric.operation;
 
 import com.keuin.kbackupfabric.operation.abstracts.InvokableBlockingOperation;
-import com.keuin.kbackupfabric.operation.backup.BackupMethod;
-import com.keuin.kbackupfabric.operation.backup.PrimitiveBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.BackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.PrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
@@ -94,10 +94,12 @@ public class RestoreOperation extends InvokableBlockingOperation {
                 }while(--cnt > 0);
 
                 ////////////////////
-                backupMethod.restore(backupFileName, levelPath, backupSavePath);
-
-                //ServerRestartUtil.forkAndRestart();
-                System.exit(111);
+                if (backupMethod.restore(backupFileName, levelPath, backupSavePath)) {
+                    //ServerRestartUtil.forkAndRestart();
+                    System.exit(111);
+                } else {
+                    PrintUtil.error("Failed to restore! server will not restart automatically.");
+                }
 
             } catch (SecurityException e) {
                 PrintUtil.error("An exception occurred while restoring: " + e.getMessage());
@@ -105,6 +107,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
                 PrintUtil.error(e.toString());
                 PrintUtil.error("Failed to restore.");
             }
+            System.exit(0); // all failed restoration will eventually go here
         }
     }
 }

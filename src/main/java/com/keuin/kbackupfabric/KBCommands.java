@@ -5,9 +5,10 @@ import com.keuin.kbackupfabric.operation.BackupOperation;
 import com.keuin.kbackupfabric.operation.DeleteOperation;
 import com.keuin.kbackupfabric.operation.RestoreOperation;
 import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
-import com.keuin.kbackupfabric.operation.backup.PrimitiveBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.PrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.backup.name.PrimitiveBackupFileNameEncoder;
 import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -82,23 +83,24 @@ public final class KBCommands {
                 (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
         );
 
-        backupFileNameList.clear();
-        if (files != null) {
-            if (files.length != 0) {
-                msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
+        synchronized (backupFileNameList) {
+            backupFileNameList.clear();
+            if (files != null) {
+                if (files.length != 0) {
+                    msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
+                } else {
+                    msgInfo(context, "There are no available backups. To make a new backup, run /kb backup.");
+                }
+                int i = 0;
+                for (File file : files) {
+                    ++i;
+                    String backupFileName = file.getName();
+                    msgInfo(context, String.format("[%d] %s", i, getPrimitiveBackupInformationString(backupFileName, file.length())));
+                    backupFileNameList.add(backupFileName);
+                }
             } else {
-                msgInfo(context, "There are no available backups. To make a new backup, run /kb backup.");
+                msgErr(context, "Error: failed to list files in backup folder.");
             }
-            int i = 0;
-            for (File file : files) {
-                ++i;
-                String backupFileName = file.getName();
-                String sizeString = getFriendlyFileSizeString(file.length());
-                msgInfo(context, String.format("[%d] %s, size: %s", i, backupFileName, sizeString));
-                backupFileNameList.add(backupFileName);
-            }
-        } else {
-            msgErr(context, "Error: failed to list files in backup folder.");
         }
         return SUCCESS;
     }
@@ -293,14 +295,21 @@ public final class KBCommands {
             files.sort((x, y) -> (int) (BackupFilesystemUtil.getBackupTimeFromBackupFileName(y.getName()) - BackupFilesystemUtil.getBackupTimeFromBackupFileName(x.getName())));
             File prevBackupFile = files.get(0);
             String backupFileName = prevBackupFile.getName();
-            int i = backupFileNameList.indexOf(backupFileName);
-            if (i == -1) {
-                backupFileNameList.add(backupFileName);
-                i = backupFileNameList.size();
-            } else {
-                ++i;
+            int i;
+            synchronized (backupFileNameList) {
+                i = backupFileNameList.indexOf(backupFileName);
+                if (i == -1) {
+                    backupFileNameList.add(backupFileName);
+                    i = backupFileNameList.size();
+                } else {
+                    ++i;
+                }
             }
-            msgInfo(context, String.format("The most recent backup: [%d] %s , size: %s", i, backupFileName, getFriendlyFileSizeString(prevBackupFile.length())));
+            msgInfo(context, String.format(
+                    "The most recent backup: [%d] %s",
+                    i,
+                    getPrimitiveBackupInformationString(backupFileName, prevBackupFile.length())
+            ));
         } catch (NullPointerException e) {
             msgInfo(context, "There are no backups available.");
         } catch (SecurityException ignored) {
@@ -308,6 +317,14 @@ public final class KBCommands {
             return FAILED;
         }
         return SUCCESS;
+    }
+
+    private static String getPrimitiveBackupInformationString(String backupFileName, long backupFileSizeBytes) {
+        return String.format(
+                "%s , size: %s",
+                new PrimitiveBackupFileNameEncoder().decode(backupFileName),
+                getFriendlyFileSizeString(backupFileSizeBytes)
+        );
     }
 
 //    /**
@@ -338,7 +355,9 @@ public final class KBCommands {
             if (backupName.matches("[0-9]*")) {
                 // If numeric input
                 int index = Integer.parseInt(backupName) - 1;
-                return backupFileNameList.get(index); // Replace input number with real backup file name.
+                synchronized (backupFileNameList) {
+                    return backupFileNameList.get(index); // Replace input number with real backup file name.
+                }
             }
         } catch (NumberFormatException | IndexOutOfBoundsException ignored) {
         }

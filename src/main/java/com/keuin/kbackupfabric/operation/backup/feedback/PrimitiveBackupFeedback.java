@@ -11,6 +11,7 @@ public class PrimitiveBackupFeedback implements BackupFeedback {
         this.backupSizeBytes = backupSizeBytes;
     }
 
+    @Override
     public boolean isSuccess() {
         return success;
     }
@@ -22,7 +23,7 @@ public class PrimitiveBackupFeedback implements BackupFeedback {
     @Override
     public String getFeedback() {
         if (success && backupSizeBytes >= 0)
-            return String.format(" File size: %s.", getFriendlyFileSizeString(backupSizeBytes));
+            return String.format("File size: %s.", getFriendlyFileSizeString(backupSizeBytes));
         else
             return "";
     }
