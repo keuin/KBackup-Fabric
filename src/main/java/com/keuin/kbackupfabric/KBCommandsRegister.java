@@ -18,17 +18,15 @@ public final class KBCommandsRegister {
         // register /kb list for showing the backup list. OP is required.
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("list").requires(PermissionValidator::op).executes(KBCommands::list)));
 
-//        // register /kb backup incremental [name]
-//        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("backup").then(
-//                CommandManager.literal("incremental").then(
-//                        CommandManager.argument("backupName", StringArgumentType.greedyString()).requires(PermissionValidator::op).executes(KBCommands::incrementalBackup)
-//                ).requires(PermissionValidator::op).executes(KBCommands::incrementalBackupWithDefaultName)))
-//        );
-
         // register /kb backup [name] for performing backup. OP is required.
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("backup").then(
                 CommandManager.argument("backupName", StringArgumentType.greedyString()).requires(PermissionValidator::op).executes(KBCommands::primitiveBackup)
         ).requires(PermissionValidator::op).executes(KBCommands::primitiveBackupWithDefaultName)));
+
+        // register /kb incbak [name] for performing incremental backup. OP is required.
+        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("incbak").then(
+                CommandManager.argument("backupName", StringArgumentType.greedyString()).requires(PermissionValidator::op).executes(KBCommands::incrementalBackup)
+        ).requires(PermissionValidator::op).executes(KBCommands::incrementalBackupWithDefaultName)));
 
         // register /kb restore <name> for performing restore. OP is required.
         dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("restore").then(CommandManager.argument("backupName", StringArgumentType.greedyString()).suggests(BackupNameSuggestionProvider.getProvider()).requires(PermissionValidator::op).executes(KBCommands::restore)).executes(KBCommands::list)));

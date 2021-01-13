@@ -5,9 +5,12 @@ import com.keuin.kbackupfabric.operation.BackupOperation;
 import com.keuin.kbackupfabric.operation.DeleteOperation;
 import com.keuin.kbackupfabric.operation.RestoreOperation;
 import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredIncrementalBackupMethod;
 import com.keuin.kbackupfabric.operation.backup.method.ConfiguredPrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.backup.name.IncrementalBackupFileNameEncoder;
 import com.keuin.kbackupfabric.util.backup.name.PrimitiveBackupFileNameEncoder;
 import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -120,7 +123,7 @@ public final class KBCommands {
             customBackupName = String.format("a%s", customBackupName);
             msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", customBackupName));
         }
-        return doBackup(context, customBackupName);
+        return doBackup(context, customBackupName, false);
     }
 
     /**
@@ -130,8 +133,23 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int primitiveBackupWithDefaultName(CommandContext<ServerCommandSource> context) {
-        return doBackup(context, DEFAULT_BACKUP_NAME);
+        return doBackup(context, DEFAULT_BACKUP_NAME, false);
     }
+
+    public static int incrementalBackup(CommandContext<ServerCommandSource> context) {
+        String customBackupName = StringArgumentType.getString(context, "backupName");
+        if (customBackupName.matches("[0-9]*")) {
+            // Numeric param is not allowed
+            customBackupName = String.format("a%s", customBackupName);
+            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", customBackupName));
+        }
+        return doBackup(context, customBackupName, true);
+    }
+
+    public static int incrementalBackupWithDefaultName(CommandContext<ServerCommandSource> context) {
+        return doBackup(context, DEFAULT_BACKUP_NAME, true);
+    }
+
 
 //    public static int incrementalBackup(CommandContext<ServerCommandSource> context) {
 //        //KBMain.backup("name")
@@ -208,13 +226,24 @@ public final class KBCommands {
         // Update pending task
         //pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
 //        File backupFile = new File(getBackupSaveDirectory(server), getBackupFileName(backupName));
-        pendingOperation = new RestoreOperation(context, getBackupSaveDirectory(server).getAbsolutePath(), getLevelPath(server), backupFileName);
+        // TODO: improve this
+        ConfiguredBackupMethod method = backupFileName.endsWith(".zip") ?
+                new ConfiguredPrimitiveBackupMethod(
+                        backupFileName, getLevelPath(server), getBackupSaveDirectory(server).getAbsolutePath()
+                ) : new ConfiguredIncrementalBackupMethod(
+                backupFileName, getLevelPath(server),
+                getBackupSaveDirectory(server).getAbsolutePath(),
+                getIncrementalBackupBaseDirectory(server).getAbsolutePath()
+        );
+        // String backupSavePath, String levelPath, String backupFileName
+//        getBackupSaveDirectory(server).getAbsolutePath(), getLevelPath(server), backupFileName
+        pendingOperation = new RestoreOperation(context, method);
 
         msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", backupFileName), true);
         return SUCCESS;
     }
 
-    private static int doBackup(CommandContext<ServerCommandSource> context, String customBackupName) {
+    private static int doBackup(CommandContext<ServerCommandSource> context, String customBackupName, boolean incremental) {
         // Real backup name (compatible with legacy backup): date_name, such as 2020-04-23_21-03-00_test
         //KBMain.backup("name")
 //        String backupName = BackupNameTimeFormatter.getTimeString() + "_" + customBackupName;
@@ -232,10 +261,15 @@ public final class KBCommands {
 
         // configure backup method
         MinecraftServer server = context.getSource().getMinecraftServer();
-        ConfiguredPrimitiveBackupMethod method = new ConfiguredPrimitiveBackupMethod(
+        ConfiguredBackupMethod method = !incremental ? new ConfiguredPrimitiveBackupMethod(
                 new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
                 getLevelPath(server),
                 getBackupSaveDirectory(server).getAbsolutePath()
+        ) : new ConfiguredIncrementalBackupMethod(
+                new IncrementalBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
+                getLevelPath(server),
+                getBackupSaveDirectory(server).getAbsolutePath(),
+                getIncrementalBackupBaseDirectory(server).getAbsolutePath()
         );
 
         // dispatch to operation worker

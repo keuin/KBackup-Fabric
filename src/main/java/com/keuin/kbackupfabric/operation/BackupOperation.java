@@ -9,13 +9,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.world.World;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupSaveDirectory;
 
 public class BackupOperation extends InvokableAsyncBlockingOperation {
 
@@ -39,15 +37,12 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             //// Do our main backup logic
 
             // Create backup saving directory
-            File backupSaveDirectoryFile = getBackupSaveDirectory(server);
-            backupSaveDirectory = backupSaveDirectoryFile.getName();
-            if (!backupSaveDirectoryFile.isDirectory() && !backupSaveDirectoryFile.mkdir()) {
-                msgInfo(context, String.format("Failed to create backup saving directory: %s. Failed to backup.", backupSaveDirectory));
+            if (!configuredBackupMethod.touch()) {
+                PrintUtil.msgErr(context, "Failed to create backup save directory. Cannot backup.");
                 return;
             }
 
-            // Make zip
-
+            // Backup
             BackupFeedback result = configuredBackupMethod.backup();
             if (result.isSuccess()) {
                 // Restore old auto-save switch stat

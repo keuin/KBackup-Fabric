@@ -1,5 +1,6 @@
 package com.keuin.kbackupfabric.util.backup.incremental;
 
+import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.backup.incremental.identifier.FileIdentifierProvider;
 import com.keuin.kbackupfabric.util.backup.incremental.identifier.ObjectIdentifier;
 
@@ -23,26 +24,32 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
         this.identifierFactory = identifierFactory;
     }
 
-    public ObjectCollection fromDirectory(File directory) throws IOException {
+    public ObjectCollection fromDirectory(File directory, Set<String> ignoredFiles) throws IOException {
         final Set<ObjectElement> subFiles = new HashSet<>();
         final Map<String, ObjectCollection> subCollections = new HashMap<>();
 
         if (!Objects.requireNonNull(directory).isDirectory())
             throw new IllegalArgumentException("given file is not a directory");
 
-        for (Iterator<Path> iter = Files.walk(directory.toPath(), 1).iterator(); iter.hasNext();) {
+        for (Iterator<Path> iter = Files.walk(directory.toPath(), 1).iterator(); iter.hasNext(); ) {
             Path path = iter.next();
             if (Files.isSameFile(path, directory.toPath()))
                 continue;
             File file = path.toFile();
             if (file.isDirectory()) {
-                subCollections.put(file.getName(), fromDirectory(file));
-            } else {
+                subCollections.put(file.getName(), fromDirectory(file, ignoredFiles));
+            } else if (!ignoredFiles.contains(file.getName())) {
                 subFiles.add(new ObjectElement(file.getName(), identifierFactory.fromFile(file)));
+            } else {
+                PrintUtil.info(String.format("Skipping file %s.", file.getName()));
             }
         }
 
         return new ObjectCollection(directory.getName(), subFiles, subCollections);
+    }
+
+    public ObjectCollection fromDirectory(File directory) throws IOException {
+        return fromDirectory(directory, Collections.emptySet());
     }
 
 }

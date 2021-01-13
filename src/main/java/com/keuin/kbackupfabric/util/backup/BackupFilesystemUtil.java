@@ -14,7 +14,8 @@ import java.util.regex.Pattern;
  */
 public final class BackupFilesystemUtil {
 
-    private static final String backupSaveDirectoryName = "backups";
+    private static final String BACKUP_SAVE_DIRECTORY_NAME = "backups";
+    private static final String INCREMENTAL_BASE_DIRECTORY_NAME = "incremental";
     private static final String backupFileNamePrefix = "kbackup-";
 
     @Deprecated
@@ -43,7 +44,11 @@ public final class BackupFilesystemUtil {
     }
 
     public static File getBackupSaveDirectory(MinecraftServer server) {
-        return new File(server.getRunDirectory(), backupSaveDirectoryName);
+        return new File(server.getRunDirectory(), BACKUP_SAVE_DIRECTORY_NAME);
+    }
+
+    public static File getIncrementalBackupBaseDirectory(MinecraftServer server) {
+        return new File(server.getRunDirectory(), INCREMENTAL_BASE_DIRECTORY_NAME);
     }
 
     public static String getLevelPath(MinecraftServer server) {

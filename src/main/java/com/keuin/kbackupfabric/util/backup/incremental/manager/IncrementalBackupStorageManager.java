@@ -1,15 +1,19 @@
 package com.keuin.kbackupfabric.util.backup.incremental.manager;
 
+import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.backup.incremental.ObjectCollection;
 import com.keuin.kbackupfabric.util.backup.incremental.ObjectElement;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
+
+import static org.apache.commons.io.FileUtils.forceDelete;
 
 public class IncrementalBackupStorageManager {
 
@@ -63,13 +67,50 @@ public class IncrementalBackupStorageManager {
 
         int copyCount = 0;
 
+        // touch directory
+        if (!collectionBasePath.exists()) {
+            int retryCounter = 0;
+            boolean success = false;
+            while (retryCounter++ < 5) {
+                if (collectionBasePath.mkdirs()) {
+                    success = true;
+                    break;
+                }
+            }
+            if (!success) {
+                throw new IOException("Failed to create directory " + collectionBasePath.getAbsolutePath());
+            }
+        }
+
         // copy sub files
         for (Map.Entry<String, ObjectElement> entry : collection.getElementMap().entrySet()) {
             File copySource = new File(backupStorageBase.toFile(), entry.getValue().getIdentifier().getIdentification());
+            File copyTarget = new File(collectionBasePath.getAbsolutePath(), entry.getKey());
+
             if (!baseContainsObject(entry.getValue())) {
                 throw new IOException(String.format("File %s does not exist in the base.", copySource.getName()));
             }
-            Files.copy(copySource.toPath(), Paths.get(collectionBasePath.getAbsolutePath(), entry.getKey()));
+            if (copyTarget.exists()) {
+                boolean successDeleting = false;
+                for (int i = 0; i < 5; ++i) {
+                    try {
+                        forceDelete(copyTarget);
+                        successDeleting = true;
+                        break;
+                    } catch (FileNotFoundException ignored) {
+                        break;
+                    } catch (IOException e) {
+                        PrintUtil.error(String.format("Failed to delete file %s, retry.", copyTarget.getName()));
+                    }
+                }
+                if (!successDeleting) {
+                    String msg = String.format("Failed to delete file %s.", copyTarget.getName());
+                    PrintUtil.error(msg);
+                    throw new IOException(msg);
+                }
+            }
+
+            Files.copy(copySource.toPath(), copyTarget.toPath());
             ++copyCount;
         }
 

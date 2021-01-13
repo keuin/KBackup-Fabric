@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 
-import static org.apache.commons.io.FileUtils.forceDelete;
-
 public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
 
     private final String backupFileName;
@@ -56,37 +54,17 @@ public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
     public boolean restore() throws IOException {
         // Delete old level
         PrintUtil.info("Server stopped. Deleting old level ...");
-        File levelDirFile = new File(levelPath);
-        long startTime = System.currentTimeMillis();
-
-        int failedCounter = 0;
-        final int MAX_RETRY_TIMES = 20;
-        while (failedCounter < MAX_RETRY_TIMES) {
-            System.gc();
-            if (!levelDirFile.delete() && levelDirFile.exists()) {
-                System.gc();
-                forceDelete(levelDirFile); // Try to force delete.
-            }
-            if (!levelDirFile.exists())
-                break;
-            ++failedCounter;
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ignored) {
-            }
-        }
-        if (levelDirFile.exists()) {
-            PrintUtil.error(String.format("Cannot restore: failed to delete old level %s .", levelDirFile.getName()));
+        if (!FilesystemUtil.forceDeleteDirectory(new File(levelPath))) {
+            PrintUtil.info("Failed to delete old level!");
             return false;
         }
+
 
         // TODO: Refactor this to the concrete BackupMethod.
         // Decompress archive
         PrintUtil.info("Decompressing archived level ...");
         ZipUtil.unzip(Paths.get(backupSavePath, backupFileName).toString(), levelPath, false);
-        long endTime = System.currentTimeMillis();
-        PrintUtil.info(String.format("Restore complete! (%.2fs) Please restart the server manually.", (endTime - startTime) / 1000.0));
-        PrintUtil.info("If you want to restart automatically after restoring, please check the manual at: https://github.com/keuin/KBackup-Fabric/blob/master/README.md");
+
 
 //        try {
 //            Thread.sleep(1000);
@@ -95,4 +73,16 @@ public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
 
         return true;
     }
+
+    @Override
+    public boolean touch() {
+        File backupSaveDirectoryFile = new File(backupSavePath);
+        return backupSaveDirectoryFile.isDirectory() || backupSaveDirectoryFile.mkdir();
+    }
+
+    @Override
+    public String getBackupFileName() {
+        return backupFileName;
+    }
+
 }

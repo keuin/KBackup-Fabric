@@ -20,4 +20,18 @@ public interface ConfiguredBackupMethod {
 
     boolean restore() throws IOException;
 
+    /**
+     * Create backup save directory and do some essential initialization before the backup process.
+     *
+     * @return false if failed, then the backup process won't proceed.
+     */
+    boolean touch();
+
+    /**
+     * Get the used backup file name.
+     *
+     * @return the file name.
+     */
+    String getBackupFileName();
+
 }
