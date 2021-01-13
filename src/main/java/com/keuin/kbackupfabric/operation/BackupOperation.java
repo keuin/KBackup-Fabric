@@ -52,8 +52,8 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             String levelPath = getLevelPath(server);
             String backupFileName = getBackupFileName(customBackupName);
 
-            BackupFeedback result = backupMethod.backup(customBackupName,levelPath,backupSaveDirectory);
-            if(result.isSuccess()) {
+            BackupFeedback result = backupMethod.backup(customBackupName, levelPath, backupSaveDirectory);
+            if (result.isSuccess()) {
                 // Restore old auto-save switch stat
                 server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
 

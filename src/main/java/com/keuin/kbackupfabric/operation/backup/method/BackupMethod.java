@@ -12,10 +12,11 @@ public interface BackupMethod {
     /**
      * Perform a backup with given method. The backup will be saved as the given name.
      * Note: real file name depends on the backup type.
-     * @param backupName the backup name.
+     *
+     * @param customBackupName the custom backup name.
      * @return if the backup operation succeed.
      */
-    BackupFeedback backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
+    BackupFeedback backup(String customBackupName, String levelPath, String backupSaveDirectory) throws IOException;
 
     boolean restore(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
 

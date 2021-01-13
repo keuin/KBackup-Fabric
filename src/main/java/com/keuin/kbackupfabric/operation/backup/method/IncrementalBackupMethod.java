@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class IncrementalBackupMethod implements BackupMethod {
     @Override
-    public IncrementalBackupFeedback backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException {
+    public IncrementalBackupFeedback backup(String customBackupName, String levelPath, String backupSaveDirectory) throws IOException {
         return null;
     }
 
