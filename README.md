@@ -51,14 +51,8 @@ done
 
 ## 3. To-Do List:
 
-- New version checker.
-- Refactor code.
-- More thorough test.
-- Implement incremental backup.
-    + Restore: trace-back (recursively, then generate file dependence tree)
-        - Implement unZipRecursively (unzip a .zip.inc file recursively until reaches the root (i.e. the last full backup).)
-    + Backup: base-diff (select most recently backup as the base, then diff)
-        - Implement zipDiff (make a new zip with the latest backup as the base, store diff-table in zip comment (A:Add, M:Modification, D:Deletion))
-- Optimize help menu. (colored command help menu)
-- Add op login hint in the next start after restoring.
-- Implement incremental backup.
+- Incremental backup
+- Code refactor
+- Op login hint in the next start after restoring
+- Optimized help menu (colored command help menu)
+- New version checker

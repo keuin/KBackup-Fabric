@@ -17,6 +17,7 @@ public final class BackupFilesystemUtil {
     private static final String backupSaveDirectoryName = "backups";
     private static final String backupFileNamePrefix = "kbackup-";
 
+    @Deprecated
     public static String getBackupFileNamePrefix() {
         return backupFileNamePrefix;
     }
@@ -26,18 +27,18 @@ public final class BackupFilesystemUtil {
         return backupFileNamePrefix + backupName + ".zip";
     }
 
-    @Deprecated
-    public static String getBackupName(String backupFileName) {
-        try {
-            if (backupFileName.matches(backupFileNamePrefix + ".+\\.zip"))
-                return backupFileName.substring(backupFileNamePrefix.length(), backupFileName.length() - 4);
-        } catch (IndexOutOfBoundsException ignored) {
-        }
-        return backupFileName;
-    }
+//    @Deprecated
+//    public static String getBackupName(String backupFileName) {
+//        try {
+//            if (backupFileName.matches(backupFileNamePrefix + ".+\\.zip"))
+//                return backupFileName.substring(backupFileNamePrefix.length(), backupFileName.length() - 4);
+//        } catch (IndexOutOfBoundsException ignored) {
+//        }
+//        return backupFileName;
+//    }
 
-    public static boolean isBackupNameValid(String backupName, MinecraftServer server) {
-        File backupFile = new File(getBackupSaveDirectory(server), getBackupFileName(backupName));
+    public static boolean isBackupFileExists(String backupFileName, MinecraftServer server) {
+        File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
         return backupFile.isFile();
     }
 
@@ -70,8 +71,8 @@ public final class BackupFilesystemUtil {
         return -1;
     }
 
-    public static String getFriendlyFileSizeString(long size) {
-        double fileSize = size * 1.0 / 1024 / 1024; // Default unit is MB
+    public static String getFriendlyFileSizeString(long sizeBytes) {
+        double fileSize = sizeBytes * 1.0 / 1024 / 1024; // Default unit is MB
         if (fileSize > 1000)
             //msgInfo(context, String.format("File size: %.2fGB", fileSize / 1024));
             return String.format("%.2fGB", fileSize / 1024);

@@ -1,9 +1,9 @@
 package com.keuin.kbackupfabric.operation;
 
-import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.operation.abstracts.InvokableBlockingOperation;
+import com.keuin.kbackupfabric.operation.backup.BackupMethod;
+import com.keuin.kbackupfabric.operation.backup.PrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
-import com.keuin.kbackupfabric.util.ZipUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -13,33 +13,33 @@ import java.io.IOException;
 
 import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupFileName;
 import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupSaveDirectory;
-import static org.apache.commons.io.FileUtils.forceDelete;
 
 public class RestoreOperation extends InvokableBlockingOperation {
 
     //private static final Logger LOGGER = LogManager.getLogger();
-    private final String backupName;
+    private final String backupFileName;
     private final Thread serverThread;
-    private final String backupFilePath;
-    private final String levelDirectory;
+    private final String backupSavePath;
+    private final String levelPath;
     private final CommandContext<ServerCommandSource> context;
     private final MinecraftServer server;
+    private final BackupMethod backupMethod = PrimitiveBackupMethod.getInstance();
 
-    public RestoreOperation(CommandContext<ServerCommandSource> context, String backupFilePath, String levelDirectory, String backupName) {
+    public RestoreOperation(CommandContext<ServerCommandSource> context, String backupSavePath, String levelPath, String backupFileName) {
         server = context.getSource().getMinecraftServer();
-        this.backupName = backupName;
+        this.backupFileName = backupFileName;
         this.serverThread = server.getThread();
-        this.backupFilePath = backupFilePath;
-        this.levelDirectory = levelDirectory;
+        this.backupSavePath = backupSavePath;
+        this.levelPath = levelPath;
         this.context = context;
     }
 
     @Override
     protected boolean blockingContext() {
         // do restore to backupName
-        PrintUtil.broadcast(String.format("Restoring to previous world %s ...", backupName));
+        PrintUtil.broadcast(String.format("Restoring to backup %s ...", backupFileName));
 
-        String backupFileName = getBackupFileName(backupName);
+        String backupFileName = getBackupFileName(this.backupFileName);
         PrintUtil.debug("Backup file name: " + backupFileName);
         File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
 
@@ -67,7 +67,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
 
     @Override
     public String toString() {
-        return String.format("restoration from %s", backupName);
+        return String.format("restoration from %s", backupFileName);
     }
 
     private class WorkerThread implements Runnable {
@@ -94,12 +94,16 @@ public class RestoreOperation extends InvokableBlockingOperation {
                 }while(--cnt > 0);
 
                 ////////////////////
+                backupMethod.restore(backupFileName, levelPath, backupSavePath);
 
                 //ServerRestartUtil.forkAndRestart();
                 System.exit(111);
 
             } catch (SecurityException e) {
                 PrintUtil.error("An exception occurred while restoring: " + e.getMessage());
+            } catch (IOException e) {
+                PrintUtil.error(e.toString());
+                PrintUtil.error("Failed to restore.");
             }
         }
     }

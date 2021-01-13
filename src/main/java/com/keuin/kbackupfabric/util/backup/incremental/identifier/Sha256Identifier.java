@@ -15,7 +15,7 @@ public class Sha256Identifier extends SingleHashIdentifier {
 
     private static final int SHA256_LENGTH = 32;
     private static final Sha256Identifier DUMMY = new Sha256Identifier(new byte[SHA256_LENGTH]); // only for using its hash method
-    private static final FileIdentifierFactory<Sha256Identifier> factory = Sha256Identifier::fromFile;
+    private static final FileIdentifierProvider<Sha256Identifier> factory = Sha256Identifier::fromFile;
 
     public static Sha256Identifier fromFile(File file) throws IOException {
         if (!Objects.requireNonNull(file).isFile()) {
@@ -24,7 +24,7 @@ public class Sha256Identifier extends SingleHashIdentifier {
         return new Sha256Identifier(DUMMY.hash(file));
     }
 
-    public static FileIdentifierFactory<Sha256Identifier> getFactory() {
+    public static FileIdentifierProvider<Sha256Identifier> getFactory() {
         return factory;
     }
 

@@ -2,11 +2,13 @@ package com.keuin.kbackupfabric.operation.backup;
 
 import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
+import com.keuin.kbackupfabric.operation.backup.feedback.PrimitiveBackupFeedback;
 import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.ZipUtil;
-import com.keuin.kbackupfabric.util.backup.builder.BackupFileNameBuilder;
-import com.keuin.kbackupfabric.util.backup.formatter.BackupFileNameFormatter;
+import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.backup.BackupNameTimeFormatter;
+import com.keuin.kbackupfabric.util.backup.name.PrimitiveBackupFileNameEncoder;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,27 +25,32 @@ public class PrimitiveBackupMethod implements BackupMethod {
         return INSTANCE;
     }
 
-    @Override
-    public BackupResult backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException {
-        String backupFileName = BackupFileNameBuilder.primitiveZipBackup().build(LocalDateTime.now(),backupName);
-        try {
-            BackupMetadata backupMetadata = new BackupMetadata(System.currentTimeMillis(), backupName);
-
-            PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSaveDirectory));
-            PrintUtil.info("Compressing level ...");
-            ZipUtil.makeBackupZip(levelPath, backupSaveDirectory, backupFileName, backupMetadata);
-
-        } catch (ZipUtilException exception) {
-            PrintUtil.info("Infinite recursive of directory tree detected, backup was aborted.");
-            return new BackupResult(false, 0);
-        }
-
-        // Get backup file size and return
-        return new BackupResult(true, FilesystemUtil.getFileSizeBytes(backupSaveDirectory, backupFileName));
+    @Deprecated
+    private String getBackupFileName(LocalDateTime time, String backupName) {
+        String timeString = BackupNameTimeFormatter.localDateTimeToString(time);
+        return String.format("%s%s_%s%s", BackupFilesystemUtil.getBackupFileNamePrefix(), timeString, backupName, ".zip");
     }
 
     @Override
-    public boolean restore(String backupName, String levelDirectory, String backupSaveDirectory) throws IOException {
+    public PrimitiveBackupFeedback backup(String customBackupName, String levelPath, String backupSavePath) throws IOException {
+//        String backupFileName = getBackupFileName(LocalDateTime.now(),backupName);
+        String backupFileName = new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now());
+        try {
+            BackupMetadata backupMetadata = new BackupMetadata(System.currentTimeMillis(), customBackupName);
+            PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSavePath));
+            PrintUtil.info("Compressing level ...");
+            ZipUtil.makeBackupZip(levelPath, backupSavePath, backupFileName, backupMetadata);
+        } catch (ZipUtilException exception) {
+            PrintUtil.info("Infinite recursive of directory tree detected, backup was aborted.");
+            return new PrimitiveBackupFeedback(false, 0);
+        }
+
+        // Get backup file size and return
+        return new PrimitiveBackupFeedback(true, FilesystemUtil.getFileSizeBytes(backupSavePath, backupFileName));
+    }
+
+    @Override
+    public boolean restore(String backupFileName, String levelDirectory, String backupSaveDirectory) throws IOException {
         // Delete old level
         PrintUtil.info("Server stopped. Deleting old level ...");
         File levelDirFile = new File(levelDirectory);
@@ -73,10 +80,10 @@ public class PrimitiveBackupMethod implements BackupMethod {
         // TODO: Refactor this to the concrete BackupMethod.
         // Decompress archive
         PrintUtil.info("Decompressing archived level ...");
-        ZipUtil.unzip(Paths.get(backupSaveDirectory, backupName).toString(), levelDirectory, false);
+        ZipUtil.unzip(Paths.get(backupSaveDirectory, backupFileName).toString(), levelDirectory, false);
         long endTime = System.currentTimeMillis();
         PrintUtil.info(String.format("Restore complete! (%.2fs) Please restart the server manually.", (endTime - startTime) / 1000.0));
-        PrintUtil.info("If you want to restart automatically after restoring, please visit the project manual at: https://github.com/keuin/KBackup-Fabric/blob/master/README.md");
+        PrintUtil.info("If you want to restart automatically after restoring, please check the manual at: https://github.com/keuin/KBackup-Fabric/blob/master/README.md");
 
 //        try {
 //            Thread.sleep(1000);
@@ -84,15 +91,5 @@ public class PrimitiveBackupMethod implements BackupMethod {
 //        }
 
         return true;
-    }
-
-    @Override
-    public BackupFileNameBuilder getBackupFileNameBuilder() {
-        return BackupFileNameBuilder.primitiveZipBackup();
-    }
-
-    @Override
-    public BackupFileNameFormatter getBackupFileNameFormatter() {
-        return BackupFileNameFormatter.primitiveZipBackup();
     }
 }

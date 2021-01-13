@@ -1,6 +1,6 @@
 package com.keuin.kbackupfabric.util.backup.incremental;
 
-import com.keuin.kbackupfabric.util.backup.incremental.identifier.FileIdentifierFactory;
+import com.keuin.kbackupfabric.util.backup.incremental.identifier.FileIdentifierProvider;
 import com.keuin.kbackupfabric.util.backup.incremental.identifier.ObjectIdentifier;
 
 import java.io.File;
@@ -17,9 +17,9 @@ import java.util.*;
  */
 public class ObjectCollectionFactory <T extends ObjectIdentifier> {
 
-    private final FileIdentifierFactory<T> identifierFactory;
+    private final FileIdentifierProvider<T> identifierFactory;
 
-    public ObjectCollectionFactory(FileIdentifierFactory<T> identifierFactory) {
+    public ObjectCollectionFactory(FileIdentifierProvider<T> identifierFactory) {
         this.identifierFactory = identifierFactory;
     }
 

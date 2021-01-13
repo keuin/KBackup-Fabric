@@ -1,7 +1,6 @@
 package com.keuin.kbackupfabric.operation.backup;
 
-import com.keuin.kbackupfabric.util.backup.builder.BackupFileNameBuilder;
-import com.keuin.kbackupfabric.util.backup.formatter.BackupFileNameFormatter;
+import com.keuin.kbackupfabric.operation.backup.feedback.PrimitiveBackupFeedback;
 
 import java.io.IOException;
 
@@ -16,29 +15,8 @@ public interface BackupMethod {
      * @param backupName the backup name.
      * @return if the backup operation succeed.
      */
-    BackupResult backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
+    PrimitiveBackupFeedback backup(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
 
     boolean restore(String backupName, String levelPath, String backupSaveDirectory) throws IOException;
 
-    BackupFileNameBuilder getBackupFileNameBuilder();
-
-    BackupFileNameFormatter getBackupFileNameFormatter();
-
-    class BackupResult {
-        private final boolean success;
-        private final long backupSizeBytes;
-
-        public BackupResult(boolean success, long backupSizeBytes) {
-            this.success = success;
-            this.backupSizeBytes = backupSizeBytes;
-        }
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public long getBackupSizeBytes() {
-            return backupSizeBytes;
-        }
-    }
 }

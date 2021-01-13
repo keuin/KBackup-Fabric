@@ -2,6 +2,7 @@ package com.keuin.kbackupfabric.operation;
 
 import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
 import com.keuin.kbackupfabric.operation.backup.BackupMethod;
+import com.keuin.kbackupfabric.operation.backup.feedback.PrimitiveBackupFeedback;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
@@ -19,16 +20,16 @@ import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 public class BackupOperation extends InvokableAsyncBlockingOperation {
 
     private final CommandContext<ServerCommandSource> context;
-    private final String backupName;
+    private final String customBackupName;
     private final Map<World, Boolean> oldWorldsSavingDisabled = new HashMap<>();
     private final BackupMethod backupMethod;
     private long startTime;
 
 
-    public BackupOperation(CommandContext<ServerCommandSource> context, String backupName, BackupMethod backupMethod) {
+    public BackupOperation(CommandContext<ServerCommandSource> context, String customBackupName, BackupMethod backupMethod) {
         super("BackupWorker");
         this.context = context;
-        this.backupName = backupName;
+        this.customBackupName = customBackupName;
         this.backupMethod = backupMethod;
     }
 
@@ -49,18 +50,16 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
 
             // Make zip
             String levelPath = getLevelPath(server);
-            String backupFileName = getBackupFileName(backupName);
+            String backupFileName = getBackupFileName(customBackupName);
 
-            BackupMethod.BackupResult result = backupMethod.backup(backupName,levelPath,backupSaveDirectory);
+            PrimitiveBackupFeedback result = backupMethod.backup(customBackupName,levelPath,backupSaveDirectory);
             if(result.isSuccess()) {
-                // Restore old autosave switch stat
+                // Restore old auto-save switch stat
                 server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
 
                 // Print finish message: time elapsed and file size
                 long timeElapsedMillis = System.currentTimeMillis() - startTime;
-                String msgText = String.format("Backup finished. Time elapsed: %.2fs.", timeElapsedMillis / 1000.0);
-                File backupZipFile = new File(backupSaveDirectory, backupFileName);
-                msgText += String.format(" File size: %s.", getFriendlyFileSizeString(result.getBackupSizeBytes()));
+                String msgText = String.format("Backup finished. Time elapsed: %.2fs. ", timeElapsedMillis / 1000.0) + result.getFeedback();
                 PrintUtil.msgInfo(context, msgText, true);
             } else {
                 // failed
@@ -77,7 +76,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
     protected boolean sync() {
         //// Save world, save old autosave configs
 
-        PrintUtil.broadcast(String.format("Making backup %s, please wait ...", backupName));
+        PrintUtil.broadcast(String.format("Making backup %s, please wait ...", customBackupName));
 
         // Get server
         MinecraftServer server = context.getSource().getMinecraftServer();

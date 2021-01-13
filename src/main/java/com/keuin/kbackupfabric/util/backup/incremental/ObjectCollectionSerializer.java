@@ -3,6 +3,9 @@ package com.keuin.kbackupfabric.util.backup.incremental;
 import java.io.*;
 import java.util.Objects;
 
+/**
+ * Serialize and deserialize ObjectCollection from/to the disk file.
+ */
 public class ObjectCollectionSerializer {
     public static ObjectCollection fromFile(File file) throws IOException {
         Objects.requireNonNull(file);

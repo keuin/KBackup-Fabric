@@ -1,6 +1,5 @@
 package com.keuin.kbackupfabric.util.backup.suggestion;
 
-import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -38,7 +37,7 @@ public class BackupNameSuggestionProvider {
                 if (files == null)
                     return;
                 for (File f : files)
-                    candidateCacheList.add(BackupFilesystemUtil.getBackupName(f.getName()));
+                    candidateCacheList.add(f.getName());
                 cacheUpdateTime = System.currentTimeMillis();
             } catch (NullPointerException ignored) {
             }
