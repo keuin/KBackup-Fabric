@@ -15,7 +15,7 @@ import java.util.*;
  * identifiers. Usually, identifier is the combination of hash and other short information (such as size and another hash).
  * The identifier should use hashes that are strong enough, to prevent possible collisions.
  */
-public class ObjectCollectionFactory <T extends ObjectIdentifier> {
+public class ObjectCollectionFactory<T extends ObjectIdentifier> {
 
     private final FileIdentifierProvider<T> identifierFactory;
 

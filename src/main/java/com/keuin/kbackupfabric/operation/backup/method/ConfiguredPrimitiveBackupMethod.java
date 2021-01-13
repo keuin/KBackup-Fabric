@@ -17,12 +17,16 @@ import java.time.LocalDateTime;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
 
-public class PrimitiveBackupMethod implements BackupMethod {
+public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
 
-    private static final PrimitiveBackupMethod INSTANCE = new PrimitiveBackupMethod();
+    private final String backupFileName;
+    private final String levelPath;
+    private final String backupSavePath;
 
-    public static PrimitiveBackupMethod getInstance() {
-        return INSTANCE;
+    public ConfiguredPrimitiveBackupMethod(String backupFileName, String levelPath, String backupSavePath) {
+        this.backupFileName = backupFileName;
+        this.levelPath = levelPath;
+        this.backupSavePath = backupSavePath;
     }
 
     @Deprecated
@@ -32,10 +36,9 @@ public class PrimitiveBackupMethod implements BackupMethod {
     }
 
     @Override
-    public PrimitiveBackupFeedback backup(String customBackupName, String levelPath, String backupSavePath) throws IOException {
-//        String backupFileName = getBackupFileName(LocalDateTime.now(),backupName);
-        String backupFileName = new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now());
+    public PrimitiveBackupFeedback backup() throws IOException {
         try {
+            String customBackupName = new PrimitiveBackupFileNameEncoder().decode(backupFileName).customName;
             BackupMetadata backupMetadata = new BackupMetadata(System.currentTimeMillis(), customBackupName);
             PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSavePath));
             PrintUtil.info("Compressing level ...");
@@ -50,10 +53,10 @@ public class PrimitiveBackupMethod implements BackupMethod {
     }
 
     @Override
-    public boolean restore(String backupFileName, String levelDirectory, String backupSaveDirectory) throws IOException {
+    public boolean restore() throws IOException {
         // Delete old level
         PrintUtil.info("Server stopped. Deleting old level ...");
-        File levelDirFile = new File(levelDirectory);
+        File levelDirFile = new File(levelPath);
         long startTime = System.currentTimeMillis();
 
         int failedCounter = 0;
@@ -80,7 +83,7 @@ public class PrimitiveBackupMethod implements BackupMethod {
         // TODO: Refactor this to the concrete BackupMethod.
         // Decompress archive
         PrintUtil.info("Decompressing archived level ...");
-        ZipUtil.unzip(Paths.get(backupSaveDirectory, backupFileName).toString(), levelDirectory, false);
+        ZipUtil.unzip(Paths.get(backupSavePath, backupFileName).toString(), levelPath, false);
         long endTime = System.currentTimeMillis();
         PrintUtil.info(String.format("Restore complete! (%.2fs) Please restart the server manually.", (endTime - startTime) / 1000.0));
         PrintUtil.info("If you want to restart automatically after restoring, please check the manual at: https://github.com/keuin/KBackup-Fabric/blob/master/README.md");

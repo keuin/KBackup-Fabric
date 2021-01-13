@@ -1,37 +1,30 @@
 package com.keuin.kbackupfabric.operation;
 
 import com.keuin.kbackupfabric.operation.abstracts.InvokableBlockingOperation;
-import com.keuin.kbackupfabric.operation.backup.method.BackupMethod;
-import com.keuin.kbackupfabric.operation.backup.method.PrimitiveBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredPrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
-import java.io.File;
 import java.io.IOException;
-
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupFileName;
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupSaveDirectory;
 
 public class RestoreOperation extends InvokableBlockingOperation {
 
     //private static final Logger LOGGER = LogManager.getLogger();
     private final String backupFileName;
     private final Thread serverThread;
-    private final String backupSavePath;
-    private final String levelPath;
     private final CommandContext<ServerCommandSource> context;
     private final MinecraftServer server;
-    private final BackupMethod backupMethod = PrimitiveBackupMethod.getInstance();
+    private final ConfiguredBackupMethod configuredBackupMethod;
 
     public RestoreOperation(CommandContext<ServerCommandSource> context, String backupSavePath, String levelPath, String backupFileName) {
         server = context.getSource().getMinecraftServer();
         this.backupFileName = backupFileName;
         this.serverThread = server.getThread();
-        this.backupSavePath = backupSavePath;
-        this.levelPath = levelPath;
         this.context = context;
+        this.configuredBackupMethod = new ConfiguredPrimitiveBackupMethod(backupFileName, levelPath, backupSavePath);
     }
 
     @Override
@@ -39,9 +32,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
         // do restore to backupName
         PrintUtil.broadcast(String.format("Restoring to backup %s ...", backupFileName));
 
-        String backupFileName = getBackupFileName(this.backupFileName);
         PrintUtil.debug("Backup file name: " + backupFileName);
-        File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
 
         PrintUtil.msgInfo(context, "Server will shutdown in a few seconds, depending on world size and disk speed, the progress may take from seconds to minutes.", true);
         PrintUtil.msgInfo(context, "Please do not force the server stop, or the level would be broken.", true);
@@ -94,7 +85,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
                 }while(--cnt > 0);
 
                 ////////////////////
-                if (backupMethod.restore(backupFileName, levelPath, backupSavePath)) {
+                if (configuredBackupMethod.restore()) {
                     //ServerRestartUtil.forkAndRestart();
                     System.exit(111);
                 } else {

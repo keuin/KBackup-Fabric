@@ -9,6 +9,10 @@ public class IncrementalBackupFileNameEncoder implements BackupFileNameEncoder {
     private static final String backupFileNamePrefix = "incremental-";
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
+    // TODO: make this private and use singleton pattern
+    public IncrementalBackupFileNameEncoder() {
+    }
+
     @Override
     public String encode(String customName, LocalDateTime time) {
         if (!isValidCustomName(customName))

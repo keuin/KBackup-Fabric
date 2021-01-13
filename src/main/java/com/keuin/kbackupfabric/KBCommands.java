@@ -5,7 +5,7 @@ import com.keuin.kbackupfabric.operation.BackupOperation;
 import com.keuin.kbackupfabric.operation.DeleteOperation;
 import com.keuin.kbackupfabric.operation.RestoreOperation;
 import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
-import com.keuin.kbackupfabric.operation.backup.method.PrimitiveBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredPrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.util.backup.name.PrimitiveBackupFileNameEncoder;
@@ -16,6 +16,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -227,10 +228,18 @@ public final class KBCommands {
             }
         }
 
-        // Do backup
-        PrintUtil.info("Invoking backup worker ...");
-        //BackupWorker.invoke(context, backupName, metadata);
-        BackupOperation operation = new BackupOperation(context, customBackupName, PrimitiveBackupMethod.getInstance());
+        PrintUtil.info("Start backup...");
+
+        // configure backup method
+        MinecraftServer server = context.getSource().getMinecraftServer();
+        ConfiguredPrimitiveBackupMethod method = new ConfiguredPrimitiveBackupMethod(
+                new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
+                getLevelPath(server),
+                getBackupSaveDirectory(server).getAbsolutePath()
+        );
+
+        // dispatch to operation worker
+        BackupOperation operation = new BackupOperation(context, method);
         if (operation.invoke()) {
             return SUCCESS;
         } else if (operation.isBlocked()) {

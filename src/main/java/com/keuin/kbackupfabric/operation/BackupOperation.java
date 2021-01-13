@@ -2,7 +2,7 @@ package com.keuin.kbackupfabric.operation;
 
 import com.keuin.kbackupfabric.operation.abstracts.InvokableAsyncBlockingOperation;
 import com.keuin.kbackupfabric.operation.backup.feedback.BackupFeedback;
-import com.keuin.kbackupfabric.operation.backup.method.BackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
@@ -15,22 +15,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.keuin.kbackupfabric.util.PrintUtil.msgInfo;
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
+import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupSaveDirectory;
 
 public class BackupOperation extends InvokableAsyncBlockingOperation {
 
     private final CommandContext<ServerCommandSource> context;
-    private final String customBackupName;
     private final Map<World, Boolean> oldWorldsSavingDisabled = new HashMap<>();
-    private final BackupMethod backupMethod;
+    private final ConfiguredBackupMethod configuredBackupMethod;
     private long startTime;
 
 
-    public BackupOperation(CommandContext<ServerCommandSource> context, String customBackupName, BackupMethod backupMethod) {
+    public BackupOperation(CommandContext<ServerCommandSource> context, ConfiguredBackupMethod configuredBackupMethod) {
         super("BackupWorker");
         this.context = context;
-        this.customBackupName = customBackupName;
-        this.backupMethod = backupMethod;
+        this.configuredBackupMethod = configuredBackupMethod;
     }
 
     @Override
@@ -49,10 +47,8 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
             }
 
             // Make zip
-            String levelPath = getLevelPath(server);
-            String backupFileName = getBackupFileName(customBackupName);
 
-            BackupFeedback result = backupMethod.backup(customBackupName, levelPath, backupSaveDirectory);
+            BackupFeedback result = configuredBackupMethod.backup();
             if (result.isSuccess()) {
                 // Restore old auto-save switch stat
                 server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
@@ -74,14 +70,14 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
 
     @Override
     protected boolean sync() {
-        //// Save world, save old autosave configs
+        //// Save world, save old auto-save configs
 
-        PrintUtil.broadcast(String.format("Making backup %s, please wait ...", customBackupName));
+        PrintUtil.broadcast("Making backup, please wait ...");
 
         // Get server
         MinecraftServer server = context.getSource().getMinecraftServer();
 
-        // Save old autosave switch stat temporally
+        // Save old auto-save switch state for restoration after finished
         oldWorldsSavingDisabled.clear();
         server.getWorlds().forEach(world -> {
             oldWorldsSavingDisabled.put(world, world.savingDisabled);
