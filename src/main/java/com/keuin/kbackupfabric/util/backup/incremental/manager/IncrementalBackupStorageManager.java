@@ -30,6 +30,10 @@ public class IncrementalBackupStorageManager {
      * @throws IOException I/O Error.
      */
     public int addObjectCollection(ObjectCollection collection, File collectionBasePath) throws IOException {
+        if (!backupStorageBase.toFile().isDirectory()) {
+            if (!backupStorageBase.toFile().mkdirs())
+                throw new IOException("Backup storage base directory does not exist, and failed to create it.");
+        }
         Objects.requireNonNull(collection);
         Objects.requireNonNull(collectionBasePath);
 
