@@ -4,6 +4,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Test;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -19,14 +20,14 @@ public class ConfiguredIncrementalBackupMethodTest {
     private final String destDirectoryName = "destination";
     private final String indexFileName = "index";
 
-    private final double directoryFactor = 0.4;
-    private final double fileFactor = 0.1;
-    private final int maxRandomFileSizeBytes = 1024 * 1024;
+    private final double directoryFactor = 0.03;
+    private final double fileFactor = 0.05;
+    private final int maxRandomFileSizeBytes = 1024 * 1024 * 16;
     private final Function<Integer, Integer> scaleDecayFunc = (x) -> x - 1;
 
     @Test
     public void iterationTest() throws IOException {
-        int a = 100;
+        int a = 12;
         for (int i = 0; i < a; ++i) {
             performTest(Math.min(i + 1, 10));
             System.out.println("Round " + i + " passed.");
@@ -75,9 +76,28 @@ public class ConfiguredIncrementalBackupMethodTest {
         if (!method.restore())
             fail();
 
+        boolean fake = scale % 2 != 0;
+
+        int[] success = new int[1];
+        if (fake) {
+            Files.walk(sourcePath).filter(path -> path.toFile().isFile()).limit(3).forEach(path -> {
+                if (!path.toFile().delete())
+                    fail();
+                success[0]++;
+            });
+            if (success[0] == 0)
+                fake = false;
+        }
+
+        if (fake)
+            System.out.println("Fake: deleted " + success[0] + " file(s).");
+
         String hash2 = calcMD5HashForDir(sourcePath.toFile(), true);
 
-        assertEquals(hash1, hash2);
+        if (!fake)
+            assertEquals(hash1, hash2);
+        else
+            assertNotEquals(hash1, hash2);
     }
 
     private void createRandomDirectoryTree(String path, int scale) throws IOException {
@@ -94,7 +114,7 @@ public class ConfiguredIncrementalBackupMethodTest {
         for (int i = 0; i < subFileCount; i++) {
             String subFile = null;
             while (subFile == null || new File(path, subFile).exists())
-                subFile = getRandomString((int) (Math.random() * 16 + 1));
+                subFile = getRandomString((int) (Math.random() * 16 + 5));
             createRandomFile(new File(path, subFile), maxRandomFileSizeBytes);
         }
 
@@ -103,7 +123,7 @@ public class ConfiguredIncrementalBackupMethodTest {
         for (int i = 0; i < subDirCount; i++) {
             String subDir = null;
             while (subDir == null || new File(path, subDir).exists())
-                subDir = getRandomString((int) (Math.random() * 16 + 1));
+                subDir = getRandomString((int) (Math.random() * 16 + 5));
             createRandomDirectoryTree(new File(path, subDir).getAbsolutePath(), scaleDecayFunc.apply(scale));
         }
     }

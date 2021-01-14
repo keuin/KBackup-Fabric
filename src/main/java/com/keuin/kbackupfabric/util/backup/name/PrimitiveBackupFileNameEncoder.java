@@ -20,7 +20,7 @@ public class PrimitiveBackupFileNameEncoder implements BackupFileNameEncoder {
     @Override
     public BackupBasicInformation decode(String fileName) {
         Pattern pattern = Pattern.compile(
-                backupFileNamePrefix + "-" + "([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_(.+)\\.zip"
+                "^" + backupFileNamePrefix + "-" + "([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_(.+)\\.zip" + "$"
         );
         Matcher matcher = pattern.matcher(fileName);
         if (matcher.find()) {

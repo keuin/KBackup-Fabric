@@ -20,7 +20,7 @@ public class ObjectCollectionFactoryTest {
         }
         for (Map.Entry<String, ObjectElement> entry : collection.getElementMap().entrySet()) {
 //            assertTrue(subElements.contains(e.getIdentification()));
-            assertEquals(subElements.get(entry.getKey()), entry.getValue().getIdentifier().getIdentification());
+            assertEquals(subElements.get(entry.getKey()).toUpperCase(), entry.getValue().getIdentifier().getIdentification().toUpperCase());
         }
     }
 
@@ -39,14 +39,14 @@ public class ObjectCollectionFactoryTest {
             final Map<String, String> elements = new HashMap<>();
 
             // check root dir
-            elements.put("a", "261CA0D59FEE8FD169802BB8030A07CF23E5C1593FA81A16C6D0A8CF27DAA2ED");
-            elements.put("b", "B3FED75012C4969DC63A50EBC4E745FF77E4A06E0B04720EF71EF033032EBAF7");
+            elements.put("a", "S2-261CA0D59FEE8FD169802BB8030A07CF23E5C1593FA81A16C6D0A8CF27DAA2ED");
+            elements.put("b", "S2-B3FED75012C4969DC63A50EBC4E745FF77E4A06E0B04720EF71EF033032EBAF7");
             validate(collection, Arrays.asList("1", "2", "3"), elements);
             elements.clear();
 
             // check `1`
-            elements.put("a", "E8620F35A5DB33B1257CC51245DDACDA8AF3E0D431A8A38473575E468BCBD0BD");
-            elements.put("b", "19EE41585A674274891DE5A4B365DBAB9C49C576AB6F86CD515B683724D2DBBD");
+            elements.put("a", "S2-E8620F35A5DB33B1257CC51245DDACDA8AF3E0D431A8A38473575E468BCBD0BD");
+            elements.put("b", "S2-19EE41585A674274891DE5A4B365DBAB9C49C576AB6F86CD515B683724D2DBBD");
             validate(collection.getSubCollectionMap().get("1"), Arrays.asList("11", "12"), elements);
             elements.clear();
 
@@ -60,8 +60,8 @@ public class ObjectCollectionFactoryTest {
             validate(collection.getSubCollectionMap().get("1").getSubCollectionMap().get("11"), Collections.singletonList("111"), Collections.emptyMap());
 
             // check `111`
-            elements.put("a", "1EDBE882A757E1FAFCA77A9D3BE3FF5D2BB3E2037B238C865F1F957C431F43B4");
-            elements.put("b", "30BA7CD8B4AD93A8B3826CD8D1518790924EEBB930EC04DF7DFB03A50B17D7BC");
+            elements.put("a", "S2-1EDBE882A757E1FAFCA77A9D3BE3FF5D2BB3E2037B238C865F1F957C431F43B4");
+            elements.put("b", "S2-30BA7CD8B4AD93A8B3826CD8D1518790924EEBB930EC04DF7DFB03A50B17D7BC");
             validate(
                     collection.getSubCollectionMap().get("1").getSubCollectionMap().get("11").getSubCollectionMap().get("111"),
                     Collections.emptyList(),

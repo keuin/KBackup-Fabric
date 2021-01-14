@@ -84,7 +84,9 @@ public final class KBCommands {
     public static int list(CommandContext<ServerCommandSource> context) {
         MinecraftServer server = context.getSource().getMinecraftServer();
         File[] files = getBackupSaveDirectory(server).listFiles(
-                (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
+                (dir, name) -> dir.isDirectory() &&
+                        (name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
+                                || name.toLowerCase().endsWith(".kbi"))
         );
 
         synchronized (backupFileNameList) {

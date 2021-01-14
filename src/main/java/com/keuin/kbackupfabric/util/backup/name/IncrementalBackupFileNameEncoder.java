@@ -24,7 +24,7 @@ public class IncrementalBackupFileNameEncoder implements BackupFileNameEncoder {
     @Override
     public BackupFileNameEncoder.BackupBasicInformation decode(String fileName) {
         Pattern pattern = Pattern.compile(
-                backupFileNamePrefix + "-" + "([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_(.+)\\.kbi"
+                "^" + backupFileNamePrefix + "-" + "([0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_(.+)\\.kbi" + "$"
         );
         Matcher matcher = pattern.matcher(fileName);
         if (matcher.find()) {

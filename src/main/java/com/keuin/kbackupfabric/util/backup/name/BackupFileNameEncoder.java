@@ -18,13 +18,19 @@ public interface BackupFileNameEncoder {
 
     /**
      * Extract custom and backup time from backup file name.
+     *
      * @param fileName the backup file name.
      * @return the information. If the given file name is invalid, return null.
      */
     BackupBasicInformation decode(String fileName);
 
+    default boolean isValidFileName(String fileName) {
+        return decode(fileName) != null;
+    }
+
     /**
      * Check if the given string is a valid custom backup name.
+     *
      * @param customName the custom backup name.
      * @return if the name is valid.
      */
@@ -45,7 +51,7 @@ public interface BackupFileNameEncoder {
 
         private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm.ss");
 
-        BackupBasicInformation(String customName, LocalDateTime time) {
+        protected BackupBasicInformation(String customName, LocalDateTime time) {
             this.customName = customName;
             this.time = time;
         }

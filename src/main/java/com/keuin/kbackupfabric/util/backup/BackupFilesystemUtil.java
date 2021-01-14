@@ -23,10 +23,6 @@ public final class BackupFilesystemUtil {
         return backupFileNamePrefix;
     }
 
-    @Deprecated
-    public static String getBackupFileName(String backupName) {
-        return backupFileNamePrefix + backupName + ".zip";
-    }
 
 //    @Deprecated
 //    public static String getBackupName(String backupFileName) {

@@ -15,7 +15,7 @@ public class Sha256IdentifierTest {
         try {
             Sha256Identifier sha256 = Sha256Identifier.fromFile(new File("./testfile/Sha256IdentifierTest"));
             String str = sha256.getIdentification().toUpperCase();
-            assertEquals("315F5BDB76D078C43B8AC0064E4A0164612B1FCE77C869345BFC94C75894EDD3", str);
+            assertEquals("S2-315F5BDB76D078C43B8AC0064E4A0164612B1FCE77C869345BFC94C75894EDD3", str);
         } catch (IOException e) {
             e.printStackTrace();
             fail();

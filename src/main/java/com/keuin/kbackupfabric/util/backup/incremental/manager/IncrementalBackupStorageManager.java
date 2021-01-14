@@ -3,6 +3,8 @@ package com.keuin.kbackupfabric.util.backup.incremental.manager;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.backup.incremental.ObjectCollection;
 import com.keuin.kbackupfabric.util.backup.incremental.ObjectElement;
+import com.keuin.kbackupfabric.util.backup.incremental.identifier.ObjectIdentifier;
+import com.keuin.kbackupfabric.util.backup.incremental.identifier.StorageObjectLoader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,14 +12,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
 
 public class IncrementalBackupStorageManager {
 
     private final Path backupStorageBase;
+    private final Map<ObjectIdentifier, File> map = new HashMap<>();
+    private boolean loaded = false;
 
     public IncrementalBackupStorageManager(Path backupStorageBase) {
         this.backupStorageBase = backupStorageBase;
@@ -127,14 +130,59 @@ public class IncrementalBackupStorageManager {
         return copyCount;
     }
 
+    public int cleanUnusedObjects(Iterable<ObjectCollection> collectionIterable) {
+        // construct object list in memory
+        Set<String> objects = new HashSet<>();
+//        backupStorageBase
+
+        for (ObjectCollection collection : collectionIterable) {
+            for (ObjectElement ele : collection.getElementMap().values()) {
+
+            }
+        }
+        throw new RuntimeException("not impl");
+    }
+
+    /**
+     * Check all objects, return unused ones.
+     *
+     * @return the unused ones.
+     */
+    private Map<ObjectIdentifier, File> markUnusedObjects() {
+        throw new RuntimeException("not impl");
+    }
+
     /**
      * Check if the backup base contains given element.
+     *
      * @param objectElement the element.
      * @return true or false.
      */
     private boolean baseContainsObject(ObjectElement objectElement) {
         // This may be extended to use more variants of hash functions and combinations of other attributes (such as file size)
         return (new File(backupStorageBase.toFile(), objectElement.getIdentifier().getIdentification())).exists();
+    }
+
+    private void lazyLoadStorage() throws IOException {
+        if (!loaded) {
+            loadStorage();
+            loaded = true;
+        }
+    }
+
+    private synchronized void loadStorage() throws IOException {
+        map.clear();
+        Files.walk(backupStorageBase, 1).forEach(path -> {
+            File file = path.toFile();
+            ObjectIdentifier identifier = StorageObjectLoader.asIdentifier(file);
+            if (identifier == null) {
+                map.clear();
+                throw new IllegalStateException(String.format(
+                        "Bad storage object %s: cannot recognize identifier.", file.getName()
+                ));
+            }
+            map.put(identifier, file);
+        });
     }
 
 }

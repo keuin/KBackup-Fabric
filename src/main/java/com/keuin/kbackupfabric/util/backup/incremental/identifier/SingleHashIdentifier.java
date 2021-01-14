@@ -5,6 +5,7 @@ import com.keuin.kbackupfabric.util.BytesUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * A simple identifier based on a single hash function.
@@ -13,9 +14,13 @@ import java.util.Arrays;
 public abstract class SingleHashIdentifier implements ObjectIdentifier {
 
     private final byte[] hash;
+    private final String type;
 
-    protected SingleHashIdentifier(byte[] hash) {
+    protected SingleHashIdentifier(byte[] hash, String type) {
+        Objects.requireNonNull(hash);
+        Objects.requireNonNull(type);
         this.hash = Arrays.copyOf(hash, hash.length);
+        this.type = type;
     }
 
     /**
@@ -28,7 +33,7 @@ public abstract class SingleHashIdentifier implements ObjectIdentifier {
 
     @Override
     public String getIdentification() {
-        return BytesUtil.bytesToHex(hash);
+        return type + "-" + BytesUtil.bytesToHex(hash);
     }
 
     @Override
@@ -37,5 +42,12 @@ public abstract class SingleHashIdentifier implements ObjectIdentifier {
             return false;
         }
         return Arrays.equals(hash, ((SingleHashIdentifier) obj).hash);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(type);
+        result = 31 * result + Arrays.hashCode(hash);
+        return result;
     }
 }
