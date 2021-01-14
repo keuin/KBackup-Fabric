@@ -2,7 +2,7 @@
 
 A simple backup mod for fabric Minecraft server.
 
-Minecraft version: 1.14.4
+Minecraft version: 1.14.4, 1.15.2, 1.16.4
 
 [Fabric API](https://minecraft.curseforge.com/projects/fabric/files) is required!
 
@@ -11,6 +11,7 @@ Minecraft version: 1.14.4
 - **/kb**  or **/kb help**: show command list
 - **/kb list**: show existing backups
 - **/kb backup \[backup_name\]**: make a backup with given name or the current system time by default
+- **/kb incbak \[backup_name\]**: make an incremental backup which will be saved in `incremental` folder. (However, the index file will be saved in `backups` folder)
 - **/kb restore \<backup_name\>**: restore to a certain backup. This command needs a confirm to execute.
 - **/kb confirm**: confirm executing restore operation. The operation is irreversible.
 - **/kb delete**: delete an existing backup.
