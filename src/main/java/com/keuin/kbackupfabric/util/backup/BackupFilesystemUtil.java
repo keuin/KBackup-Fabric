@@ -2,10 +2,13 @@ package com.keuin.kbackupfabric.util.backup;
 
 import com.keuin.kbackupfabric.util.ReflectionUtils;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.world.World;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,8 +50,13 @@ public final class BackupFilesystemUtil {
         return new File(server.getRunDirectory(), INCREMENTAL_BASE_DIRECTORY_NAME);
     }
 
-    public static String getLevelPath(MinecraftServer server) {
-        return (new File(server.getRunDirectory(), server.getLevelName())).getAbsolutePath();
+    public static String getLevelPath(MinecraftServer server) throws IOException {
+        if (!(server instanceof MinecraftDedicatedServer))
+            throw new IllegalStateException("This plugin is server-side only.");
+        String path = (new File(server.getRunDirectory().getCanonicalPath(), ((MinecraftDedicatedServer) server).getLevelName())).getAbsolutePath();
+        Logger.getLogger("getLevelPath").info(String.format("Level path: %s", path));
+        assert (new File(path)).exists();
+        return path;
     }
 
     public static String getWorldDirectoryName(World world) throws NoSuchFieldException, IllegalAccessException {

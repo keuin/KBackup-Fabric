@@ -19,6 +19,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -207,79 +208,89 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int restore(CommandContext<ServerCommandSource> context) {
-        //KBMain.restore("name")
-        MinecraftServer server = context.getSource().getMinecraftServer();
-        String backupFileName = parseBackupFileName(context, StringArgumentType.getString(context, "backupName"));
-        backupFileName = parseBackupFileName(context, backupFileName);
+        try {
+            //KBMain.restore("name")
+            MinecraftServer server = context.getSource().getMinecraftServer();
+            String backupFileName = parseBackupFileName(context, StringArgumentType.getString(context, "backupName"));
+            backupFileName = parseBackupFileName(context, backupFileName);
 
-        if (backupFileName == null)
-            return list(context); // Show the list and return
+            if (backupFileName == null)
+                return list(context); // Show the list and return
 
-        // Validate backupName
-        if (!isBackupFileExists(backupFileName, server)) {
-            // Invalid backupName
-            msgErr(context, "Invalid backup name! Please check your input. The list index number is also valid.", false);
-            return FAILED;
-        }
+            // Validate backupName
+            if (!isBackupFileExists(backupFileName, server)) {
+                // Invalid backupName
+                msgErr(context, "Invalid backup name! Please check your input. The list index number is also valid.", false);
+                return FAILED;
+            }
 
-        // Detect backup type
+            // Detect backup type
 
 
-        // Update pending task
-        //pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
+            // Update pending task
+            //pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
 //        File backupFile = new File(getBackupSaveDirectory(server), getBackupFileName(backupName));
-        // TODO: improve this
-        ConfiguredBackupMethod method = backupFileName.endsWith(".zip") ?
-                new ConfiguredPrimitiveBackupMethod(
-                        backupFileName, getLevelPath(server), getBackupSaveDirectory(server).getAbsolutePath()
-                ) : new ConfiguredIncrementalBackupMethod(
-                backupFileName, getLevelPath(server),
-                getBackupSaveDirectory(server).getAbsolutePath(),
-                getIncrementalBackupBaseDirectory(server).getAbsolutePath()
-        );
-        // String backupSavePath, String levelPath, String backupFileName
+            // TODO: improve this
+            ConfiguredBackupMethod method = backupFileName.endsWith(".zip") ?
+                    new ConfiguredPrimitiveBackupMethod(
+                            backupFileName, getLevelPath(server), getBackupSaveDirectory(server).getAbsolutePath()
+                    ) : new ConfiguredIncrementalBackupMethod(
+                    backupFileName, getLevelPath(server),
+                    getBackupSaveDirectory(server).getAbsolutePath(),
+                    getIncrementalBackupBaseDirectory(server).getAbsolutePath()
+            );
+            // String backupSavePath, String levelPath, String backupFileName
 //        getBackupSaveDirectory(server).getAbsolutePath(), getLevelPath(server), backupFileName
-        pendingOperation = new RestoreOperation(context, method);
+            pendingOperation = new RestoreOperation(context, method);
 
-        msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", backupFileName), true);
-        return SUCCESS;
+            msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", backupFileName), true);
+            return SUCCESS;
+        } catch (IOException e) {
+            msgErr(context, String.format("An I/O exception occurred while making backup: %s", e));
+        }
+        return FAILED;
     }
 
     private static int doBackup(CommandContext<ServerCommandSource> context, String customBackupName, boolean incremental) {
-        // Real backup name (compatible with legacy backup): date_name, such as 2020-04-23_21-03-00_test
-        //KBMain.backup("name")
+        try {
+            // Real backup name (compatible with legacy backup): date_name, such as 2020-04-23_21-03-00_test
+            //KBMain.backup("name")
 //        String backupName = BackupNameTimeFormatter.getTimeString() + "_" + customBackupName;
 
-        // Validate file name
-        final char[] ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
-        for (char c : ILLEGAL_CHARACTERS) {
-            if (customBackupName.contains(String.valueOf(c))) {
-                msgErr(context, String.format("Name cannot contain special character \"%c\".", c));
+            // Validate file name
+            final char[] ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
+            for (char c : ILLEGAL_CHARACTERS) {
+                if (customBackupName.contains(String.valueOf(c))) {
+                    msgErr(context, String.format("Name cannot contain special character \"%c\".", c));
+                    return FAILED;
+                }
+            }
+
+            PrintUtil.info("Start backup...");
+
+            // configure backup method
+            MinecraftServer server = context.getSource().getMinecraftServer();
+            ConfiguredBackupMethod method = !incremental ? new ConfiguredPrimitiveBackupMethod(
+                    new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
+                    getLevelPath(server),
+                    getBackupSaveDirectory(server).getAbsolutePath()
+            ) : new ConfiguredIncrementalBackupMethod(
+                    new IncrementalBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
+                    getLevelPath(server),
+                    getBackupSaveDirectory(server).getAbsolutePath(),
+                    getIncrementalBackupBaseDirectory(server).getAbsolutePath()
+            );
+
+            // dispatch to operation worker
+            BackupOperation operation = new BackupOperation(context, method);
+            if (operation.invoke()) {
+                return SUCCESS;
+            } else if (operation.isBlocked()) {
+                msgWarn(context, "Another task is running, cannot issue new backup at once.");
                 return FAILED;
             }
-        }
-
-        PrintUtil.info("Start backup...");
-
-        // configure backup method
-        MinecraftServer server = context.getSource().getMinecraftServer();
-        ConfiguredBackupMethod method = !incremental ? new ConfiguredPrimitiveBackupMethod(
-                new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
-                getLevelPath(server),
-                getBackupSaveDirectory(server).getAbsolutePath()
-        ) : new ConfiguredIncrementalBackupMethod(
-                new IncrementalBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
-                getLevelPath(server),
-                getBackupSaveDirectory(server).getAbsolutePath(),
-                getIncrementalBackupBaseDirectory(server).getAbsolutePath()
-        );
-
-        // dispatch to operation worker
-        BackupOperation operation = new BackupOperation(context, method);
-        if (operation.invoke()) {
-            return SUCCESS;
-        } else if (operation.isBlocked()) {
-            msgWarn(context, "Another task is running, cannot issue new backup at once.");
+        } catch (IOException e) {
+            msgErr(context, String.format("An I/O exception occurred while making backup: %s", e));
         }
         return FAILED;
     }
