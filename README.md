@@ -1,8 +1,8 @@
 # KBackup-Fabric
 
-A simple backup mod for fabric Minecraft server.
+A simple backup mod for **fabric** Minecraft server, which makes **normal `.zip` backup** of your world, or self-implemented **incremental backup**, with slower increasing disk usage.
 
-Minecraft version: 1.14.4, 1.15.2, 1.16.4
+Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5
 
 [Fabric API](https://minecraft.curseforge.com/projects/fabric/files) is required!
 
