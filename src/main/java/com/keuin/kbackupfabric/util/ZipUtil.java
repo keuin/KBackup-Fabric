@@ -14,6 +14,8 @@ import static java.util.zip.Deflater.DEFAULT_COMPRESSION;
 
 public final class ZipUtil {
 
+    private static final int bufferSize = 1024 * 1024 * 8; // 1MB
+
     /**
      * 递归压缩文件夹
      *
@@ -23,7 +25,7 @@ public final class ZipUtil {
      * @param filesSkipping   被忽略的文件
      * @throws IOException IO Error
      */
-    private static void zip(String srcRootDir, File file, ZipOutputStream zipOutputStream, Set<String> filesSkipping) throws IOException {
+    private static void zip(String srcRootDir, File file, ZipOutputStream zipOutputStream, Set<String> filesSkipping, final byte[] buffer) throws IOException {
         if (file == null) {
             return;
         }
@@ -34,8 +36,7 @@ public final class ZipUtil {
         // 如果是文件，则直接压缩该文件
         boolean skipping = Optional.ofNullable(filesSkipping).orElse(Collections.emptySet()).contains(file.getName());
         if (file.isFile() && !skipping) {
-            int count, bufferLen = 1024;
-            byte[] data = new byte[bufferLen];
+            int count;
 
             // 获取文件相对于压缩文件夹根目录的子路径
             String subPath = file.getAbsolutePath();
@@ -47,9 +48,10 @@ public final class ZipUtil {
             // 写入压缩包
             ZipEntry entry = new ZipEntry(subPath);
             zipOutputStream.putNextEntry(entry);
-            BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-            while ((count = inputStream.read(data, 0, bufferLen)) != -1) {
-                zipOutputStream.write(data, 0, count);
+//            BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+            InputStream inputStream = new FileInputStream(file);
+            while ((count = inputStream.read(buffer, 0, bufferSize)) != -1) {
+                zipOutputStream.write(buffer, 0, count);
             }
             inputStream.close();
             zipOutputStream.closeEntry();
@@ -59,7 +61,7 @@ public final class ZipUtil {
             File[] childFileList = file.listFiles();
             if (childFileList != null) {
                 for (File value : childFileList)
-                    zip(srcRootDir, value, zipOutputStream, filesSkipping);
+                    zip(srcRootDir, value, zipOutputStream, filesSkipping, buffer);
             }
         }
     }
@@ -136,7 +138,7 @@ public final class ZipUtil {
                 }
             }
             //调用递归压缩方法进行目录或文件压缩
-            zip(srcRootDir, srcFile, zipOutputStream, Collections.singleton("session.lock"));
+            zip(srcRootDir, srcFile, zipOutputStream, Collections.singleton("session.lock"), new byte[bufferSize]);
             zipOutputStream.flush();
         } finally {
             try {
@@ -161,6 +163,7 @@ public final class ZipUtil {
      * @param includeZipFileName 解压后的文件保存的路径是否包含压缩文件的文件名。true-包含；false-不包含
      */
     public static void unzip(String zipFilePath, String unzipFilePath, boolean includeZipFileName) throws IOException {
+        final byte[] buffer = new byte[bufferSize];
         if (zipFilePath.isEmpty() || unzipFilePath.isEmpty()) {
             throw new IllegalArgumentException("Parameter for unzip() contains null.");
         }
@@ -184,10 +187,7 @@ public final class ZipUtil {
         ZipEntry entry;
         String entryFilePath, entryDirPath;
         File entryFile, entryDir;
-        int index, count, bufferSize = 1024;
-        byte[] buffer = new byte[bufferSize];
-        BufferedInputStream bis;
-        BufferedOutputStream bos;
+        int index, count;
         ZipFile zip = new ZipFile(zipFile);
         Enumeration<? extends ZipEntry> entries = zip.entries();
         // 循环对压缩包里的每一个文件进行解压
@@ -227,13 +227,13 @@ public final class ZipUtil {
             } else {
                 // Is a file, we write the data
                 // 写入文件
-                bos = new BufferedOutputStream(new FileOutputStream(entryFile));
-                bis = new BufferedInputStream(zip.getInputStream(entry));
-                while ((count = bis.read(buffer, 0, bufferSize)) != -1) {
-                    bos.write(buffer, 0, count);
+                OutputStream outputStream = new FileOutputStream(entryFile);
+                InputStream inputStream = zip.getInputStream(entry);
+                while ((count = inputStream.read(buffer, 0, bufferSize)) != -1) {
+                    outputStream.write(buffer, 0, count);
                 }
-                bos.flush();
-                bos.close();
+                outputStream.flush();
+                outputStream.close();
             }
 
 
