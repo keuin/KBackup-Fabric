@@ -52,8 +52,7 @@ done
 
 ## 3. To-Do List:
 
-- Incremental backup
-- Code refactor
 - Op login hint in the next start after restoring
-- Optimized help menu (colored command help menu)
+- A more friendly help menu (colored command help menu)
 - New version checker
+- Code refactor
