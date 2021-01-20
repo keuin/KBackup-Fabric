@@ -4,7 +4,10 @@ import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Optional;
+import java.util.Set;
 import java.util.zip.*;
 
 import static java.util.zip.Deflater.DEFAULT_COMPRESSION;
@@ -17,9 +20,10 @@ public final class ZipUtil {
      * @param srcRootDir      压缩文件夹根目录的子路径
      * @param file            当前递归压缩的文件或目录对象
      * @param zipOutputStream 压缩文件存储对象
+     * @param filesSkipping   被忽略的文件
      * @throws IOException IO Error
      */
-    private static void zip(String srcRootDir, File file, ZipOutputStream zipOutputStream) throws IOException {
+    private static void zip(String srcRootDir, File file, ZipOutputStream zipOutputStream, Set<String> filesSkipping) throws IOException {
         if (file == null) {
             return;
         }
@@ -28,7 +32,8 @@ public final class ZipUtil {
             return; // Reject
 
         // 如果是文件，则直接压缩该文件
-        if (file.isFile()) {
+        boolean skipping = Optional.ofNullable(filesSkipping).orElse(Collections.emptySet()).contains(file.getName());
+        if (file.isFile() && !skipping) {
             int count, bufferLen = 1024;
             byte[] data = new byte[bufferLen];
 
@@ -38,6 +43,8 @@ public final class ZipUtil {
             if (index != -1) {
                 subPath = subPath.substring(srcRootDir.length() + File.separator.length());
             }
+
+            // 写入压缩包
             ZipEntry entry = new ZipEntry(subPath);
             zipOutputStream.putNextEntry(entry);
             BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
@@ -46,14 +53,13 @@ public final class ZipUtil {
             }
             inputStream.close();
             zipOutputStream.closeEntry();
-        }
-        // 如果是目录，则压缩整个目录
-        else {
+        } else {
+            // 如果是目录，则压缩整个目录
             // 压缩目录中的文件或子目录
             File[] childFileList = file.listFiles();
             if (childFileList != null) {
                 for (File value : childFileList)
-                    zip(srcRootDir, value, zipOutputStream);
+                    zip(srcRootDir, value, zipOutputStream, filesSkipping);
             }
         }
     }
@@ -130,7 +136,7 @@ public final class ZipUtil {
                 }
             }
             //调用递归压缩方法进行目录或文件压缩
-            zip(srcRootDir, srcFile, zipOutputStream);
+            zip(srcRootDir, srcFile, zipOutputStream, Collections.singleton("session.lock"));
             zipOutputStream.flush();
         } finally {
             try {

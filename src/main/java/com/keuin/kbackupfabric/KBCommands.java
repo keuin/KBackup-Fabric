@@ -5,24 +5,29 @@ import com.keuin.kbackupfabric.operation.BackupOperation;
 import com.keuin.kbackupfabric.operation.DeleteOperation;
 import com.keuin.kbackupfabric.operation.RestoreOperation;
 import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
-import com.keuin.kbackupfabric.operation.backup.BackupMethod;
-import com.keuin.kbackupfabric.operation.backup.IncrementalBackupMethod;
-import com.keuin.kbackupfabric.operation.backup.PrimitiveBackupMethod;
-import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
-import com.keuin.kbackupfabric.util.backup.BackupType;
-import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
-import com.keuin.kbackupfabric.util.backup.BackupNameTimeFormatter;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredIncrementalBackupMethod;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredPrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
+import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.util.backup.name.IncrementalBackupFileNameEncoder;
+import com.keuin.kbackupfabric.util.backup.name.PrimitiveBackupFileNameEncoder;
+import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.io.File;
-import java.util.*;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.*;
+import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 
 public final class KBCommands {
 
@@ -30,10 +35,11 @@ public final class KBCommands {
     private static final int SUCCESS = 1;
     private static final int FAILED = -1;
     private static final String DEFAULT_BACKUP_NAME = "noname";
+    private static boolean notifiedPreviousRestoration = false;
 
     //private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final List<String> backupNameList = new ArrayList<>(); // index -> backupName
+    private static final List<String> backupFileNameList = new ArrayList<>(); // index -> backupName
     private static Invokable pendingOperation = null;
     //private static BackupMethod activatedBackupMethod = new PrimitiveBackupMethod(); // The backup method we currently using
 
@@ -62,8 +68,9 @@ public final class KBCommands {
      */
     public static int kb(CommandContext<ServerCommandSource> context) {
         int statCode = list(context);
-        if (MetadataHolder.hasMetadata()) {
+        if (MetadataHolder.hasMetadata() && !notifiedPreviousRestoration) {
             // Output metadata info
+            notifiedPreviousRestoration = true;
             msgStress(context, "Restored from backup " + MetadataHolder.getMetadata().getBackupName());
         }
         return statCode;
@@ -78,25 +85,29 @@ public final class KBCommands {
     public static int list(CommandContext<ServerCommandSource> context) {
         MinecraftServer server = context.getSource().getMinecraftServer();
         File[] files = getBackupSaveDirectory(server).listFiles(
-                (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
+                (dir, name) -> dir.isDirectory() &&
+                        (name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
+                                || name.toLowerCase().endsWith(".kbi"))
         );
 
-        backupNameList.clear();
-        if (files != null) {
-            if (files.length != 0) {
-                msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
+        synchronized (backupFileNameList) {
+            backupFileNameList.clear();
+            if (files != null) {
+                if (files.length != 0) {
+                    msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
+                } else {
+                    msgInfo(context, "There are no available backups. To make a new backup, run /kb backup.");
+                }
+                int i = 0;
+                for (File file : files) {
+                    ++i;
+                    String backupFileName = file.getName();
+                    msgInfo(context, String.format("[%d] %s", i, getPrimitiveBackupInformationString(backupFileName, file.length())));
+                    backupFileNameList.add(backupFileName);
+                }
             } else {
-                msgInfo(context, "There are no available backups. To make a new backup, check /kb backup.");
+                msgErr(context, "Error: failed to list files in backup folder.");
             }
-            int i = 0;
-            for (File file : files) {
-                ++i;
-                String backupName = getBackupName(file.getName());
-                backupNameList.add(backupName);
-                msgInfo(context, String.format("[%d] %s, size: %.1fMB", i, backupName, file.length() * 1.0 / 1024 / 1024));
-            }
-        } else {
-            msgErr(context, "Error: failed to list files in backup folder.");
         }
         return SUCCESS;
     }
@@ -109,13 +120,13 @@ public final class KBCommands {
      */
     public static int primitiveBackup(CommandContext<ServerCommandSource> context) {
         //KBMain.backup("name")
-        String backupName = StringArgumentType.getString(context, "backupName");
-        if (backupName.matches("[0-9]*")) {
+        String customBackupName = StringArgumentType.getString(context, "backupName");
+        if (customBackupName.matches("[0-9]*")) {
             // Numeric param is not allowed
-            backupName = String.format("a%s", backupName);
-            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", backupName));
+            customBackupName = String.format("a%s", customBackupName);
+            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", customBackupName));
         }
-        return doBackup(context, backupName, PrimitiveBackupMethod.getInstance());
+        return doBackup(context, customBackupName, false);
     }
 
     /**
@@ -125,23 +136,38 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int primitiveBackupWithDefaultName(CommandContext<ServerCommandSource> context) {
-        return doBackup(context, DEFAULT_BACKUP_NAME, PrimitiveBackupMethod.getInstance());
+        return doBackup(context, DEFAULT_BACKUP_NAME, false);
     }
 
     public static int incrementalBackup(CommandContext<ServerCommandSource> context) {
-        //KBMain.backup("name")
-        String backupName = StringArgumentType.getString(context, "backupName");
-        if (backupName.matches("[0-9]*")) {
+        String customBackupName = StringArgumentType.getString(context, "backupName");
+        if (customBackupName.matches("[0-9]*")) {
             // Numeric param is not allowed
-            backupName = String.format("a%s", backupName);
-            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", backupName));
+            customBackupName = String.format("a%s", customBackupName);
+            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", customBackupName));
         }
-        return doBackup(context, backupName, IncrementalBackupMethod.getInstance());
+        return doBackup(context, customBackupName, true);
     }
 
     public static int incrementalBackupWithDefaultName(CommandContext<ServerCommandSource> context) {
-        return doBackup(context, DEFAULT_BACKUP_NAME, IncrementalBackupMethod.getInstance());
+        return doBackup(context, DEFAULT_BACKUP_NAME, true);
     }
+
+
+//    public static int incrementalBackup(CommandContext<ServerCommandSource> context) {
+//        //KBMain.backup("name")
+//        String backupName = StringArgumentType.getString(context, "backupName");
+//        if (backupName.matches("[0-9]*")) {
+//            // Numeric param is not allowed
+//            backupName = String.format("a%s", backupName);
+//            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", backupName));
+//        }
+//        return doBackup(context, backupName, IncrementalBackupMethod.getInstance());
+//    }
+//
+//    public static int incrementalBackupWithDefaultName(CommandContext<ServerCommandSource> context) {
+//        return doBackup(context, DEFAULT_BACKUP_NAME, IncrementalBackupMethod.getInstance());
+//    }
 
     /**
      * Delete an existing backup with context parameter backupName.
@@ -152,14 +178,14 @@ public final class KBCommands {
      */
     public static int delete(CommandContext<ServerCommandSource> context) {
 
-        String backupName = parseBackupName(context, StringArgumentType.getString(context, "backupName"));
+        String backupFileName = parseBackupFileName(context, StringArgumentType.getString(context, "backupName"));
         MinecraftServer server = context.getSource().getMinecraftServer();
 
-        if (backupName == null)
+        if (backupFileName == null)
             return list(context); // Show the list and return
 
         // Validate backupName
-        if (!isBackupNameValid(backupName, server)) {
+        if (!isBackupFileExists(backupFileName, server)) {
             // Invalid backupName
             msgErr(context, "Invalid backup name! Please check your input. The list index number is also valid.");
             return FAILED;
@@ -167,9 +193,9 @@ public final class KBCommands {
 
         // Update pending task
         //pendingOperation = AbstractConfirmableOperation.createDeleteOperation(context, backupName);
-        pendingOperation = new DeleteOperation(context, backupName);
+        pendingOperation = new DeleteOperation(context, backupFileName);
 
-        msgWarn(context, String.format("DELETION WARNING: The deletion is irreversible! You will lose the backup %s permanently. Use /kb confirm to start or /kb cancel to abort.", backupName), true);
+        msgWarn(context, String.format("DELETION WARNING: The deletion is irreversible! You will lose the backup %s permanently. Use /kb confirm to start or /kb cancel to abort.", backupFileName), true);
         return SUCCESS;
     }
 
@@ -182,55 +208,89 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int restore(CommandContext<ServerCommandSource> context) {
-        //KBMain.restore("name")
-        MinecraftServer server = context.getSource().getMinecraftServer();
-        String backupName = parseBackupName(context, StringArgumentType.getString(context, "backupName"));
-        backupName = parseBackupName(context, backupName);
+        try {
+            //KBMain.restore("name")
+            MinecraftServer server = context.getSource().getMinecraftServer();
+            String backupFileName = parseBackupFileName(context, StringArgumentType.getString(context, "backupName"));
+            backupFileName = parseBackupFileName(context, backupFileName);
 
-        if (backupName == null)
-            return list(context); // Show the list and return
+            if (backupFileName == null)
+                return list(context); // Show the list and return
 
-        // Validate backupName
-        if (!isBackupNameValid(backupName, server)) {
-            // Invalid backupName
-            msgErr(context, "Invalid backup name! Please check your input. The list index number is also valid.", false);
-            return FAILED;
-        }
-
-        // Detect backup type
-
-
-        // Update pending task
-        //pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
-        File backupFile = new File(getBackupSaveDirectory(server), getBackupFileName(backupName));
-        pendingOperation = new RestoreOperation(context, backupFile.getAbsolutePath(), getLevelPath(server), backupName);
-
-        msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", backupName), true);
-        return SUCCESS;
-    }
-
-    private static int doBackup(CommandContext<ServerCommandSource> context, String customBackupName, BackupMethod backupMethod) {
-        // Real backup name (compatible with legacy backup): date_name, such as 2020-04-23_21-03-00_test
-        //KBMain.backup("name")
-        String backupName = BackupNameTimeFormatter.getTimeString() + "_" + customBackupName;
-
-        // Validate file name
-        final char[] ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
-        for (char c : ILLEGAL_CHARACTERS) {
-            if (backupName.contains(String.valueOf(c))) {
-                msgErr(context, String.format("Name cannot contain special character \"%c\".", c));
+            // Validate backupName
+            if (!isBackupFileExists(backupFileName, server)) {
+                // Invalid backupName
+                msgErr(context, "Invalid backup name! Please check your input. The list index number is also valid.", false);
                 return FAILED;
             }
-        }
 
-        // Do backup
-        PrintUtil.info("Invoking backup worker ...");
-        //BackupWorker.invoke(context, backupName, metadata);
-        BackupOperation operation = new BackupOperation(context, backupName, backupMethod);
-        if (operation.invoke()) {
+            // Detect backup type
+
+
+            // Update pending task
+            //pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
+//        File backupFile = new File(getBackupSaveDirectory(server), getBackupFileName(backupName));
+            // TODO: improve this
+            ConfiguredBackupMethod method = backupFileName.endsWith(".zip") ?
+                    new ConfiguredPrimitiveBackupMethod(
+                            backupFileName, getLevelPath(server), getBackupSaveDirectory(server).getAbsolutePath()
+                    ) : new ConfiguredIncrementalBackupMethod(
+                    backupFileName, getLevelPath(server),
+                    getBackupSaveDirectory(server).getAbsolutePath(),
+                    getIncrementalBackupBaseDirectory(server).getAbsolutePath()
+            );
+            // String backupSavePath, String levelPath, String backupFileName
+//        getBackupSaveDirectory(server).getAbsolutePath(), getLevelPath(server), backupFileName
+            pendingOperation = new RestoreOperation(context, method);
+
+            msgWarn(context, String.format("RESET WARNING: You will LOSE YOUR CURRENT WORLD PERMANENTLY! The worlds will be replaced with backup %s . Use /kb confirm to start or /kb cancel to abort.", backupFileName), true);
             return SUCCESS;
-        } else if (operation.isBlocked()) {
-            msgWarn(context, "Another task is running, cannot issue new backup at once.");
+        } catch (IOException e) {
+            msgErr(context, String.format("An I/O exception occurred while making backup: %s", e));
+        }
+        return FAILED;
+    }
+
+    private static int doBackup(CommandContext<ServerCommandSource> context, String customBackupName, boolean incremental) {
+        try {
+            // Real backup name (compatible with legacy backup): date_name, such as 2020-04-23_21-03-00_test
+            //KBMain.backup("name")
+//        String backupName = BackupNameTimeFormatter.getTimeString() + "_" + customBackupName;
+
+            // Validate file name
+            final char[] ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
+            for (char c : ILLEGAL_CHARACTERS) {
+                if (customBackupName.contains(String.valueOf(c))) {
+                    msgErr(context, String.format("Name cannot contain special character \"%c\".", c));
+                    return FAILED;
+                }
+            }
+
+            PrintUtil.info("Start backup...");
+
+            // configure backup method
+            MinecraftServer server = context.getSource().getMinecraftServer();
+            ConfiguredBackupMethod method = !incremental ? new ConfiguredPrimitiveBackupMethod(
+                    new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
+                    getLevelPath(server),
+                    getBackupSaveDirectory(server).getAbsolutePath()
+            ) : new ConfiguredIncrementalBackupMethod(
+                    new IncrementalBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
+                    getLevelPath(server),
+                    getBackupSaveDirectory(server).getAbsolutePath(),
+                    getIncrementalBackupBaseDirectory(server).getAbsolutePath()
+            );
+
+            // dispatch to operation worker
+            BackupOperation operation = new BackupOperation(context, method);
+            if (operation.invoke()) {
+                return SUCCESS;
+            } else if (operation.isBlocked()) {
+                msgWarn(context, "Another task is running, cannot issue new backup at once.");
+                return FAILED;
+            }
+        } catch (IOException e) {
+            msgErr(context, String.format("An I/O exception occurred while making backup: %s", e));
         }
         return FAILED;
     }
@@ -290,15 +350,22 @@ public final class KBCommands {
             files.removeIf(f -> !f.getName().startsWith(BackupFilesystemUtil.getBackupFileNamePrefix()));
             files.sort((x, y) -> (int) (BackupFilesystemUtil.getBackupTimeFromBackupFileName(y.getName()) - BackupFilesystemUtil.getBackupTimeFromBackupFileName(x.getName())));
             File prevBackupFile = files.get(0);
-            String backupName = getBackupName(prevBackupFile.getName());
-            int i = backupNameList.indexOf(backupName);
-            if (i == -1) {
-                backupNameList.add(backupName);
-                i = backupNameList.size();
-            } else {
-                ++i;
+            String backupFileName = prevBackupFile.getName();
+            int i;
+            synchronized (backupFileNameList) {
+                i = backupFileNameList.indexOf(backupFileName);
+                if (i == -1) {
+                    backupFileNameList.add(backupFileName);
+                    i = backupFileNameList.size();
+                } else {
+                    ++i;
+                }
             }
-            msgInfo(context, String.format("The most recent backup: [%d] %s , size: %s", i, backupName, humanFileSize(prevBackupFile.length())));
+            msgInfo(context, String.format(
+                    "The most recent backup: [%d] %s",
+                    i,
+                    getPrimitiveBackupInformationString(backupFileName, prevBackupFile.length())
+            ));
         } catch (NullPointerException e) {
             msgInfo(context, "There are no backups available.");
         } catch (SecurityException ignored) {
@@ -308,35 +375,45 @@ public final class KBCommands {
         return SUCCESS;
     }
 
-    /**
-     * Select the backup method we use.
-     * @param context the context.
-     * @return stat code.
-     */
-    public static int setMethod(CommandContext<ServerCommandSource> context) {
-        String desiredMethodName = StringArgumentType.getString(context, "backupMethod");
-        List<BackupType> backupMethods = Arrays.asList(BackupType.PRIMITIVE_ZIP_BACKUP, BackupType.OBJECT_TREE_BACKUP);
-        for (BackupType method : backupMethods) {
-            if(method.getName().equals(desiredMethodName)) {
-                // Incremental backup
-//                activatedBackupMethod =
-                msgInfo(context, String.format("Backup method is set to: %s", desiredMethodName));
-                return SUCCESS;
-            }
-        }
-
-        return SUCCESS;
+    private static String getPrimitiveBackupInformationString(String backupFileName, long backupFileSizeBytes) {
+        return String.format(
+                "%s , size: %s",
+                new PrimitiveBackupFileNameEncoder().decode(backupFileName),
+                getFriendlyFileSizeString(backupFileSizeBytes)
+        );
     }
 
+//    /**
+//     * Select the backup method we use.
+//     * @param context the context.
+//     * @return stat code.
+//     */
+//    public static int setMethod(CommandContext<ServerCommandSource> context) {
+//        String desiredMethodName = StringArgumentType.getString(context, "backupMethod");
+//        List<BackupType> backupMethods = Arrays.asList(BackupType.PRIMITIVE_ZIP_BACKUP, BackupType.OBJECT_TREE_BACKUP);
+//        for (BackupType method : backupMethods) {
+//            if(method.getName().equals(desiredMethodName)) {
+//                // Incremental backup
+////                activatedBackupMethod =
+//                msgInfo(context, String.format("Backup method is set to: %s", desiredMethodName));
+//                return SUCCESS;
+//            }
+//        }
+//
+//        return SUCCESS;
+//    }
 
-    private static String parseBackupName(CommandContext<ServerCommandSource> context, String userInput) {
+
+    private static String parseBackupFileName(CommandContext<ServerCommandSource> context, String userInput) {
         try {
             String backupName = StringArgumentType.getString(context, "backupName");
 
             if (backupName.matches("[0-9]*")) {
                 // If numeric input
                 int index = Integer.parseInt(backupName) - 1;
-                return backupNameList.get(index); // Replace input number with real backup name.
+                synchronized (backupFileNameList) {
+                    return backupFileNameList.get(index); // Replace input number with real backup file name.
+                }
             }
         } catch (NumberFormatException | IndexOutOfBoundsException ignored) {
         }

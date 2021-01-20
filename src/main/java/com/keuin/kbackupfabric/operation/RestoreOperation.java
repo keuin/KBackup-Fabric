@@ -1,47 +1,36 @@
 package com.keuin.kbackupfabric.operation;
 
-import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.operation.abstracts.InvokableBlockingOperation;
+import com.keuin.kbackupfabric.operation.backup.method.ConfiguredBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
-import com.keuin.kbackupfabric.util.ZipUtil;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
-import java.io.File;
 import java.io.IOException;
-
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupFileName;
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getBackupSaveDirectory;
-import static org.apache.commons.io.FileUtils.forceDelete;
+import java.util.Objects;
 
 public class RestoreOperation extends InvokableBlockingOperation {
 
     //private static final Logger LOGGER = LogManager.getLogger();
-    private final String backupName;
     private final Thread serverThread;
-    private final String backupFilePath;
-    private final String levelDirectory;
     private final CommandContext<ServerCommandSource> context;
     private final MinecraftServer server;
+    private final ConfiguredBackupMethod configuredBackupMethod;
 
-    public RestoreOperation(CommandContext<ServerCommandSource> context, String backupFilePath, String levelDirectory, String backupName) {
-        server = context.getSource().getMinecraftServer();
-        this.backupName = backupName;
-        this.serverThread = server.getThread();
-        this.backupFilePath = backupFilePath;
-        this.levelDirectory = levelDirectory;
-        this.context = context;
+    public RestoreOperation(CommandContext<ServerCommandSource> context, ConfiguredBackupMethod configuredBackupMethod) {
+        server = Objects.requireNonNull(context.getSource().getMinecraftServer());
+        this.serverThread = Objects.requireNonNull(server.getThread());
+        this.context = Objects.requireNonNull(context);
+        this.configuredBackupMethod = Objects.requireNonNull(configuredBackupMethod);
     }
 
     @Override
     protected boolean blockingContext() {
         // do restore to backupName
-        PrintUtil.broadcast(String.format("Restoring to previous world %s ...", backupName));
+        PrintUtil.broadcast(String.format("Restoring to backup %s ...", configuredBackupMethod.getBackupFileName()));
 
-        String backupFileName = getBackupFileName(backupName);
-        PrintUtil.debug("Backup file name: " + backupFileName);
-        File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
+        PrintUtil.debug("Backup file name: " + configuredBackupMethod.getBackupFileName());
 
         PrintUtil.msgInfo(context, "Server will shutdown in a few seconds, depending on world size and disk speed, the progress may take from seconds to minutes.", true);
         PrintUtil.msgInfo(context, "Please do not force the server stop, or the level would be broken.", true);
@@ -67,7 +56,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
 
     @Override
     public String toString() {
-        return String.format("restoration from %s", backupName);
+        return String.format("restoration from %s", configuredBackupMethod.getBackupFileName());
     }
 
     private class WorkerThread implements Runnable {
@@ -80,7 +69,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
                 while (serverThread.isAlive()) {
                     try {
                         serverThread.join();
-                    } catch (InterruptedException ignored) {
+                    } catch (InterruptedException | RuntimeException ignored) {
                     }
                 }
 
@@ -94,13 +83,30 @@ public class RestoreOperation extends InvokableBlockingOperation {
                 }while(--cnt > 0);
 
                 ////////////////////
-
-                //ServerRestartUtil.forkAndRestart();
-                System.exit(111);
+                long startTime = System.currentTimeMillis();
+                if (configuredBackupMethod.restore()) {
+                    long endTime = System.currentTimeMillis();
+                    PrintUtil.info(String.format(
+                            "Restore complete! (%.2fs) Please restart the server manually.",
+                            (endTime - startTime) / 1000.0
+                    ));
+                    PrintUtil.info("If you want to restart automatically after restoring, " +
+                            "please check the manual at: https://github.com/keuin/KBackup-Fabric/blob/master/README.md");
+                    //ServerRestartUtil.forkAndRestart();
+                    System.exit(111);
+                } else {
+                    PrintUtil.error("Failed to restore! server will not restart automatically.");
+                }
 
             } catch (SecurityException e) {
                 PrintUtil.error("An exception occurred while restoring: " + e.getMessage());
+                e.printStackTrace();
+            } catch (IOException e) {
+                PrintUtil.error(e.toString());
+                PrintUtil.error("Failed to restore due to an unhandled I/O exception.");
+                e.printStackTrace();
             }
+            System.exit(0); // all failed restoration will eventually go here
         }
     }
 }

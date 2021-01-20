@@ -2,10 +2,13 @@ package com.keuin.kbackupfabric.util.backup;
 
 import com.keuin.kbackupfabric.util.ReflectionUtils;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.world.World;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,39 +17,46 @@ import java.util.regex.Pattern;
  */
 public final class BackupFilesystemUtil {
 
-    private static final String backupSaveDirectoryName = "backups";
+    private static final String BACKUP_SAVE_DIRECTORY_NAME = "backups";
+    private static final String INCREMENTAL_BASE_DIRECTORY_NAME = "incremental";
     private static final String backupFileNamePrefix = "kbackup-";
 
+    @Deprecated
     public static String getBackupFileNamePrefix() {
         return backupFileNamePrefix;
     }
 
-    @Deprecated
-    public static String getBackupFileName(String backupName) {
-        return backupFileNamePrefix + backupName + ".zip";
-    }
 
-    @Deprecated
-    public static String getBackupName(String backupFileName) {
-        try {
-            if (backupFileName.matches(backupFileNamePrefix + ".+\\.zip"))
-                return backupFileName.substring(backupFileNamePrefix.length(), backupFileName.length() - 4);
-        } catch (IndexOutOfBoundsException ignored) {
-        }
-        return backupFileName;
-    }
+//    @Deprecated
+//    public static String getBackupName(String backupFileName) {
+//        try {
+//            if (backupFileName.matches(backupFileNamePrefix + ".+\\.zip"))
+//                return backupFileName.substring(backupFileNamePrefix.length(), backupFileName.length() - 4);
+//        } catch (IndexOutOfBoundsException ignored) {
+//        }
+//        return backupFileName;
+//    }
 
-    public static boolean isBackupNameValid(String backupName, MinecraftServer server) {
-        File backupFile = new File(getBackupSaveDirectory(server), getBackupFileName(backupName));
+    public static boolean isBackupFileExists(String backupFileName, MinecraftServer server) {
+        File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
         return backupFile.isFile();
     }
 
     public static File getBackupSaveDirectory(MinecraftServer server) {
-        return new File(server.getRunDirectory(), backupSaveDirectoryName);
+        return new File(server.getRunDirectory(), BACKUP_SAVE_DIRECTORY_NAME);
     }
 
-    public static String getLevelPath(MinecraftServer server) {
-        return (new File(server.getRunDirectory(), server.getLevelName())).getAbsolutePath();
+    public static File getIncrementalBackupBaseDirectory(MinecraftServer server) {
+        return new File(server.getRunDirectory(), INCREMENTAL_BASE_DIRECTORY_NAME);
+    }
+
+    public static String getLevelPath(MinecraftServer server) throws IOException {
+        if (!(server instanceof MinecraftDedicatedServer))
+            throw new IllegalStateException("This plugin is server-side only.");
+        String path = (new File(server.getRunDirectory().getCanonicalPath(), ((MinecraftDedicatedServer) server).getLevelName())).getAbsolutePath();
+        Logger.getLogger("getLevelPath").info(String.format("Level path: %s", path));
+        assert (new File(path)).exists();
+        return path;
     }
 
     public static String getWorldDirectoryName(World world) throws NoSuchFieldException, IllegalAccessException {
@@ -70,8 +80,8 @@ public final class BackupFilesystemUtil {
         return -1;
     }
 
-    public static String humanFileSize(long size) {
-        double fileSize = size * 1.0 / 1024 / 1024; // Default unit is MB
+    public static String getFriendlyFileSizeString(long sizeBytes) {
+        double fileSize = sizeBytes * 1.0 / 1024 / 1024; // Default unit is MB
         if (fileSize > 1000)
             //msgInfo(context, String.format("File size: %.2fGB", fileSize / 1024));
             return String.format("%.2fGB", fileSize / 1024);
