@@ -1,5 +1,9 @@
 package com.keuin.kbackupfabric;
 
+import com.keuin.kbackupfabric.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
+import com.keuin.kbackupfabric.backup.name.PrimitiveBackupFileNameEncoder;
+import com.keuin.kbackupfabric.backup.suggestion.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.operation.BackupOperation;
 import com.keuin.kbackupfabric.operation.DeleteOperation;
@@ -9,10 +13,6 @@ import com.keuin.kbackupfabric.operation.backup.method.ConfiguredBackupMethod;
 import com.keuin.kbackupfabric.operation.backup.method.ConfiguredIncrementalBackupMethod;
 import com.keuin.kbackupfabric.operation.backup.method.ConfiguredPrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.PrintUtil;
-import com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil;
-import com.keuin.kbackupfabric.util.backup.name.IncrementalBackupFileNameEncoder;
-import com.keuin.kbackupfabric.util.backup.name.PrimitiveBackupFileNameEncoder;
-import com.keuin.kbackupfabric.util.backup.suggestion.BackupNameSuggestionProvider;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
@@ -26,8 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static com.keuin.kbackupfabric.backup.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.*;
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.*;
 
 public final class KBCommands {
 
@@ -273,12 +273,12 @@ public final class KBCommands {
             ConfiguredBackupMethod method = !incremental ? new ConfiguredPrimitiveBackupMethod(
                     new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
                     getLevelPath(server),
-                    getBackupSaveDirectory(server).getAbsolutePath()
+                    getBackupSaveDirectory(server).getCanonicalPath()
             ) : new ConfiguredIncrementalBackupMethod(
                     new IncrementalBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
                     getLevelPath(server),
-                    getBackupSaveDirectory(server).getAbsolutePath(),
-                    getIncrementalBackupBaseDirectory(server).getAbsolutePath()
+                    getBackupSaveDirectory(server).getCanonicalPath(),
+                    getIncrementalBackupBaseDirectory(server).getCanonicalPath()
             );
 
             // dispatch to operation worker

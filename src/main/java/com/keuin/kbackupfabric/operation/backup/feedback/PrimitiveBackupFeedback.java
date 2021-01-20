@@ -1,6 +1,6 @@
 package com.keuin.kbackupfabric.operation.backup.feedback;
 
-import static com.keuin.kbackupfabric.util.backup.BackupFilesystemUtil.getFriendlyFileSizeString;
+import static com.keuin.kbackupfabric.backup.BackupFilesystemUtil.getFriendlyFileSizeString;
 
 public class PrimitiveBackupFeedback implements BackupFeedback {
     private final boolean success;
