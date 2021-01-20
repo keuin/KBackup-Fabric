@@ -15,12 +15,12 @@ import static org.junit.Assert.*;
 
 public class ConfiguredIncrementalBackupMethodTest {
 
-    private final String testTempPath = "R:\\";
+    private final String testTempPath = (new File("R:\\").isDirectory()) ? "R:\\" : ".\\testfile\\ConfiguredIncrementalBackupMethodTest";
     private final String sourceDirectoryName = "source";
     private final String destDirectoryName = "destination";
     private final String indexFileName = "index";
 
-    private final double directoryFactor = 0.03;
+    private final double directoryFactor = 0.02;
     private final double fileFactor = 0.05;
     private final int maxRandomFileSizeBytes = 1024 * 1024 * 16;
     private final Function<Integer, Integer> scaleDecayFunc = (x) -> x - 1;
