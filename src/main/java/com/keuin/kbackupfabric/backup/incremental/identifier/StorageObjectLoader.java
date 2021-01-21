@@ -16,10 +16,8 @@ public class StorageObjectLoader {
         ObjectIdentifier identifier;
 
         identifier = Sha256Identifier.fromFileName(fileName);
-        if (identifier != null)
-            return identifier;
+        return identifier;
 
         // Add more identifiers.
-        return null;
     }
 }

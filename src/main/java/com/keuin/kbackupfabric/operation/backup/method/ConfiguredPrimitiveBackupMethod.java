@@ -14,12 +14,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.logging.Logger;
 
 public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
 
     private final String backupFileName;
     private final String levelPath;
     private final String backupSavePath;
+
+    private final Logger LOGGER = Logger.getLogger(ConfiguredPrimitiveBackupMethod.class.getName());
 
     public ConfiguredPrimitiveBackupMethod(String backupFileName, String levelPath, String backupSavePath) {
         this.backupFileName = backupFileName;
@@ -34,20 +37,34 @@ public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
     }
 
     @Override
-    public PrimitiveBackupFeedback backup() throws IOException {
+    public PrimitiveBackupFeedback backup() {
+
+        PrimitiveBackupFeedback feedback;
+
         try {
             String customBackupName = new PrimitiveBackupFileNameEncoder().decode(backupFileName).customName;
             BackupMetadata backupMetadata = new BackupMetadata(System.currentTimeMillis(), customBackupName);
             PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSavePath));
             PrintUtil.info("Compressing level ...");
             ZipUtil.makeBackupZip(levelPath, backupSavePath, backupFileName, backupMetadata);
+            feedback = new PrimitiveBackupFeedback(true, FilesystemUtil.getFileSizeBytes(backupSavePath, backupFileName));
         } catch (ZipUtilException exception) {
             PrintUtil.info("Infinite recursive of directory tree detected, backup was aborted.");
-            return new PrimitiveBackupFeedback(false, 0);
+            feedback = new PrimitiveBackupFeedback(false, 0);
+        } catch (IOException e) {
+            feedback = new PrimitiveBackupFeedback(false, 0);
         }
 
-        // Get backup file size and return
-        return new PrimitiveBackupFeedback(true, FilesystemUtil.getFileSizeBytes(backupSavePath, backupFileName));
+        if (!feedback.isSuccess()) {
+            // do clean-up if failed
+            File backupFile = new File(backupSavePath, backupFileName);
+            if (backupFile.exists()) {
+                if (!backupFile.delete()) {
+                    LOGGER.warning("Failed to clean up: cannot delete file " + backupFile.getName());
+                }
+            }
+        }
+        return feedback;
     }
 
     @Override

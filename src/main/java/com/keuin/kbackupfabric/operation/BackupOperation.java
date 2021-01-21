@@ -33,6 +33,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
     protected void async() {
         String backupSaveDirectory = "";
         MinecraftServer server = context.getSource().getMinecraftServer();
+        boolean success = false; // only success when everything is done
         try {
             //// Do our main backup logic
 
@@ -44,11 +45,12 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
 
             // Backup
             BackupFeedback result = configuredBackupMethod.backup();
-            if (result.isSuccess()) {
-                // Restore old auto-save switch stat
+            success = result.isSuccess();
+            if (success) {
+                // Restore previous auto-save switch stat
                 server.getWorlds().forEach(world -> world.savingDisabled = oldWorldsSavingDisabled.getOrDefault(world, true));
 
-                // Print finish message: time elapsed and file size
+                // Finish. Print time elapsed and file size
                 long timeElapsedMillis = System.currentTimeMillis() - startTime;
                 String msgText = String.format("Backup finished. Time elapsed: %.2fs. ", timeElapsedMillis / 1000.0) + result.getFeedback();
                 PrintUtil.msgInfo(context, msgText, true);

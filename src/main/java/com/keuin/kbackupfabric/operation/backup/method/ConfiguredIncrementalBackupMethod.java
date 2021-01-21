@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.logging.Logger;
 
 public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod {
 
@@ -21,6 +22,8 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
     private final String levelPath;
     private final String backupIndexFileSaveDirectory;
     private final String backupBaseDirectory;
+
+    private static final Logger LOGGER = Logger.getLogger(ConfiguredIncrementalBackupMethod.class.getName());
 
     public ConfiguredIncrementalBackupMethod(String backupIndexFileName, String levelPath, String backupIndexFileSaveDirectory, String backupBaseDirectory) {
         this.backupIndexFileName = backupIndexFileName;
@@ -30,26 +33,45 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
     }
 
     @Override
-    public IncrementalBackupFeedback backup() throws IOException {
-        File levelPathFile = new File(levelPath);
+    public IncrementalBackupFeedback backup() {
+        IncrementalBackupFeedback feedback;
+        try {
+            File levelPathFile = new File(levelPath);
 
-        // construct incremental backup index
-        PrintUtil.info("Hashing files...");
-        ObjectCollection collection = new ObjectCollectionFactory<>(Sha256Identifier.getFactory())
-                .fromDirectory(levelPathFile, new HashSet<>(Arrays.asList("session.lock", "kbackup_metadata")));
+            // construct incremental backup index
+            PrintUtil.info("Hashing files...");
+            ObjectCollection collection = new ObjectCollectionFactory<>(Sha256Identifier.getFactory())
+                    .fromDirectory(levelPathFile, new HashSet<>(Arrays.asList("session.lock", "kbackup_metadata")));
 
-        // update storage
-        PrintUtil.info("Copying files...");
-        IncrementalBackupStorageManager storageManager = new IncrementalBackupStorageManager(Paths.get(backupBaseDirectory));
-        int filesAdded = storageManager.addObjectCollection(collection, levelPathFile);
+            // update storage
+            PrintUtil.info("Copying files...");
+            IncrementalBackupStorageManager storageManager = new IncrementalBackupStorageManager(Paths.get(backupBaseDirectory));
+            int filesAdded = storageManager.addObjectCollection(collection, levelPathFile);
 
-        // save index file
-        PrintUtil.info("Saving index file...");
-        ObjectCollectionSerializer.toFile(collection, new File(backupIndexFileSaveDirectory, backupIndexFileName));
+            // save index file
+            PrintUtil.info("Saving index file...");
+            ObjectCollectionSerializer.toFile(collection, new File(backupIndexFileSaveDirectory, backupIndexFileName));
 
-        // return result
-        PrintUtil.info("Incremental backup finished.");
-        return new IncrementalBackupFeedback(filesAdded >= 0, filesAdded);
+            // return result
+            PrintUtil.info("Incremental backup finished.");
+            feedback = new IncrementalBackupFeedback(filesAdded >= 0, filesAdded);
+        } catch (IOException e) {
+            feedback = new IncrementalBackupFeedback(false, 0);
+        }
+
+        if (!feedback.isSuccess()) {
+            // do clean-up if failed
+            File backupIndexFile = new File(backupIndexFileSaveDirectory, backupIndexFileName);
+            if (backupIndexFile.exists()) {
+                if (!backupIndexFile.delete()) {
+                    LOGGER.warning("Failed to clean up: cannot delete file " + backupIndexFile.getName());
+                }
+            }
+
+            //TODO: do more deep clean for object files
+        }
+
+        return feedback;
     }
 
     @Override

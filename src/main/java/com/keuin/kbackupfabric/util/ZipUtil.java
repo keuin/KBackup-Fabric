@@ -4,17 +4,14 @@ import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 
 import java.io.*;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.*;
 
 import static java.util.zip.Deflater.DEFAULT_COMPRESSION;
 
 public final class ZipUtil {
 
-    private static final int bufferSize = 1024 * 1024 * 8; // 1MB
+    private static final int bufferSize = 1024 * 1024 * 8; // 8MB
 
     /**
      * 递归压缩文件夹
@@ -30,12 +27,13 @@ public final class ZipUtil {
             return;
         }
 
-        if (file.getName().equals(BackupMetadata.metadataFileName))
+        boolean skipping = Optional.ofNullable(filesSkipping).orElse(Collections.emptySet()).contains(file.getName())
+                || file.getName().equals(BackupMetadata.metadataFileName);
+        if (skipping)
             return; // Reject
 
         // 如果是文件，则直接压缩该文件
-        boolean skipping = Optional.ofNullable(filesSkipping).orElse(Collections.emptySet()).contains(file.getName());
-        if (file.isFile() && !skipping) {
+        if (file.isFile()) {
             int count;
 
             // 获取文件相对于压缩文件夹根目录的子路径
@@ -66,11 +64,6 @@ public final class ZipUtil {
         }
     }
 
-//    public static void makeZipBackup(String srcPath, String zipPath, String zipFileName) throws IOException, ZipUtilException {
-//        zip(srcPath, zipPath, zipFileName, null);
-//    }
-
-
     /**
      * 对文件或文件目录进行压缩
      *
@@ -81,9 +74,21 @@ public final class ZipUtil {
      * @throws ZipUtilException General exception, such as loop recursion.
      */
     public static void makeBackupZip(String srcPath, String zipPath, String zipFileName, BackupMetadata backupMetadata, int zipLevel) throws IOException, ZipUtilException {
-        if (srcPath == null || zipPath == null || zipFileName == null || backupMetadata == null || srcPath.isEmpty() || zipPath.isEmpty() || zipFileName.isEmpty()) {
-            throw new IllegalArgumentException("Parameter for zip() contains null.");
+        Objects.requireNonNull(srcPath);
+        Objects.requireNonNull(zipPath);
+        Objects.requireNonNull(zipFileName);
+        Objects.requireNonNull(backupMetadata);
+        Objects.requireNonNull(srcPath);
+        if (srcPath.isEmpty()) {
+            throw new IllegalArgumentException("srcPath cannot be empty");
         }
+        if (zipPath.isEmpty()) {
+            throw new IllegalArgumentException("zipPath cannot be empty");
+        }
+        if (zipFileName.isEmpty()) {
+            throw new IllegalArgumentException("zipFileName cannot be empty");
+        }
+
         CheckedOutputStream checkedOutputStream;
         ZipOutputStream zipOutputStream = null;
         try {
@@ -137,6 +142,7 @@ public final class ZipUtil {
                     srcRootDir = srcPath.substring(0, index);
                 }
             }
+
             //调用递归压缩方法进行目录或文件压缩
             zip(srcRootDir, srcFile, zipOutputStream, Collections.singleton("session.lock"), new byte[bufferSize]);
             zipOutputStream.flush();

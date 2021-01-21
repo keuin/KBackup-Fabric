@@ -53,7 +53,7 @@ public final class BackupFilesystemUtil {
     public static String getLevelPath(MinecraftServer server) throws IOException {
         if (!(server instanceof MinecraftDedicatedServer))
             throw new IllegalStateException("This plugin is server-side only.");
-        String path = (new File(server.getRunDirectory().getCanonicalPath(), ((MinecraftDedicatedServer) server).getLevelName())).getAbsolutePath();
+        String path = (new File(server.getRunDirectory().getCanonicalPath(), server.getLevelName())).getAbsolutePath();
         Logger.getLogger("getLevelPath").info(String.format("Level path: %s", path));
         assert (new File(path)).exists();
         return path;
