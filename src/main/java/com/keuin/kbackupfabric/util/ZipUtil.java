@@ -7,11 +7,10 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
-import static java.util.zip.Deflater.DEFAULT_COMPRESSION;
-
 public final class ZipUtil {
 
-    private static final int bufferSize = 1024 * 1024 * 8; // 8MB
+    private static final int unzipBufferSize = 1024 * 1024 * 8; // 8MB
+    private static final int zipBufferSize = 1024 * 1024 * 8; // 8MB
 
     /**
      * 递归压缩文件夹
@@ -48,7 +47,7 @@ public final class ZipUtil {
             zipOutputStream.putNextEntry(entry);
 //            BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
             InputStream inputStream = new FileInputStream(file);
-            while ((count = inputStream.read(buffer, 0, bufferSize)) != -1) {
+            while ((count = inputStream.read(buffer, 0, zipBufferSize)) != -1) {
                 zipOutputStream.write(buffer, 0, count);
             }
             inputStream.close();
@@ -144,7 +143,7 @@ public final class ZipUtil {
             }
 
             //调用递归压缩方法进行目录或文件压缩
-            zip(srcRootDir, srcFile, zipOutputStream, Collections.singleton("session.lock"), new byte[bufferSize]);
+            zip(srcRootDir, srcFile, zipOutputStream, Collections.singleton("session.lock"), new byte[zipBufferSize]);
             zipOutputStream.flush();
         } finally {
             try {
@@ -158,7 +157,7 @@ public final class ZipUtil {
     }
 
     public static void makeBackupZip(String srcPath, String zipPath, String zipFileName, BackupMetadata backupMetadata) throws IOException, ZipUtilException {
-        makeBackupZip(srcPath, zipPath, zipFileName, backupMetadata, DEFAULT_COMPRESSION);
+        makeBackupZip(srcPath, zipPath, zipFileName, backupMetadata, Deflater.BEST_SPEED);
     }
 
     /**
@@ -169,7 +168,7 @@ public final class ZipUtil {
      * @param includeZipFileName 解压后的文件保存的路径是否包含压缩文件的文件名。true-包含；false-不包含
      */
     public static void unzip(String zipFilePath, String unzipFilePath, boolean includeZipFileName) throws IOException {
-        final byte[] buffer = new byte[bufferSize];
+        final byte[] buffer = new byte[unzipBufferSize];
         if (zipFilePath.isEmpty() || unzipFilePath.isEmpty()) {
             throw new IllegalArgumentException("Parameter for unzip() contains null.");
         }
@@ -235,7 +234,7 @@ public final class ZipUtil {
                 // 写入文件
                 OutputStream outputStream = new FileOutputStream(entryFile);
                 InputStream inputStream = zip.getInputStream(entry);
-                while ((count = inputStream.read(buffer, 0, bufferSize)) != -1) {
+                while ((count = inputStream.read(buffer, 0, unzipBufferSize)) != -1) {
                     outputStream.write(buffer, 0, count);
                 }
                 outputStream.flush();
