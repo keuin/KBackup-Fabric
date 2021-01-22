@@ -1,6 +1,7 @@
 package com.keuin.kbackupfabric.util;
 
 import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.network.MessageType;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
@@ -10,30 +11,33 @@ import net.minecraft.util.Formatting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.UUID;
+
 
 public final class PrintUtil {
 
     private static final Object syncMessage = new Object();
     private static final Object syncBroadcast = new Object();
 
-    private static final Style broadcastStyle = new Style().setColor(Formatting.AQUA);
-    private static final Style infoStyle = new Style().setColor(Formatting.WHITE);
-    private static final Style stressStyle = new Style().setColor(Formatting.AQUA);
-    private static final Style warnStyle = new Style().setColor(Formatting.YELLOW);
-    private static final Style errorStyle = new Style().setColor(Formatting.DARK_RED);
+    private static final Style broadcastStyle = Style.EMPTY.withColor(Formatting.AQUA);
+    private static final Style infoStyle = Style.EMPTY.withColor(Formatting.WHITE);
+    private static final Style stressStyle = Style.EMPTY.withColor(Formatting.AQUA);
+    private static final Style warnStyle = Style.EMPTY.withColor(Formatting.YELLOW);
+    private static final Style errorStyle = Style.EMPTY.withColor(Formatting.DARK_RED);
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static PlayerManager fuckMojang = null;
+    private static PlayerManager fuckingPlayerManager = null;
 
     public static void setPlayerManager(PlayerManager playerManager) {
-        if (fuckMojang == null)
-            fuckMojang = playerManager;
+        if (fuckingPlayerManager == null)
+            fuckingPlayerManager = playerManager;
     }
 
     public static void broadcast(String message) {
         synchronized (syncBroadcast) {
-            if (fuckMojang != null)
-                fuckMojang.sendToAll(new LiteralText(message).setStyle(broadcastStyle));
+            if (fuckingPlayerManager != null)
+//                fuckingPlayerManager.sendToAll(new LiteralText(message).setStyle(broadcastStyle));
+                fuckingPlayerManager.broadcastChatMessage(new LiteralText(message).setStyle(broadcastStyle), MessageType.GAME_INFO, UUID.randomUUID());
             else
                 PrintUtil.error("Error in PrintUtil.broadcast: PlayerManager is not initialized.");
         }
@@ -73,8 +77,7 @@ public final class PrintUtil {
 
     private static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps, Style style) {
         synchronized (syncMessage) {
-            Text text = new LiteralText(messageText);
-            text.setStyle(style);
+            Text text = new LiteralText(messageText).setStyle(style);
             context.getSource().sendFeedback(text, broadcastToOps);
         }
         return context;
