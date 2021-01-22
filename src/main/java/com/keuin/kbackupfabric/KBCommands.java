@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static com.keuin.kbackupfabric.backup.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.*;
@@ -90,6 +91,18 @@ public final class KBCommands {
                                 || name.toLowerCase().endsWith(".kbi"))
         );
 
+        Function<File, String> backupInformationProvider = new Function<File, String>() {
+            @Override
+            public String apply(File file) {
+                Objects.requireNonNull(file);
+                if (file.getName().toLowerCase().endsWith(".zip"))
+                    return getPrimitiveBackupInformationString(file.getName(), file.length());
+                else if (file.getName().toLowerCase().endsWith(".kbi"))
+                    return getIncrementalBackupInformationString(file.getName());
+                return file.getName();
+            }
+        };
+
         synchronized (backupFileNameList) {
             backupFileNameList.clear();
             if (files != null) {
@@ -102,7 +115,7 @@ public final class KBCommands {
                 for (File file : files) {
                     ++i;
                     String backupFileName = file.getName();
-                    msgInfo(context, String.format("[%d] %s", i, getPrimitiveBackupInformationString(backupFileName, file.length())));
+                    msgInfo(context, String.format("[%d] %s", i, backupInformationProvider.apply(file)));
                     backupFileNameList.add(backupFileName);
                 }
             } else {
@@ -380,6 +393,13 @@ public final class KBCommands {
                 "%s , size: %s",
                 new PrimitiveBackupFileNameEncoder().decode(backupFileName),
                 getFriendlyFileSizeString(backupFileSizeBytes)
+        );
+    }
+
+    private static String getIncrementalBackupInformationString(String backupFileName) {
+        return String.format(
+                "(Incremental) %s",
+                new IncrementalBackupFileNameEncoder().decode(backupFileName)
         );
     }
 
