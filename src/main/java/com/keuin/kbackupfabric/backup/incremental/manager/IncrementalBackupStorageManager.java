@@ -160,6 +160,7 @@ public class IncrementalBackupStorageManager {
      */
     private boolean baseContainsObject(ObjectElement objectElement) {
         // This may be extended to use more variants of hash functions and combinations of other attributes (such as file size)
+        //TODO: optimize this by using in-memory data structure
         return (new File(backupStorageBase.toFile(), objectElement.getIdentifier().getIdentification())).exists();
     }
 
