@@ -21,9 +21,9 @@ public class ConfiguredIncrementalBackupMethodTest {
     private final String destDirectoryName = "destination";
     private final String indexFileName = "index";
 
-    private final double directoryFactor = 0.03;
-    private final double fileFactor = 0.04;
-    private final int maxRandomFileSizeBytes = 1024 * 1024 * 4;
+    private final double directoryFactor = 0.05;
+    private final double fileFactor = 0.1;
+    private final int maxRandomFileSizeBytes = 1024 * 1024;
     private final Function<Integer, Integer> scaleDecayFunc = (x) -> x - 1;
 
     @Test

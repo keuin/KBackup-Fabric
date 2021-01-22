@@ -13,27 +13,47 @@ public class ObjectCollectionSerializerTest {
 
     @Test
     public void testSerializationConsistency1() throws IOException {
-        testSerializationConsistency(1);
+        testSerializationConsistency(1, 0);
     }
 
     @Test
     public void testSerializationConsistency2() throws IOException {
-        testSerializationConsistency(2);
+        testSerializationConsistency(2, 0);
     }
 
     @Test
     public void testSerializationConsistency4() throws IOException {
-        testSerializationConsistency(4);
+        testSerializationConsistency(4, 0);
     }
 
     @Test
     public void testSerializationConsistency8() throws IOException {
-        testSerializationConsistency(8);
+        testSerializationConsistency(8, 0);
     }
 
-    public void testSerializationConsistency(int threads) throws IOException {
+    @Test
+    public void testSerializationConsistency1A() throws IOException {
+        testSerializationConsistency(1, 1000);
+    }
+
+    @Test
+    public void testSerializationConsistency2A() throws IOException {
+        testSerializationConsistency(2, 1000);
+    }
+
+    @Test
+    public void testSerializationConsistency4A() throws IOException {
+        testSerializationConsistency(4, 1000);
+    }
+
+    @Test
+    public void testSerializationConsistency8A() throws IOException {
+        testSerializationConsistency(8, 1000);
+    }
+
+    public void testSerializationConsistency(int threads, int multiThreadThreshold) throws IOException {
         ObjectCollectionFactory<Sha256Identifier> factory =
-                new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads);
+                new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads, multiThreadThreshold);
         ObjectCollection collection =
                 factory.fromDirectory(new File("./testfile/ObjectCollectionFactoryTest"));
         File file = new File("./testfile/serialized");

@@ -26,28 +26,48 @@ public class ObjectCollectionFactoryTest {
 
     @Test
     public void fromDirectory1() {
-        fromDirectory(1);
+        fromDirectory(1, 0);
     }
 
     @Test
     public void fromDirectory2() {
-        fromDirectory(2);
+        fromDirectory(2, 0);
     }
 
     @Test
     public void fromDirectory4() {
-        fromDirectory(4);
+        fromDirectory(4, 0);
     }
 
     @Test
     public void fromDirectory8() {
-        fromDirectory(8);
+        fromDirectory(8, 0);
     }
 
-    public void fromDirectory(int threads) {
+    @Test
+    public void fromDirectory1A() {
+        fromDirectory(1, 1000);
+    }
+
+    @Test
+    public void fromDirectory2A() {
+        fromDirectory(2, 1000);
+    }
+
+    @Test
+    public void fromDirectory4A() {
+        fromDirectory(4, 1000);
+    }
+
+    @Test
+    public void fromDirectory8A() {
+        fromDirectory(8, 1000);
+    }
+
+    public void fromDirectory(int threads, int multiThreadThreshold) {
         try {
             ObjectCollectionFactory<Sha256Identifier> factory =
-                    new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads);
+                    new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads, multiThreadThreshold);
             ObjectCollection collection =
                     factory.fromDirectory(new File("./testfile/ObjectCollectionFactoryTest"));
 

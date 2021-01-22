@@ -46,7 +46,7 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
 
             // construct incremental backup index
             PrintUtil.info("Hashing files...");
-            ObjectCollection collection = new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), hashFactoryThreads)
+            ObjectCollection collection = new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), hashFactoryThreads, 16)
                     .fromDirectory(levelPathFile, new HashSet<>(Arrays.asList("session.lock", "kbackup_metadata")));
 
             // update storage

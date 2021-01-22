@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -25,19 +25,19 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
     private final FileIdentifierProvider<T> identifierFactory;
     private final int threads;
     private Exception exception = null; // fail in async
+    private final int minParallelProcessFileCountThreshold;
 
-    public ObjectCollectionFactory(FileIdentifierProvider<T> identifierFactory, int threads) {
+    public ObjectCollectionFactory(FileIdentifierProvider<T> identifierFactory, int threads, int minParallelProcessFileCountThreshold) {
         this.identifierFactory = identifierFactory;
         this.threads = threads;
+        this.minParallelProcessFileCountThreshold = minParallelProcessFileCountThreshold;
         if (threads <= 0)
             throw new IllegalArgumentException("thread count must be positive.");
+        if (minParallelProcessFileCountThreshold < 0)
+            throw new IllegalArgumentException("minParallelProcessFileCountThreshold must not be negative.");
     }
 
     public ObjectCollection fromDirectory(File directory, Set<String> ignoredFiles) throws IOException {
-
-        final int minParallelProcessFileCountThreshold = 0;
-
-        final Set<ObjectElement> subFiles = new ConcurrentSkipListSet<>();
 
         final Map<String, ObjectCollection> subCollections = new HashMap<>();
 
@@ -60,6 +60,8 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
                 PrintUtil.info(String.format("Skipping file %s.", file.getName()));
             }
         }
+
+        final Set<ObjectElement> subFiles = ConcurrentHashMap.newKeySet(files.size());
 
         // deal with all direct sub files
         if (threads == 1 || files.size() < minParallelProcessFileCountThreshold) {
@@ -90,7 +92,7 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
             }
         }
 
-        return new ObjectCollection(directory.getName(), new HashSet<>(subFiles), subCollections);
+        return new ObjectCollection(directory.getName(), subFiles, subCollections);
     }
 
     public ObjectCollection fromDirectory(File directory) throws IOException {
