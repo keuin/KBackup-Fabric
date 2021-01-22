@@ -9,6 +9,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.server.ServerStartCallback;
 import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,6 +38,9 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
     @Override
     public void onStartServer(MinecraftServer server) {
 
+        if (!(server instanceof MinecraftDedicatedServer))
+            throw new RuntimeException("KBackup is a server-side-only plugin. Please do not use it in Minecraft client.");
+
         // Initialize player manager reference
         PrintUtil.setPlayerManager(server.getPlayerManager());
 
@@ -45,7 +49,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
 
         // Check if we have just recovered from a previous backup. If so, print message.
         try {
-            File levelDirectory = new File(server.getRunDirectory(), server.getLevelName());
+            File levelDirectory = new File(server.getRunDirectory(), ((MinecraftDedicatedServer) server).getLevelName());
             File metadataFile = new File(levelDirectory, BackupMetadata.metadataFileName);
             if (metadataFile.exists()) {
                 // Metadata exists. Deserialize.
