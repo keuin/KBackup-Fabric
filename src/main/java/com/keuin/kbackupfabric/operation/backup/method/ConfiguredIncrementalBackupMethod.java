@@ -8,6 +8,7 @@ import com.keuin.kbackupfabric.backup.incremental.manager.IncrementalBackupStora
 import com.keuin.kbackupfabric.operation.backup.feedback.IncrementalBackupFeedback;
 import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
+import com.keuin.kbackupfabric.util.ThreadingUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,13 +35,18 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
 
     @Override
     public IncrementalBackupFeedback backup() {
+
+        final int hashFactoryThreads = ThreadingUtil.getRecommendedThreadCount(); // how many threads do we use to generate the hash tree
+
+        LOGGER.info("Threads: " + hashFactoryThreads);
+
         IncrementalBackupFeedback feedback;
         try {
             File levelPathFile = new File(levelPath);
 
             // construct incremental backup index
             PrintUtil.info("Hashing files...");
-            ObjectCollection collection = new ObjectCollectionFactory<>(Sha256Identifier.getFactory())
+            ObjectCollection collection = new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), hashFactoryThreads)
                     .fromDirectory(levelPathFile, new HashSet<>(Arrays.asList("session.lock", "kbackup_metadata")));
 
             // update storage
@@ -56,10 +62,12 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
             PrintUtil.info("Incremental backup finished.");
             feedback = new IncrementalBackupFeedback(filesAdded >= 0, filesAdded);
         } catch (IOException e) {
+            e.printStackTrace(); // at least we should print it out if we discard the exception... Better than doing nothing.
             feedback = new IncrementalBackupFeedback(false, 0);
         }
 
         if (!feedback.isSuccess()) {
+            LOGGER.severe("Failed to backup.");
             // do clean-up if failed
             File backupIndexFile = new File(backupIndexFileSaveDirectory, backupIndexFileName);
             if (backupIndexFile.exists()) {
@@ -67,7 +75,6 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
                     LOGGER.warning("Failed to clean up: cannot delete file " + backupIndexFile.getName());
                 }
             }
-
             //TODO: do more deep clean for object files
         }
 

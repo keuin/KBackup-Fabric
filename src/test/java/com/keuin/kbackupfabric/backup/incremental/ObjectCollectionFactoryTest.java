@@ -25,10 +25,29 @@ public class ObjectCollectionFactoryTest {
     }
 
     @Test
-    public void fromDirectory() {
+    public void fromDirectory1() {
+        fromDirectory(1);
+    }
+
+    @Test
+    public void fromDirectory2() {
+        fromDirectory(2);
+    }
+
+    @Test
+    public void fromDirectory4() {
+        fromDirectory(4);
+    }
+
+    @Test
+    public void fromDirectory8() {
+        fromDirectory(8);
+    }
+
+    public void fromDirectory(int threads) {
         try {
             ObjectCollectionFactory<Sha256Identifier> factory =
-                    new ObjectCollectionFactory<>(Sha256Identifier.getFactory());
+                    new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads);
             ObjectCollection collection =
                     factory.fromDirectory(new File("./testfile/ObjectCollectionFactoryTest"));
 

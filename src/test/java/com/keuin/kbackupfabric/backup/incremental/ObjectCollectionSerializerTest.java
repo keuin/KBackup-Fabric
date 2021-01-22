@@ -10,10 +10,30 @@ import java.nio.file.Files;
 import static org.junit.Assert.assertEquals;
 
 public class ObjectCollectionSerializerTest {
+
     @Test
-    public void testSerializationConsistency() throws IOException {
+    public void testSerializationConsistency1() throws IOException {
+        testSerializationConsistency(1);
+    }
+
+    @Test
+    public void testSerializationConsistency2() throws IOException {
+        testSerializationConsistency(2);
+    }
+
+    @Test
+    public void testSerializationConsistency4() throws IOException {
+        testSerializationConsistency(4);
+    }
+
+    @Test
+    public void testSerializationConsistency8() throws IOException {
+        testSerializationConsistency(8);
+    }
+
+    public void testSerializationConsistency(int threads) throws IOException {
         ObjectCollectionFactory<Sha256Identifier> factory =
-                new ObjectCollectionFactory<>(Sha256Identifier.getFactory());
+                new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads);
         ObjectCollection collection =
                 factory.fromDirectory(new File("./testfile/ObjectCollectionFactoryTest"));
         File file = new File("./testfile/serialized");
