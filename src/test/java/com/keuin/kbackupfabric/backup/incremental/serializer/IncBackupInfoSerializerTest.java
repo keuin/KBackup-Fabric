@@ -1,15 +1,18 @@
-package com.keuin.kbackupfabric.backup.incremental;
+package com.keuin.kbackupfabric.backup.incremental.serializer;
 
+import com.keuin.kbackupfabric.backup.incremental.ObjectCollection2;
+import com.keuin.kbackupfabric.backup.incremental.ObjectCollectionFactory;
 import com.keuin.kbackupfabric.backup.incremental.identifier.Sha256Identifier;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.ZonedDateTime;
 
 import static org.junit.Assert.assertEquals;
 
-public class ObjectCollectionSerializerTest {
+public class IncBackupInfoSerializerTest {
 
     @Test
     public void testSerializationConsistency1() throws IOException {
@@ -54,16 +57,17 @@ public class ObjectCollectionSerializerTest {
     public void testSerializationConsistency(int threads, int multiThreadThreshold) throws IOException {
         ObjectCollectionFactory<Sha256Identifier> factory =
                 new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads, multiThreadThreshold);
-        ObjectCollection collection =
+        ObjectCollection2 collection =
                 factory.fromDirectory(new File("./testfile/ObjectCollectionFactoryTest"));
         File file = new File("./testfile/serialized");
         if (file.exists()) {
             Files.delete(file.toPath());
         }
-        ObjectCollectionSerializer.toFile(collection, file);
-        ObjectCollection collection2 = ObjectCollectionSerializer.fromFile(file);
+        SavedIncrementalBackup backup = SavedIncrementalBackup.newLatest(collection, ":name:", ZonedDateTime.now(), 10000, 2000, 10, 20);
+        IncBackupInfoSerializer.toFile(file, backup);
+        SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(file);
         Files.delete(file.toPath());
-        assertEquals(collection, collection2);
+        assertEquals(backup, info);
     }
 
 }

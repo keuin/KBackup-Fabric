@@ -3,12 +3,17 @@ package com.keuin.kbackupfabric.backup.incremental;
 import java.io.Serializable;
 import java.util.*;
 
-public class ObjectCollection implements Serializable {
+/**
+ * This class must be in package `com.keuin.kbackupfabric.util.backup.incremental.ObjectCollection`,
+ * or it will not be compatible with old backups.
+ */
+public class ObjectCollection2 implements Serializable {
+
     private final String name;
     private final Map<String, ObjectElement> elements;
-    private final Map<String, ObjectCollection> subCollections;
+    private final Map<String, ObjectCollection2> subCollections;
 
-    ObjectCollection(String name, Set<ObjectElement> elements, Map<String, ObjectCollection> subCollections) {
+    ObjectCollection2(String name, Set<ObjectElement> elements, Map<String, ObjectCollection2> subCollections) {
         this.name = Objects.requireNonNull(name);
         this.elements = new HashMap<>();
         for (ObjectElement e : elements) {
@@ -36,15 +41,15 @@ public class ObjectCollection implements Serializable {
         return elements.get(name);
     }
 
-    public Set<ObjectCollection> getSubCollectionSet() {
+    public Set<ObjectCollection2> getSubCollectionSet() {
         return new HashSet<>(subCollections.values());
     }
 
-    public Map<String, ObjectCollection> getSubCollectionMap() {
+    public Map<String, ObjectCollection2> getSubCollectionMap() {
         return Collections.unmodifiableMap(subCollections);
     }
 
-    public ObjectCollection getSubCollection(String name) {
+    public ObjectCollection2 getSubCollection(String name) {
         return subCollections.get(name);
     }
 
@@ -52,7 +57,7 @@ public class ObjectCollection implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ObjectCollection that = (ObjectCollection) o;
+        ObjectCollection2 that = (ObjectCollection2) o;
         return name.equals(that.name) &&
                 elements.equals(that.elements) &&
                 subCollections.equals(that.subCollections);

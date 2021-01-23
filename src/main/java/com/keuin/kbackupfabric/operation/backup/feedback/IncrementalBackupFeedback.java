@@ -1,12 +1,15 @@
 package com.keuin.kbackupfabric.operation.backup.feedback;
 
+import com.keuin.kbackupfabric.backup.incremental.manager.IncCopyResult;
+import org.jetbrains.annotations.Nullable;
+
 public class IncrementalBackupFeedback implements BackupFeedback {
     private final boolean success;
-    private final int newFilesAdded;
+    private final IncCopyResult copyResult;
 
-    public IncrementalBackupFeedback(boolean success, int newFilesAdded) {
+    public IncrementalBackupFeedback(boolean success, @Nullable IncCopyResult copyResult) {
         this.success = success;
-        this.newFilesAdded = newFilesAdded;
+        this.copyResult = copyResult;
     }
 
     @Override
@@ -14,15 +17,15 @@ public class IncrementalBackupFeedback implements BackupFeedback {
         return success;
     }
 
-    public long getNewFilesAdded() {
-        return newFilesAdded;
+    public IncCopyResult getCopyResult() {
+        return copyResult;
     }
 
     @Override
     public String getFeedback() {
-        if (success && newFilesAdded >= 0)
-            return String.format("File(s) added: %d.", newFilesAdded);
+        if (success && copyResult != null)
+            return String.format("File(s) added: %s.", copyResult);
         else
-            return "";
+            return "Backup failed.";
     }
 }

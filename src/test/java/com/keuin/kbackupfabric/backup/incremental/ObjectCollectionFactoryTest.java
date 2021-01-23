@@ -11,10 +11,10 @@ import static org.junit.Assert.*;
 
 public class ObjectCollectionFactoryTest {
 
-    private void validate(ObjectCollection collection, List<String> subCollections, Map<String, String> subElements) {
+    private void validate(ObjectCollection2 collection, List<String> subCollections, Map<String, String> subElements) {
         assertEquals(subCollections.size(), collection.getSubCollectionMap().size());
         assertEquals(subElements.size(), collection.getElementSet().size());
-        for (Map.Entry<String, ObjectCollection> c : collection.getSubCollectionMap().entrySet()) {
+        for (Map.Entry<String, ObjectCollection2> c : collection.getSubCollectionMap().entrySet()) {
             assertEquals(c.getKey(), c.getValue().getName());
             assertTrue(subCollections.contains(c.getKey()));
         }
@@ -68,7 +68,7 @@ public class ObjectCollectionFactoryTest {
         try {
             ObjectCollectionFactory<Sha256Identifier> factory =
                     new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads, multiThreadThreshold);
-            ObjectCollection collection =
+            ObjectCollection2 collection =
                     factory.fromDirectory(new File("./testfile/ObjectCollectionFactoryTest"));
 
             assertEquals("ObjectCollectionFactoryTest", collection.getName());

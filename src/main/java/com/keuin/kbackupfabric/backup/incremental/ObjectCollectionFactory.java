@@ -37,9 +37,9 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
             throw new IllegalArgumentException("minParallelProcessFileCountThreshold must not be negative.");
     }
 
-    public ObjectCollection fromDirectory(File directory, Set<String> ignoredFiles) throws IOException {
+    public ObjectCollection2 fromDirectory(File directory, Set<String> ignoredFiles) throws IOException {
 
-        final Map<String, ObjectCollection> subCollections = new HashMap<>();
+        final Map<String, ObjectCollection2> subCollections = new HashMap<>();
 
         if (!Objects.requireNonNull(directory).isDirectory())
             throw new IllegalArgumentException("given file is not a directory");
@@ -92,10 +92,10 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
             }
         }
 
-        return new ObjectCollection(directory.getName(), subFiles, subCollections);
+        return new ObjectCollection2(directory.getName(), subFiles, subCollections);
     }
 
-    public ObjectCollection fromDirectory(File directory) throws IOException {
+    public ObjectCollection2 fromDirectory(File directory) throws IOException {
         return fromDirectory(directory, Collections.emptySet());
     }
 

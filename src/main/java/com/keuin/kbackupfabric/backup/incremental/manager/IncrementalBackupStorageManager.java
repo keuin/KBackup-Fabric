@@ -1,17 +1,18 @@
 package com.keuin.kbackupfabric.backup.incremental.manager;
 
-import com.keuin.kbackupfabric.backup.incremental.ObjectCollection;
+import com.keuin.kbackupfabric.backup.incremental.ObjectCollection2;
 import com.keuin.kbackupfabric.backup.incremental.ObjectElement;
 import com.keuin.kbackupfabric.backup.incremental.identifier.ObjectIdentifier;
 import com.keuin.kbackupfabric.backup.incremental.identifier.StorageObjectLoader;
+import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
@@ -28,11 +29,14 @@ public class IncrementalBackupStorageManager {
 
     /**
      * Add a object collection to storage base.
+     *
      * @param collection the collection.
      * @return objects copied to the base.
      * @throws IOException I/O Error.
      */
-    public int addObjectCollection(ObjectCollection collection, File collectionBasePath) throws IOException {
+    public @Nullable
+    IncCopyResult addObjectCollection(ObjectCollection2 collection, File collectionBasePath) throws IOException {
+        // TODO: add failure detection
         if (!backupStorageBase.toFile().isDirectory()) {
             if (!backupStorageBase.toFile().mkdirs())
                 throw new IOException("Backup storage base directory does not exist, and failed to create it.");
@@ -40,22 +44,28 @@ public class IncrementalBackupStorageManager {
         Objects.requireNonNull(collection);
         Objects.requireNonNull(collectionBasePath);
 
-        int copyCount = 0;
+        IncCopyResult copyCount = IncCopyResult.ZERO;
 
         // copy sub files
         for (Map.Entry<String, ObjectElement> entry : collection.getElementMap().entrySet()) {
             File copyDestination = new File(backupStorageBase.toFile(), entry.getValue().getIdentifier().getIdentification());
+            File copySourceFile = new File(collectionBasePath.getAbsolutePath(), entry.getKey());
+            final long fileBytes = FilesystemUtil.getFileSizeBytes(copySourceFile.getAbsolutePath());
             if (!baseContainsObject(entry.getValue())) {
                 // element does not exist. copy.
-                Files.copy(Paths.get(collectionBasePath.getAbsolutePath(), entry.getKey()), copyDestination.toPath());
-                ++copyCount;
+                Files.copy(copySourceFile.toPath(), copyDestination.toPath());
+                copyCount = copyCount.addWith(new IncCopyResult(1, 1, fileBytes, fileBytes));
+            }
+            {
+                // element exists (file reused). Just update the stat info
+                copyCount = copyCount.addWith(new IncCopyResult(1, 1, 0, fileBytes));
             }
         }
 
         //copy sub dirs recursively
-        for (Map.Entry<String, ObjectCollection> entry : collection.getSubCollectionMap().entrySet()) {
+        for (Map.Entry<String, ObjectCollection2> entry : collection.getSubCollectionMap().entrySet()) {
             File newBase = new File(collectionBasePath, entry.getKey());
-            copyCount += addObjectCollection(entry.getValue(), newBase);
+            copyCount = copyCount.addWith(addObjectCollection(entry.getValue(), newBase));
         }
 
         return copyCount;
@@ -63,12 +73,13 @@ public class IncrementalBackupStorageManager {
 
     /**
      * Restore an object collection from the storage base. i.e., restore the save from backup storage.
-     * @param collection the collection to be restored.
+     *
+     * @param collection         the collection to be restored.
      * @param collectionBasePath save path of the collection.
      * @return objects restored from the base.
      * @throws IOException I/O Error.
      */
-    public int restoreObjectCollection(ObjectCollection collection, File collectionBasePath) throws IOException {
+    public int restoreObjectCollection(ObjectCollection2 collection, File collectionBasePath) throws IOException {
         Objects.requireNonNull(collection);
         Objects.requireNonNull(collectionBasePath);
 
@@ -122,7 +133,7 @@ public class IncrementalBackupStorageManager {
         }
 
         //copy sub dirs recursively
-        for (Map.Entry<String, ObjectCollection> entry : collection.getSubCollectionMap().entrySet()) {
+        for (Map.Entry<String, ObjectCollection2> entry : collection.getSubCollectionMap().entrySet()) {
             File newBase = new File(collectionBasePath, entry.getKey());
             copyCount += restoreObjectCollection(entry.getValue(), newBase);
         }
@@ -130,12 +141,12 @@ public class IncrementalBackupStorageManager {
         return copyCount;
     }
 
-    public int cleanUnusedObjects(Iterable<ObjectCollection> collectionIterable) {
+    public int cleanUnusedObjects(Iterable<ObjectCollection2> collectionIterable) {
         // construct object list in memory
         Set<String> objects = new HashSet<>();
 //        backupStorageBase
 
-        for (ObjectCollection collection : collectionIterable) {
+        for (ObjectCollection2 collection : collectionIterable) {
             for (ObjectElement ele : collection.getElementMap().values()) {
 
             }
@@ -185,5 +196,4 @@ public class IncrementalBackupStorageManager {
             map.put(identifier, file);
         });
     }
-
 }

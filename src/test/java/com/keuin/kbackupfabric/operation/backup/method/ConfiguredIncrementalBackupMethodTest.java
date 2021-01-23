@@ -1,5 +1,6 @@
 package com.keuin.kbackupfabric.operation.backup.method;
 
+import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
 import com.keuin.kbackupfabric.operation.backup.feedback.IncrementalBackupFeedback;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Test;
@@ -8,6 +9,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 
@@ -19,7 +21,8 @@ public class ConfiguredIncrementalBackupMethodTest {
     private final String testTempPath = (new File("R:\\").isDirectory()) ? "R:\\" : ".\\testfile\\ConfiguredIncrementalBackupMethodTest";
     private final String sourceDirectoryName = "source";
     private final String destDirectoryName = "destination";
-    private final String indexFileName = "index";
+    private final String customBackupName = "index";
+    private final String indexFileName = new IncrementalBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now());
 
     private final double directoryFactor = 0.05;
     private final double fileFactor = 0.1;

@@ -5,14 +5,20 @@ import java.util.Objects;
 
 /**
  * Serialize and deserialize ObjectCollection from/to the disk file.
+ * Now we want to save additional metadata in incremental backups. So the serializer on pure ObjectCollection is depreciated.
  */
 public class ObjectCollectionSerializer {
-    public static ObjectCollection fromFile(File file) throws IOException {
+
+    /**
+     * This doesn't work with the latest format. Use IncBackupInfoSerializer instead.
+     */
+    @Deprecated
+    public static ObjectCollection2 fromFile(File file) throws IOException {
         Objects.requireNonNull(file);
-        ObjectCollection collection;
+        ObjectCollection2 collection;
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
             try (ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
-                collection = (ObjectCollection) objectInputStream.readObject();
+                collection = (ObjectCollection2) objectInputStream.readObject();
             } catch (ClassNotFoundException ignored) {
                 // this should not happen
                 return null;
@@ -21,7 +27,10 @@ public class ObjectCollectionSerializer {
         return collection;
     }
 
-    public static void toFile(ObjectCollection collection, File file) throws IOException {
+    /**
+     * Only used for testing backward-compatibility with legacy backups.
+     */
+    public static void toFile(ObjectCollection2 collection, File file) throws IOException {
         Objects.requireNonNull(collection);
         Objects.requireNonNull(file);
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
