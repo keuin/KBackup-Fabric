@@ -58,7 +58,7 @@ public class IncrementalBackupStorageManager {
             }
             {
                 // element exists (file reused). Just update the stat info
-                copyCount = copyCount.addWith(new IncCopyResult(1, 1, 0, fileBytes));
+                copyCount = copyCount.addWith(new IncCopyResult(1, 0, 0, fileBytes));
             }
         }
 

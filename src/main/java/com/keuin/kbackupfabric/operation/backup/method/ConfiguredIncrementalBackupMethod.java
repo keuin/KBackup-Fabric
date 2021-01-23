@@ -9,13 +9,17 @@ import com.keuin.kbackupfabric.backup.incremental.serializer.IncBackupInfoSerial
 import com.keuin.kbackupfabric.backup.incremental.serializer.SavedIncrementalBackup;
 import com.keuin.kbackupfabric.backup.name.BackupFileNameEncoder;
 import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
+import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.operation.backup.feedback.IncrementalBackupFeedback;
 import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.ThreadingUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -126,6 +130,20 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
         PrintUtil.info("Copying files...");
         IncrementalBackupStorageManager storageManager = new IncrementalBackupStorageManager(Paths.get(backupBaseDirectory));
         int restoreObjectCount = storageManager.restoreObjectCollection(info.getObjectCollection(), levelPathFile);
+
+        // write metadata file
+        File metadataFile = new File(levelPathFile, BackupMetadata.metadataFileName);
+        try (FileOutputStream fos = new FileOutputStream(metadataFile)) {
+            try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(new BackupMetadata(info.getBackupTime().toEpochSecond() * 1000, info.getBackupName()));
+            }
+        } catch (IOException e) {
+            PrintUtil.warn("Failed to write restore metadata: " + e + ". KBackup won't print restoration information during the next startup.");
+            try {
+                Files.deleteIfExists(metadataFile.toPath());
+            } catch (IOException ignored) {
+            }
+        }
 
         PrintUtil.info(String.format("%d file(s) restored.", restoreObjectCount));
         return true;

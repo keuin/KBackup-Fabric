@@ -84,6 +84,8 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int list(CommandContext<ServerCommandSource> context) {
+        // TODO: Show real name and size and etc info for incremental backup
+        // TODO: Show concrete info from metadata for `.zip` backup
         MinecraftServer server = context.getSource().getMinecraftServer();
         File[] files = getBackupSaveDirectory(server).listFiles(
                 (dir, name) -> dir.isDirectory() &&
@@ -356,6 +358,7 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int prev(CommandContext<ServerCommandSource> context) {
+        // FIXME: This breaks after adding incremental backup
         try {
             // List all backups
             MinecraftServer server = context.getSource().getMinecraftServer();

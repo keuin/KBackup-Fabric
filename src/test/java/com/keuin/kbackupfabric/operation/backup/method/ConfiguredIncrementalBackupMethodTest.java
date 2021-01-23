@@ -1,6 +1,7 @@
 package com.keuin.kbackupfabric.operation.backup.method;
 
 import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
+import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.operation.backup.feedback.IncrementalBackupFeedback;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Test;
@@ -88,10 +89,12 @@ public class ConfiguredIncrementalBackupMethodTest {
 
         int[] success = new int[1];
         if (fake) {
-            Files.walk(sourcePath).filter(path -> path.toFile().isFile()).limit(3).forEach(path -> {
+            Files.walk(sourcePath).filter(path -> path.toFile().isFile()).limit(4).forEach(path -> {
+                System.out.println("Deleted file `" + path.toFile().getName() + "`.");
                 if (!path.toFile().delete())
                     fail();
-                success[0]++;
+                if (!Objects.equals(path.toFile().getName(), BackupMetadata.metadataFileName))
+                    success[0]++;
             });
             if (success[0] == 0)
                 fake = false;
@@ -173,7 +176,7 @@ public class ConfiguredIncrementalBackupMethodTest {
         Vector<FileInputStream> fileStreams = new Vector<>();
 
         System.out.println("Found files for hashing:");
-        collectInputStreams(dirToHash, fileStreams, includeHiddenFiles);
+        collectInputStreams(dirToHash, fileStreams, includeHiddenFiles, Collections.singleton(BackupMetadata.metadataFileName));
 
         SequenceInputStream seqStream =
                 new SequenceInputStream(fileStreams.elements());
@@ -191,7 +194,8 @@ public class ConfiguredIncrementalBackupMethodTest {
 
     private void collectInputStreams(File dir,
                                      List<FileInputStream> foundStreams,
-                                     boolean includeHiddenFiles) {
+                                     boolean includeHiddenFiles,
+                                     Set<String> ignoredFiles) {
 
         File[] fileList = dir.listFiles();
         Arrays.sort(fileList,               // Need in reproducible order
@@ -202,10 +206,11 @@ public class ConfiguredIncrementalBackupMethodTest {
                 });
 
         for (File f : fileList) {
-            if (!includeHiddenFiles && f.getName().startsWith(".")) {
+            if (!includeHiddenFiles && f.getName().startsWith(".") ||
+                    Optional.ofNullable(ignoredFiles).orElse(Collections.emptySet()).contains(f.getName())) {
                 // Skip it
             } else if (f.isDirectory()) {
-                collectInputStreams(f, foundStreams, includeHiddenFiles);
+                collectInputStreams(f, foundStreams, includeHiddenFiles, ignoredFiles);
             } else {
                 try {
                     System.out.println("\t" + f.getAbsolutePath());
