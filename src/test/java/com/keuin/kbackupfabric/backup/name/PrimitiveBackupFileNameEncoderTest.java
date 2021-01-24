@@ -13,7 +13,7 @@ public class PrimitiveBackupFileNameEncoderTest {
     public void testConsistency() {
         LocalDateTime time = LocalDateTime.ofEpochSecond(System.currentTimeMillis() / 1000, 0, ZoneOffset.UTC);
         String name = "Test Na_me";
-        PrimitiveBackupFileNameEncoder encoder = new PrimitiveBackupFileNameEncoder();
+        PrimitiveBackupFileNameEncoder encoder = PrimitiveBackupFileNameEncoder.INSTANCE;
         BackupFileNameEncoder.BackupBasicInformation information = encoder.decode(encoder.encode(name, time));
         assertEquals(time, information.time);
         assertEquals(name, information.customName);
@@ -23,7 +23,7 @@ public class PrimitiveBackupFileNameEncoderTest {
     public void testEncode() {
         LocalDateTime time = LocalDateTime.of(1, 1, 1, 1, 1, 1);
         String customName = "name";
-        PrimitiveBackupFileNameEncoder encoder = new PrimitiveBackupFileNameEncoder();
+        PrimitiveBackupFileNameEncoder encoder = PrimitiveBackupFileNameEncoder.INSTANCE;
         assertEquals("kbackup-0001-01-01_01-01-01_name.zip", encoder.encode(customName, time));
     }
 
@@ -31,7 +31,7 @@ public class PrimitiveBackupFileNameEncoderTest {
     public void testDecode() {
         LocalDateTime time = LocalDateTime.of(1, 1, 1, 1, 1, 1);
         String customName = "name";
-        PrimitiveBackupFileNameEncoder encoder = new PrimitiveBackupFileNameEncoder();
+        PrimitiveBackupFileNameEncoder encoder = PrimitiveBackupFileNameEncoder.INSTANCE;
         BackupFileNameEncoder.BackupBasicInformation information = encoder.decode("kbackup-0001-01-01_01-01-01_name.zip");
         assertEquals(time, information.time);
         assertEquals(customName, information.customName);
@@ -39,7 +39,7 @@ public class PrimitiveBackupFileNameEncoderTest {
 
     @Test
     public void isValid() {
-        PrimitiveBackupFileNameEncoder encoder = new PrimitiveBackupFileNameEncoder();
+        PrimitiveBackupFileNameEncoder encoder = PrimitiveBackupFileNameEncoder.INSTANCE;
         assertTrue(encoder.isValidFileName("kbackup-0001-01-01_01-01-01_name.zip"));
         assertTrue(encoder.isValidFileName("kbackup-0001-01-01_01-01-01_0001-01-01_01-01-01_name.zip"));
         assertFalse(encoder.isValidFileName("kbackup-0001-01-01_01-01-01kbackup-0001-01-01_01-01-01_name.zip"));

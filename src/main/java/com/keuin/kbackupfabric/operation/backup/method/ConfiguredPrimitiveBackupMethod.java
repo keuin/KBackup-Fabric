@@ -42,7 +42,7 @@ public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
         PrimitiveBackupFeedback feedback;
 
         try {
-            String customBackupName = new PrimitiveBackupFileNameEncoder().decode(backupFileName).customName;
+            String customBackupName = PrimitiveBackupFileNameEncoder.INSTANCE.decode(backupFileName).customName;
             BackupMetadata backupMetadata = new BackupMetadata(System.currentTimeMillis(), customBackupName);
             PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSavePath));
             PrintUtil.info("Compressing level ...");

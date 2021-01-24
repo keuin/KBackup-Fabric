@@ -9,6 +9,11 @@ import java.util.regex.Pattern;
 public class PrimitiveBackupFileNameEncoder implements BackupFileNameEncoder {
     private static final String backupFileNamePrefix = "kbackup";
 
+    public static final PrimitiveBackupFileNameEncoder INSTANCE = new PrimitiveBackupFileNameEncoder();
+
+    private PrimitiveBackupFileNameEncoder() {
+    }
+
     @Override
     public String encode(String customName, LocalDateTime time) {
         if (!isValidCustomName(customName))

@@ -7,12 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Serialize and deserialize ObjectCollection from/to the disk file.
@@ -53,19 +48,11 @@ public class ObjectCollectionSerializer {
     }
 
     public static Iterable<ObjectCollection2> fromDirectory(File directory) throws IOException {
-        if (!directory.isDirectory()) {
-            throw new IllegalArgumentException("Given directory is invalid.");
-        }
-        List<Path> pathList = new ArrayList<>();
-        Files.walk(directory.toPath(), 1).filter(p -> {
-            File f = p.toFile();
-            return f.isFile() && f.getName().endsWith(".kbi");
-        }).forEach(pathList::add);
-        List<ObjectCollection2> objectList = new ArrayList<>();
-        for (Path path : pathList) {
-            SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(path.toFile());
-            objectList.add(info.getObjectCollection());
-        }
-        return Collections.unmodifiableCollection(objectList);
+        List<ObjectCollection2> list = new ArrayList<>();
+        IncBackupInfoSerializer.fromDirectory(directory)
+                .forEach(o -> Optional.ofNullable(o)
+                        .map(SavedIncrementalBackup::getObjectCollection)
+                        .ifPresent(list::add));
+        return Collections.unmodifiableCollection(list);
     }
 }

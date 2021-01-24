@@ -87,6 +87,8 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int list(CommandContext<ServerCommandSource> context) {
+        // lazy: it just works as expected. Don't try to refactor, it's a waste of time. Just improve display and
+        //       that's enough.
         // TODO: Show real name and size and etc info for incremental backup
         // TODO: Show concrete info from metadata for `.zip` backup
         MinecraftServer server = context.getSource().getMinecraftServer();
@@ -288,7 +290,7 @@ public final class KBCommands {
             // configure backup method
             MinecraftServer server = context.getSource().getMinecraftServer();
             ConfiguredBackupMethod method = !incremental ? new ConfiguredPrimitiveBackupMethod(
-                    new PrimitiveBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
+                    PrimitiveBackupFileNameEncoder.INSTANCE.encode(customBackupName, LocalDateTime.now()),
                     getLevelPath(server),
                     getBackupSaveDirectory(server).getCanonicalPath()
             ) : new ConfiguredIncrementalBackupMethod(
@@ -396,7 +398,7 @@ public final class KBCommands {
     private static String getPrimitiveBackupInformationString(String backupFileName, long backupFileSizeBytes) {
         return String.format(
                 "(ZIP) %s , size: %s",
-                new PrimitiveBackupFileNameEncoder().decode(backupFileName),
+                PrimitiveBackupFileNameEncoder.INSTANCE.decode(backupFileName),
                 getFriendlyFileSizeString(backupFileSizeBytes)
         );
     }

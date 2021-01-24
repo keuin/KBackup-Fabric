@@ -7,6 +7,11 @@ import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
 import com.keuin.kbackupfabric.util.backup.incremental.ObjectCollection;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class IncBackupInfoSerializer {
@@ -65,5 +70,22 @@ public class IncBackupInfoSerializer {
                 objectOutputStream.writeObject(backup);
             }
         }
+    }
+
+    public static Iterable<SavedIncrementalBackup> fromDirectory(File directory) throws IOException {
+        if (!directory.isDirectory()) {
+            throw new IllegalArgumentException("Given directory is invalid.");
+        }
+        List<Path> pathList = new ArrayList<>();
+        Files.walk(directory.toPath(), 1).filter(p -> {
+            File f = p.toFile();
+            return f.isFile() && f.getName().endsWith(".kbi");
+        }).forEach(pathList::add);
+        List<SavedIncrementalBackup> objectList = new ArrayList<>();
+        for (Path path : pathList) {
+            SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(path.toFile());
+            objectList.add(info);
+        }
+        return Collections.unmodifiableCollection(objectList);
     }
 }

@@ -3,7 +3,6 @@ package com.keuin.kbackupfabric.backup.incremental.manager;
 import com.keuin.kbackupfabric.backup.incremental.ObjectCollection2;
 import com.keuin.kbackupfabric.backup.incremental.ObjectCollectionIterator;
 import com.keuin.kbackupfabric.backup.incremental.ObjectElement;
-import com.keuin.kbackupfabric.backup.incremental.identifier.ObjectIdentifier;
 import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import org.jetbrains.annotations.Nullable;
@@ -22,9 +21,6 @@ import static org.apache.commons.io.FileUtils.forceDelete;
 public class IncrementalBackupStorageManager {
 
     private final Path backupStorageBase;
-    private final Map<ObjectIdentifier, File> map = new HashMap<>();
-    private boolean loaded = false;
-
     private final Logger LOGGER = Logger.getLogger(IncrementalBackupStorageManager.class.getName());
 
     public IncrementalBackupStorageManager(Path backupStorageBase) {
@@ -40,7 +36,6 @@ public class IncrementalBackupStorageManager {
      */
     public @Nullable
     IncCopyResult addObjectCollection(ObjectCollection2 collection, File collectionBasePath) throws IOException {
-        // TODO: add failure detection
         if (!backupStorageBase.toFile().isDirectory()) {
             if (!backupStorageBase.toFile().mkdirs())
                 throw new IOException("Backup storage base directory does not exist, and failed to create it.");
@@ -79,9 +74,8 @@ public class IncrementalBackupStorageManager {
      *
      * @param collection the collection containing files to be deleted.
      * @return files deleted
-     * @throws IOException I/O error.
      */
-    public int deleteObjectCollection(ObjectCollection2 collection) throws IOException {
+    public int deleteObjectCollection(ObjectCollection2 collection) {
         return deleteObjectCollection(collection, Collections.emptySet());
     }
 
@@ -94,6 +88,7 @@ public class IncrementalBackupStorageManager {
      */
     public int deleteObjectCollection(ObjectCollection2 collection,
                                       Iterable<ObjectCollection2> otherExistingCollections) {
+        // TODO: test this
         Iterator<ObjectElement> iter = new ObjectCollectionIterator(collection);
         Set<ObjectElement> unusedElementSet = new HashSet<>();
         iter.forEachRemaining(unusedElementSet::add);
@@ -146,7 +141,7 @@ public class IncrementalBackupStorageManager {
             File copyTarget = new File(collectionBasePath.getAbsolutePath(), entry.getKey());
 
             if (!baseContainsObject(entry.getValue())) {
-                throw new IOException(String.format("File %s does not exist in the base.", copySource.getName()));
+                throw new IOException(String.format("File %s is missing in the backup storage. Cannot restore.", copySource.getName()));
             }
             if (copyTarget.exists()) {
                 boolean successDeleting = false;
@@ -188,8 +183,7 @@ public class IncrementalBackupStorageManager {
      * @return true or false.
      */
     private boolean baseContainsObject(ObjectElement objectElement) {
-        // This may be extended to use more variants of hash functions and combinations of other attributes (such as file size)
-        //TODO: optimize this by using in-memory data structure
+        // This can be extended to use more variants of hash functions and combinations of other attributes (such as file size)
         return (new File(backupStorageBase.toFile(), objectElement.getIdentifier().getIdentification())).exists();
     }
 
