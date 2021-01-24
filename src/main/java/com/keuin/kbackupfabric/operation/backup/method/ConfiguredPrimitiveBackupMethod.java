@@ -76,17 +76,9 @@ public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
             return false;
         }
 
-
-        // TODO: Refactor this to the concrete BackupMethod.
         // Decompress archive
         PrintUtil.info("Decompressing archived level ...");
         ZipUtil.unzip(Paths.get(backupSavePath, backupFileName).toString(), levelPath, false);
-
-
-//        try {
-//            Thread.sleep(1000);
-//        } catch (InterruptedException ignored) {
-//        }
 
         return true;
     }
