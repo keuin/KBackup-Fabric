@@ -99,13 +99,13 @@ public class RestoreOperation extends InvokableBlockingOperation {
                 }
 
             } catch (SecurityException e) {
-                PrintUtil.error("An exception occurred while restoring: " + e.getMessage());
                 e.printStackTrace();
+                PrintUtil.error("An exception occurred while restoring.");
             } catch (IOException e) {
-                PrintUtil.error(e.toString());
-                PrintUtil.error("Failed to restore due to an unhandled I/O exception.");
                 e.printStackTrace();
+                PrintUtil.error("Failed to restore due to an unexpected I/O exception.");
             }
+            PrintUtil.error("Failed to restore.");
             System.exit(0); // all failed restoration will eventually go here
         }
     }
