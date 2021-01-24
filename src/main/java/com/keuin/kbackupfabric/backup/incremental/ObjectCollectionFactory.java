@@ -44,8 +44,6 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
         if (!Objects.requireNonNull(directory).isDirectory())
             throw new IllegalArgumentException("given file is not a directory");
 
-
-        // TODO: use putter instead
         Set<File> files = new HashSet<>();
         for (Iterator<Path> iter = Files.walk(directory.toPath(), 1).iterator(); iter.hasNext(); ) {
             Path path = iter.next();
@@ -172,9 +170,5 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
             }
         }
     }
-
-//    private interface Puttable<K, V> {
-//        void put(K key, V value);
-//    }
 
 }
