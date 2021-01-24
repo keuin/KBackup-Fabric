@@ -6,10 +6,12 @@ import com.keuin.kbackupfabric.util.DateUtil;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class SavedIncBackupV1 implements SavedIncrementalBackup, Serializable {
 
+    private static final long serialVersionUID = 5798490056955510205L;
     private final ObjectCollection2 objectCollection2;
     private final String backupName;
     private final ZonedDateTime backupTime;
@@ -17,6 +19,8 @@ public class SavedIncBackupV1 implements SavedIncrementalBackup, Serializable {
     private final long increasedSizeBytes;
     private final int filesAdded;
     private final int totalFiles;
+    // this field is depreciated and kept only for serialization compatibility
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     public SavedIncBackupV1(ObjectCollection2 objectCollection2, String backupName, ZonedDateTime backupTime, long totalSizeBytes, long increasedSizeBytes, int filesAdded, int totalFiles) {
         this.totalFiles = totalFiles;

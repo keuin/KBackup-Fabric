@@ -117,7 +117,7 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
                     // so we perform a clean here
                     // perform a clean-up
                     Iterable<ObjectCollection2> backups = ObjectCollectionSerializer.fromDirectory(new File(backupIndexFileSaveDirectory));
-                    storageManager.deleteObjectCollection(collection, levelPathFile, backups);
+                    storageManager.deleteObjectCollection(collection, backups);
                 } catch (IOException e) {
                     LOGGER.warning("An exception occurred while cleaning up: " + e);
                 }

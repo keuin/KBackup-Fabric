@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
@@ -76,32 +77,38 @@ public class IncrementalBackupStorageManager {
     /**
      * Delete all files in the specific collection, from the storage base.
      *
-     * @param collection         the collection containing files to be deleted.
-     * @param collectionBasePath the collection base path.
+     * @param collection the collection containing files to be deleted.
+     * @return files deleted
      * @throws IOException I/O error.
      */
-    public void deleteObjectCollection(ObjectCollection2 collection, File collectionBasePath) throws IOException {
-        deleteObjectCollection(collection, collectionBasePath, Collections.emptySet());
+    public int deleteObjectCollection(ObjectCollection2 collection) throws IOException {
+        return deleteObjectCollection(collection, Collections.emptySet());
     }
 
     /**
      * Delete a collection from the storage base, optionally preserving files used by other backups.
      *
      * @param collection               the collection containing files to be deleted.
-     * @param collectionBasePath       the collection base path.
      * @param otherExistingCollections other collections (not to be deleted) in this base. Files exist in these collections will not be deleted.
+     * @return files deleted
      */
-    public void deleteObjectCollection(ObjectCollection2 collection, File collectionBasePath,
-                                       Iterable<ObjectCollection2> otherExistingCollections) {
+    public int deleteObjectCollection(ObjectCollection2 collection,
+                                      Iterable<ObjectCollection2> otherExistingCollections) {
         Iterator<ObjectElement> iter = new ObjectCollectionIterator(collection);
         Set<ObjectElement> unusedElementSet = new HashSet<>();
         iter.forEachRemaining(unusedElementSet::add);
         otherExistingCollections.forEach(col -> new ObjectCollectionIterator(col).forEachRemaining(unusedElementSet::remove));
+        AtomicInteger deleteCount = new AtomicInteger();
         unusedElementSet.forEach(ele -> {
             File file = new File(backupStorageBase.toFile(), ele.getIdentifier().getIdentification());
-            if (!file.delete())
-                LOGGER.warning("Failed to delete unused file " + file.getName());
+            if (file.exists()) {
+                if (file.delete())
+                    deleteCount.incrementAndGet();
+                else
+                    LOGGER.warning("Failed to delete unused file " + file.getName());
+            }
         });
+        return deleteCount.get();
     }
 
     /**

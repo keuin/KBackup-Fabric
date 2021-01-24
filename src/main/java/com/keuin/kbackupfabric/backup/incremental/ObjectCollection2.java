@@ -3,12 +3,9 @@ package com.keuin.kbackupfabric.backup.incremental;
 import java.io.Serializable;
 import java.util.*;
 
-/**
- * This class must be in package `com.keuin.kbackupfabric.util.backup.incremental.ObjectCollection`,
- * or it will not be compatible with old backups.
- */
 public class ObjectCollection2 implements Serializable {
 
+    private static final long serialVersionUID = 6651743898782813296L;
     private final String name;
     private final Map<String, ObjectElement> elements;
     private final Map<String, ObjectCollection2> subCollections;

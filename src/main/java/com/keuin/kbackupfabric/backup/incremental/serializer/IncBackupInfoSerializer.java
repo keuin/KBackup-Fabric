@@ -41,8 +41,12 @@ public class IncBackupInfoSerializer {
                 }
             } catch (ClassNotFoundException e) {
                 // this should not happen
+                e.printStackTrace();
                 throw new RuntimeException(e);
             }
+        } catch (Exception e) {
+            System.err.println("Failed to deserialize file " + file.getName());
+            throw e;
         }
     }
 

@@ -407,8 +407,9 @@ public final class KBCommands {
             return "(Incremental) " + info.getBackupName()
                     + ", " + DateUtil.getString(info.getBackupTime())
                     + ((info.getTotalSizeBytes() > 0) ?
-                    ("size: " + BackupFilesystemUtil.getFriendlyFileSizeString(info.getTotalSizeBytes())) : "");
+                    (" size: " + BackupFilesystemUtil.getFriendlyFileSizeString(info.getTotalSizeBytes())) : "");
         } catch (IOException e) {
+            e.printStackTrace();
             return "(Incremental) " + backupFile.getName();
         }
     }

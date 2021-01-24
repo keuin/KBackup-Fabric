@@ -1,11 +1,17 @@
 package com.keuin.kbackupfabric.backup.incremental;
 
-import org.jetbrains.annotations.NotNull;
+import com.keuin.kbackupfabric.backup.incremental.serializer.IncBackupInfoSerializer;
+import com.keuin.kbackupfabric.backup.incremental.serializer.SavedIncrementalBackup;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -19,17 +25,18 @@ public class ObjectCollectionSerializer {
      */
     @Deprecated
     public static ObjectCollection2 fromFile(File file) throws IOException {
-        Objects.requireNonNull(file);
-        ObjectCollection2 collection;
-        try (FileInputStream fileInputStream = new FileInputStream(file)) {
-            try (ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
-                collection = (ObjectCollection2) objectInputStream.readObject();
-            } catch (ClassNotFoundException ignored) {
-                // this should not happen
-                return null;
-            }
-        }
-        return collection;
+        throw new RuntimeException("This method has been depreciated.");
+//        Objects.requireNonNull(file);
+//        ObjectCollection2 collection;
+//        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+//            try (ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
+//                collection = (ObjectCollection2) objectInputStream.readObject();
+//            } catch (ClassNotFoundException ignored) {
+//                // this should not happen
+//                return null;
+//            }
+//        }
+//        return collection;
     }
 
     /**
@@ -46,38 +53,19 @@ public class ObjectCollectionSerializer {
     }
 
     public static Iterable<ObjectCollection2> fromDirectory(File directory) throws IOException {
-
         if (!directory.isDirectory()) {
             throw new IllegalArgumentException("Given directory is invalid.");
         }
-        return new Iterable<ObjectCollection2>() {
-            private final Iterator<ObjectCollection2> iter = new Iterator<ObjectCollection2>() {
-                private final Iterator<Path> i = Files.walk(directory.toPath(), 1).filter(p -> {
-                    File f = p.toFile();
-                    return f.isFile() && f.getName().endsWith(".kbi");
-                }).iterator();
-
-                @Override
-                public boolean hasNext() {
-                    return i.hasNext();
-                }
-
-                @Override
-                public ObjectCollection2 next() {
-                    try {
-                        return fromFile(i.next().toFile());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            };
-
-            @NotNull
-            @Override
-            public Iterator<ObjectCollection2> iterator() {
-                return iter;
-            }
-        };
-
+        List<Path> pathList = new ArrayList<>();
+        Files.walk(directory.toPath(), 1).filter(p -> {
+            File f = p.toFile();
+            return f.isFile() && f.getName().endsWith(".kbi");
+        }).forEach(pathList::add);
+        List<ObjectCollection2> objectList = new ArrayList<>();
+        for (Path path : pathList) {
+            SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(path.toFile());
+            objectList.add(info.getObjectCollection());
+        }
+        return Collections.unmodifiableCollection(objectList);
     }
 }
