@@ -75,7 +75,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
 
                 int cnt = 5;
                 do {
-                    PrintUtil.info(String.format("Wait %d seconds ...", cnt));
+                    PrintUtil.info(String.format("Wait for %d seconds...", cnt));
                     try{
                         Thread.sleep(1000);
                     } catch (InterruptedException ignored) {
@@ -91,7 +91,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
                             (endTime - startTime) / 1000.0
                     ));
                     PrintUtil.info("If you want to restart automatically after restoring, " +
-                            "please check the manual at: https://github.com/keuin/KBackup-Fabric/blob/master/README.md");
+                            "refer to https://github.com/keuin/KBackup-Fabric/blob/master/README.md");
                     //ServerRestartUtil.forkAndRestart();
                     System.exit(111);
                 } else {
