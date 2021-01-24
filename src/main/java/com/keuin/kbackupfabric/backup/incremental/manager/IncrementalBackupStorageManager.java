@@ -1,9 +1,9 @@
 package com.keuin.kbackupfabric.backup.incremental.manager;
 
 import com.keuin.kbackupfabric.backup.incremental.ObjectCollection2;
+import com.keuin.kbackupfabric.backup.incremental.ObjectCollectionIterator;
 import com.keuin.kbackupfabric.backup.incremental.ObjectElement;
 import com.keuin.kbackupfabric.backup.incremental.identifier.ObjectIdentifier;
-import com.keuin.kbackupfabric.backup.incremental.identifier.StorageObjectLoader;
 import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Logger;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
 
@@ -22,6 +23,8 @@ public class IncrementalBackupStorageManager {
     private final Path backupStorageBase;
     private final Map<ObjectIdentifier, File> map = new HashMap<>();
     private boolean loaded = false;
+
+    private final Logger LOGGER = Logger.getLogger(IncrementalBackupStorageManager.class.getName());
 
     public IncrementalBackupStorageManager(Path backupStorageBase) {
         this.backupStorageBase = backupStorageBase;
@@ -32,7 +35,7 @@ public class IncrementalBackupStorageManager {
      *
      * @param collection the collection.
      * @return objects copied to the base.
-     * @throws IOException I/O Error.
+     * @throws IOException I/O error.
      */
     public @Nullable
     IncCopyResult addObjectCollection(ObjectCollection2 collection, File collectionBasePath) throws IOException {
@@ -68,6 +71,37 @@ public class IncrementalBackupStorageManager {
         }
 
         return copyCount;
+    }
+
+    /**
+     * Delete all files in the specific collection, from the storage base.
+     *
+     * @param collection         the collection containing files to be deleted.
+     * @param collectionBasePath the collection base path.
+     * @throws IOException I/O error.
+     */
+    public void deleteObjectCollection(ObjectCollection2 collection, File collectionBasePath) throws IOException {
+        deleteObjectCollection(collection, collectionBasePath, Collections.emptySet());
+    }
+
+    /**
+     * Delete a collection from the storage base, optionally preserving files used by other backups.
+     *
+     * @param collection               the collection containing files to be deleted.
+     * @param collectionBasePath       the collection base path.
+     * @param otherExistingCollections other collections (not to be deleted) in this base. Files exist in these collections will not be deleted.
+     */
+    public void deleteObjectCollection(ObjectCollection2 collection, File collectionBasePath,
+                                       Iterable<ObjectCollection2> otherExistingCollections) {
+        Iterator<ObjectElement> iter = new ObjectCollectionIterator(collection);
+        Set<ObjectElement> unusedElementSet = new HashSet<>();
+        iter.forEachRemaining(unusedElementSet::add);
+        otherExistingCollections.forEach(col -> new ObjectCollectionIterator(col).forEachRemaining(unusedElementSet::remove));
+        unusedElementSet.forEach(ele -> {
+            File file = new File(backupStorageBase.toFile(), ele.getIdentifier().getIdentification());
+            if (!file.delete())
+                LOGGER.warning("Failed to delete unused file " + file.getName());
+        });
     }
 
     /**
@@ -140,28 +174,6 @@ public class IncrementalBackupStorageManager {
         return copyCount;
     }
 
-    public int cleanUnusedObjects(Iterable<ObjectCollection2> collectionIterable) {
-        // construct object list in memory
-        Set<String> objects = new HashSet<>();
-//        backupStorageBase
-
-        for (ObjectCollection2 collection : collectionIterable) {
-            for (ObjectElement ele : collection.getElementMap().values()) {
-
-            }
-        }
-        throw new RuntimeException("not impl");
-    }
-
-    /**
-     * Check all objects, return unused ones.
-     *
-     * @return the unused ones.
-     */
-    private Map<ObjectIdentifier, File> markUnusedObjects() {
-        throw new RuntimeException("not impl");
-    }
-
     /**
      * Check if the backup base contains given element.
      *
@@ -174,25 +186,4 @@ public class IncrementalBackupStorageManager {
         return (new File(backupStorageBase.toFile(), objectElement.getIdentifier().getIdentification())).exists();
     }
 
-    private void lazyLoadStorage() throws IOException {
-        if (!loaded) {
-            loadStorage();
-            loaded = true;
-        }
-    }
-
-    private synchronized void loadStorage() throws IOException {
-        map.clear();
-        Files.walk(backupStorageBase, 1).forEach(path -> {
-            File file = path.toFile();
-            ObjectIdentifier identifier = StorageObjectLoader.asIdentifier(file);
-            if (identifier == null) {
-                map.clear();
-                throw new IllegalStateException(String.format(
-                        "Bad storage object %s: cannot recognize identifier.", file.getName()
-                ));
-            }
-            map.put(identifier, file);
-        });
-    }
 }

@@ -1,6 +1,11 @@
 package com.keuin.kbackupfabric.backup.incremental;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.Objects;
 
 /**
@@ -38,5 +43,41 @@ public class ObjectCollectionSerializer {
                 objectOutputStream.writeObject(collection);
             }
         }
+    }
+
+    public static Iterable<ObjectCollection2> fromDirectory(File directory) throws IOException {
+
+        if (!directory.isDirectory()) {
+            throw new IllegalArgumentException("Given directory is invalid.");
+        }
+        return new Iterable<ObjectCollection2>() {
+            private final Iterator<ObjectCollection2> iter = new Iterator<ObjectCollection2>() {
+                private final Iterator<Path> i = Files.walk(directory.toPath(), 1).filter(p -> {
+                    File f = p.toFile();
+                    return f.isFile() && f.getName().endsWith(".kbi");
+                }).iterator();
+
+                @Override
+                public boolean hasNext() {
+                    return i.hasNext();
+                }
+
+                @Override
+                public ObjectCollection2 next() {
+                    try {
+                        return fromFile(i.next().toFile());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+
+            @NotNull
+            @Override
+            public Iterator<ObjectCollection2> iterator() {
+                return iter;
+            }
+        };
+
     }
 }

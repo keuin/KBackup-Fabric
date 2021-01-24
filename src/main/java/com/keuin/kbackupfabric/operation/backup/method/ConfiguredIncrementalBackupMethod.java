@@ -2,6 +2,7 @@ package com.keuin.kbackupfabric.operation.backup.method;
 
 import com.keuin.kbackupfabric.backup.incremental.ObjectCollection2;
 import com.keuin.kbackupfabric.backup.incremental.ObjectCollectionFactory;
+import com.keuin.kbackupfabric.backup.incremental.ObjectCollectionSerializer;
 import com.keuin.kbackupfabric.backup.incremental.identifier.Sha256Identifier;
 import com.keuin.kbackupfabric.backup.incremental.manager.IncCopyResult;
 import com.keuin.kbackupfabric.backup.incremental.manager.IncrementalBackupStorageManager;
@@ -47,19 +48,22 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
         final int hashFactoryThreads = ThreadingUtil.getRecommendedThreadCount(); // how many threads do we use to generate the hash tree
         LOGGER.info("Threads: " + hashFactoryThreads);
 
+        // needed in abort progress
+        File levelPathFile = new File(levelPath);
         IncrementalBackupFeedback feedback;
-        try {
-            File levelPathFile = new File(levelPath);
+        IncrementalBackupStorageManager storageManager = null;
 
+        ObjectCollection2 collection = null; // this backup's collection
+        try {
             // construct incremental backup index
             PrintUtil.info("Hashing files...");
             // TODO
-            ObjectCollection2 collection = new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), hashFactoryThreads, 16)
+            collection = new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), hashFactoryThreads, 16)
                     .fromDirectory(levelPathFile, new HashSet<>(Arrays.asList("session.lock", "kbackup_metadata")));
 
             // update storage
             PrintUtil.info("Copying files...");
-            IncrementalBackupStorageManager storageManager = new IncrementalBackupStorageManager(Paths.get(backupBaseDirectory));
+            storageManager = new IncrementalBackupStorageManager(Paths.get(backupBaseDirectory));
             IncCopyResult copyResult = storageManager.addObjectCollection(collection, levelPathFile);
             if (copyResult == null) {
                 PrintUtil.info("Failed to backup. No further information.");
@@ -93,16 +97,32 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
             feedback = new IncrementalBackupFeedback(false, null);
         }
 
+        // do clean-up if failed
         if (!feedback.isSuccess()) {
-            LOGGER.severe("Failed to backup.");
-            // do clean-up if failed
+            LOGGER.severe("Failed to backup. Cleaning up...");
+
+            // remove index file
             File backupIndexFile = new File(backupIndexFileSaveDirectory, backupIndexFileName);
             if (backupIndexFile.exists()) {
                 if (!backupIndexFile.delete()) {
                     LOGGER.warning("Failed to clean up: cannot delete file " + backupIndexFile.getName());
+                    return feedback; // not try to remove unused files
                 }
             }
-            //TODO: do more deep clean for object files
+
+            // remove unused object files in the base
+            if (collection != null) {
+                try {
+                    // collection may have been copied (partially) to the base, but we may not need them
+                    // so we perform a clean here
+                    // perform a clean-up
+                    Iterable<ObjectCollection2> backups = ObjectCollectionSerializer.fromDirectory(new File(backupIndexFileSaveDirectory));
+                    storageManager.deleteObjectCollection(collection, levelPathFile, backups);
+                } catch (IOException e) {
+                    LOGGER.warning("An exception occurred while cleaning up: " + e);
+                }
+                LOGGER.info("Backup aborted.");
+            }
         }
 
         return feedback;

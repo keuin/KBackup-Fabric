@@ -90,6 +90,7 @@ public final class KBCommands {
         // TODO: Show real name and size and etc info for incremental backup
         // TODO: Show concrete info from metadata for `.zip` backup
         MinecraftServer server = context.getSource().getMinecraftServer();
+        // TODO: refactor this to use {@link ObjectCollectionSerializer#fromDirectory}
         File[] files = getBackupSaveDirectory(server).listFiles(
                 (dir, name) -> dir.isDirectory() &&
                         (name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
@@ -100,6 +101,7 @@ public final class KBCommands {
             Objects.requireNonNull(file);
             if (file.getName().toLowerCase().endsWith(".zip"))
                 return getPrimitiveBackupInformationString(file.getName(), file.length());
+                // TODO: refactor this to use {@link ObjectCollectionSerializer#fromDirectory}
             else if (file.getName().toLowerCase().endsWith(".kbi"))
                 return getIncrementalBackupInformationString(file);
             return file.getName();
