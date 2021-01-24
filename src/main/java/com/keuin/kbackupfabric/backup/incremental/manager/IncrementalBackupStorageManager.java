@@ -55,8 +55,7 @@ public class IncrementalBackupStorageManager {
                 // element does not exist. copy.
                 Files.copy(copySourceFile.toPath(), copyDestination.toPath());
                 copyCount = copyCount.addWith(new IncCopyResult(1, 1, fileBytes, fileBytes));
-            }
-            {
+            } else {
                 // element exists (file reused). Just update the stat info
                 copyCount = copyCount.addWith(new IncCopyResult(1, 0, 0, fileBytes));
             }
