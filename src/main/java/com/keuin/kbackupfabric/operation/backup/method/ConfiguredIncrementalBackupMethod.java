@@ -74,7 +74,7 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
 
             // newer saved info (with metadata)
             File indexFile = new File(backupIndexFileSaveDirectory, backupIndexFileName);
-            BackupFileNameEncoder.BackupBasicInformation info = new IncrementalBackupFileNameEncoder().decode(backupIndexFileName);
+            BackupFileNameEncoder.BackupBasicInformation info = IncrementalBackupFileNameEncoder.INSTANCE.decode(backupIndexFileName);
             IncBackupInfoSerializer.toFile(indexFile, SavedIncrementalBackup.newLatest(
                     collection,
                     info.customName,

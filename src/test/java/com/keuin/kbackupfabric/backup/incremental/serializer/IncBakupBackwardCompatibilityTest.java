@@ -22,7 +22,7 @@ public class IncBakupBackwardCompatibilityTest {
     private final LocalDateTime backupTime = LocalDateTime.of(2000, 1, 1, 1, 1, 1, 1);
 
     private final Path testRoot = Paths.get(".\\testfile\\IncBackupBackwardCompatibilityTest");
-    private final File indexFile = new File(testRoot.toString(), new IncrementalBackupFileNameEncoder().encode(customName, backupTime));
+    private final File indexFile = new File(testRoot.toString(), IncrementalBackupFileNameEncoder.INSTANCE.encode(customName, backupTime));
 
     @Test
     public void testBackwardCompatibility() throws IOException {

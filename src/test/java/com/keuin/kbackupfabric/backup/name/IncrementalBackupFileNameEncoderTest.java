@@ -11,7 +11,7 @@ public class IncrementalBackupFileNameEncoderTest {
     public void testEncode() {
         LocalDateTime time = LocalDateTime.of(1, 1, 1, 1, 1, 1);
         String customName = "name";
-        IncrementalBackupFileNameEncoder encoder = new IncrementalBackupFileNameEncoder();
+        IncrementalBackupFileNameEncoder encoder = IncrementalBackupFileNameEncoder.INSTANCE;
         assertEquals("incremental-0001-01-01_01-01-01_name.kbi", encoder.encode(customName, time));
     }
 
@@ -19,7 +19,7 @@ public class IncrementalBackupFileNameEncoderTest {
     public void testDecode() {
         LocalDateTime time = LocalDateTime.of(1, 1, 1, 1, 1, 1);
         String customName = "name";
-        IncrementalBackupFileNameEncoder encoder = new IncrementalBackupFileNameEncoder();
+        IncrementalBackupFileNameEncoder encoder = IncrementalBackupFileNameEncoder.INSTANCE;
         BackupFileNameEncoder.BackupBasicInformation information = encoder.decode("incremental-0001-01-01_01-01-01_name.kbi");
         assertEquals(time, information.time);
         assertEquals(customName, information.customName);
@@ -27,7 +27,7 @@ public class IncrementalBackupFileNameEncoderTest {
 
     @Test
     public void isValid() {
-        IncrementalBackupFileNameEncoder encoder = new IncrementalBackupFileNameEncoder();
+        IncrementalBackupFileNameEncoder encoder = IncrementalBackupFileNameEncoder.INSTANCE;
         assertTrue(encoder.isValidFileName("incremental-0001-01-01_01-01-01_name.kbi"));
         assertTrue(encoder.isValidFileName("incremental-0001-01-01_01-01-01_0001-01-01_01-01-01_name.kbi"));
         assertFalse(encoder.isValidFileName("incremental-0001-01-01_01-01-01incremental-0001-01-01_01-01-01_name.kbi"));

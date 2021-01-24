@@ -1,24 +1,24 @@
 package com.keuin.kbackupfabric.backup.name;
 
+import com.keuin.kbackupfabric.util.DateUtil;
+
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class IncrementalBackupFileNameEncoder implements BackupFileNameEncoder {
-    private static final String backupFileNamePrefix = "incremental";
-    // TODO: Merge all date formatter like this, into one single instance
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
-    // TODO: make this private and use singleton pattern
-    public IncrementalBackupFileNameEncoder() {
+    private static final String backupFileNamePrefix = "incremental";
+    public static final IncrementalBackupFileNameEncoder INSTANCE = new IncrementalBackupFileNameEncoder();
+
+    private IncrementalBackupFileNameEncoder() {
     }
 
     @Override
     public String encode(String customName, LocalDateTime time) {
         if (!isValidCustomName(customName))
             throw new IllegalArgumentException("Invalid custom name");
-        String timeString = time.format(formatter);
+        String timeString = DateUtil.getString(time);
         return backupFileNamePrefix + "-" + timeString + "_" + customName + ".kbi";
     }
 
@@ -31,8 +31,9 @@ public class IncrementalBackupFileNameEncoder implements BackupFileNameEncoder {
         if (matcher.find()) {
             String timeString = matcher.group(1);
             String customName = matcher.group(2);
-            return new BackupFileNameEncoder.BackupBasicInformation(customName, LocalDateTime.parse(timeString, formatter));
+            return new BackupFileNameEncoder.BackupBasicInformation(customName, DateUtil.toLocalDateTime(timeString));
         }
         return null;
     }
+
 }

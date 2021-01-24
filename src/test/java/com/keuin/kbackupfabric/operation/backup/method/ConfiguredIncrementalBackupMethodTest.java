@@ -23,7 +23,7 @@ public class ConfiguredIncrementalBackupMethodTest {
     private final String sourceDirectoryName = "source";
     private final String destDirectoryName = "destination";
     private final String customBackupName = "index";
-    private final String indexFileName = new IncrementalBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now());
+    private final String indexFileName = IncrementalBackupFileNameEncoder.INSTANCE.encode(customBackupName, LocalDateTime.now());
 
     private final double directoryFactor = 0.05;
     private final double fileFactor = 0.1;

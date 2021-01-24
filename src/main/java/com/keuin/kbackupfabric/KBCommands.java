@@ -1,6 +1,8 @@
 package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.backup.BackupFilesystemUtil;
+import com.keuin.kbackupfabric.backup.incremental.serializer.IncBackupInfoSerializer;
+import com.keuin.kbackupfabric.backup.incremental.serializer.SavedIncrementalBackup;
 import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
 import com.keuin.kbackupfabric.backup.name.PrimitiveBackupFileNameEncoder;
 import com.keuin.kbackupfabric.backup.suggestion.BackupNameSuggestionProvider;
@@ -12,6 +14,7 @@ import com.keuin.kbackupfabric.operation.abstracts.i.Invokable;
 import com.keuin.kbackupfabric.operation.backup.method.ConfiguredBackupMethod;
 import com.keuin.kbackupfabric.operation.backup.method.ConfiguredIncrementalBackupMethod;
 import com.keuin.kbackupfabric.operation.backup.method.ConfiguredPrimitiveBackupMethod;
+import com.keuin.kbackupfabric.util.DateUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -93,16 +96,13 @@ public final class KBCommands {
                                 || name.toLowerCase().endsWith(".kbi"))
         );
 
-        Function<File, String> backupInformationProvider = new Function<File, String>() {
-            @Override
-            public String apply(File file) {
-                Objects.requireNonNull(file);
-                if (file.getName().toLowerCase().endsWith(".zip"))
-                    return getPrimitiveBackupInformationString(file.getName(), file.length());
-                else if (file.getName().toLowerCase().endsWith(".kbi"))
-                    return getIncrementalBackupInformationString(file.getName());
-                return file.getName();
-            }
+        Function<File, String> backupInformationProvider = file -> {
+            Objects.requireNonNull(file);
+            if (file.getName().toLowerCase().endsWith(".zip"))
+                return getPrimitiveBackupInformationString(file.getName(), file.length());
+            else if (file.getName().toLowerCase().endsWith(".kbi"))
+                return getIncrementalBackupInformationString(file);
+            return file.getName();
         };
 
         synchronized (backupFileNameList) {
@@ -290,7 +290,7 @@ public final class KBCommands {
                     getLevelPath(server),
                     getBackupSaveDirectory(server).getCanonicalPath()
             ) : new ConfiguredIncrementalBackupMethod(
-                    new IncrementalBackupFileNameEncoder().encode(customBackupName, LocalDateTime.now()),
+                    IncrementalBackupFileNameEncoder.INSTANCE.encode(customBackupName, LocalDateTime.now()),
                     getLevelPath(server),
                     getBackupSaveDirectory(server).getCanonicalPath(),
                     getIncrementalBackupBaseDirectory(server).getCanonicalPath()
@@ -393,17 +393,22 @@ public final class KBCommands {
 
     private static String getPrimitiveBackupInformationString(String backupFileName, long backupFileSizeBytes) {
         return String.format(
-                "%s , size: %s",
+                "(ZIP) %s , size: %s",
                 new PrimitiveBackupFileNameEncoder().decode(backupFileName),
                 getFriendlyFileSizeString(backupFileSizeBytes)
         );
     }
 
-    private static String getIncrementalBackupInformationString(String backupFileName) {
-        return String.format(
-                "(Incremental) %s",
-                new IncrementalBackupFileNameEncoder().decode(backupFileName)
-        );
+    private static String getIncrementalBackupInformationString(File backupFile) {
+        try {
+            SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(backupFile);
+            return "(Incremental) " + info.getBackupName()
+                    + ", " + DateUtil.getString(info.getBackupTime())
+                    + ((info.getTotalSizeBytes() > 0) ?
+                    ("size: " + BackupFilesystemUtil.getFriendlyFileSizeString(info.getTotalSizeBytes())) : "");
+        } catch (IOException e) {
+            return "(Incremental) " + backupFile.getName();
+        }
     }
 
 //    /**

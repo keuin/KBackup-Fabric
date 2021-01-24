@@ -26,13 +26,13 @@ public class IncBackupInfoSerializer {
                     return (SavedIncrementalBackup) o;
                 } else if (o instanceof ObjectCollection) {
                     // backward compatibility with old-style (v0) incremental backup
-                    BackupFileNameEncoder.BackupBasicInformation info = new IncrementalBackupFileNameEncoder().decode(file.getName());
+                    BackupFileNameEncoder.BackupBasicInformation info = IncrementalBackupFileNameEncoder.INSTANCE.decode(file.getName());
                     if (info == null)
                         throw new IOException("Invalid backup file name.");
                     return new SavedIncBackupV0(ObjectCollectionConverter.convert((ObjectCollection) o), info);
                 } else if (o instanceof ObjectCollection2) {
                     // compatible with 1.4.6 implementation
-                    BackupFileNameEncoder.BackupBasicInformation info = new IncrementalBackupFileNameEncoder().decode(file.getName());
+                    BackupFileNameEncoder.BackupBasicInformation info = IncrementalBackupFileNameEncoder.INSTANCE.decode(file.getName());
                     if (info == null)
                         throw new IOException("Invalid backup file name.");
                     return new SavedIncBackupV0((ObjectCollection2) o, info);
