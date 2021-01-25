@@ -18,6 +18,9 @@ import java.util.logging.Logger;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
 
+/**
+ * Managing the base storing all collection objects.
+ */
 public class IncrementalBackupStorageManager {
 
     private final Path backupStorageBase;

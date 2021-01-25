@@ -1,8 +1,6 @@
-package com.keuin.kbackupfabric;
+package com.keuin.kbackupfabric.ui;
 
 import com.keuin.kbackupfabric.backup.BackupFilesystemUtil;
-import com.keuin.kbackupfabric.backup.incremental.serializer.IncBackupInfoSerializer;
-import com.keuin.kbackupfabric.backup.incremental.serializer.SavedIncrementalBackup;
 import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
 import com.keuin.kbackupfabric.backup.name.PrimitiveBackupFileNameEncoder;
 import com.keuin.kbackupfabric.backup.suggestion.BackupNameSuggestionProvider;
@@ -21,14 +19,11 @@ import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
 
 import static com.keuin.kbackupfabric.backup.BackupFilesystemUtil.*;
 import static com.keuin.kbackupfabric.util.PrintUtil.*;
@@ -41,11 +36,34 @@ public final class KBCommands {
     private static final String DEFAULT_BACKUP_NAME = "noname";
     private static boolean notifiedPreviousRestoration = false;
 
+    // don't access it directly
+    private static MinecraftServer server;
+    private static BackupManager backupManager;
+    private static final Object managerCreatorLock = new Object();
+
     //private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final List<String> backupFileNameList = new ArrayList<>(); // index -> backupName
+    private static final List<BackupInfo> backupList = new ArrayList<>(); // index -> backupName
     private static Invokable pendingOperation = null;
     //private static BackupMethod activatedBackupMethod = new PrimitiveBackupMethod(); // The backup method we currently using
+
+    public static void setServer(MinecraftServer server) {
+        KBCommands.server = server;
+    }
+
+    private static MinecraftServer getServer() {
+        if (server != null)
+            return server;
+        throw new IllegalStateException("server is not initialized.");
+    }
+
+    private static BackupManager getBackupManager() {
+        synchronized (managerCreatorLock) {
+            if (backupManager == null)
+                backupManager = new BackupManager(getBackupSaveDirectory(getServer()));
+            return backupManager;
+        }
+    }
 
     /**
      * Print the help menu.
@@ -75,9 +93,22 @@ public final class KBCommands {
         if (MetadataHolder.hasMetadata() && !notifiedPreviousRestoration) {
             // Output metadata info
             notifiedPreviousRestoration = true;
-            msgStress(context, "Restored from backup " + MetadataHolder.getMetadata().getBackupName());
+            msgStress(context, "Restored from backup "
+                    + MetadataHolder.getMetadata().getBackupName() + " (created at " +
+                    DateUtil.fromEpochMillis(MetadataHolder.getMetadata().getBackupTime())
+                    + ")");
         }
         return statCode;
+    }
+
+    private static void updateBackupList() {
+        synchronized (backupList) {
+            backupList.clear();
+            List<BackupInfo> list = new ArrayList<>();
+            getBackupManager().getAllBackups().forEach(list::add);
+            list.sort(Comparator.comparing(BackupInfo::getCreationTime).reversed());
+            backupList.addAll(list);
+        }
     }
 
     /**
@@ -91,44 +122,70 @@ public final class KBCommands {
         //       that's enough.
         // TODO: Show real name and size and etc info for incremental backup
         // TODO: Show concrete info from metadata for `.zip` backup
-        MinecraftServer server = context.getSource().getMinecraftServer();
+//        MinecraftServer server = context.getSource().getMinecraftServer();
         // TODO: refactor this to use {@link ObjectCollectionSerializer#fromDirectory}
-        File[] files = getBackupSaveDirectory(server).listFiles(
-                (dir, name) -> dir.isDirectory() &&
-                        (name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
-                                || name.toLowerCase().endsWith(".kbi"))
-        );
+//        File[] files = getBackupSaveDirectory(server).listFiles(
+//                (dir, name) -> dir.isDirectory() &&
+//                        (name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
+//                                || name.toLowerCase().endsWith(".kbi"))
+//        );
 
-        Function<File, String> backupInformationProvider = file -> {
-            Objects.requireNonNull(file);
-            if (file.getName().toLowerCase().endsWith(".zip"))
-                return getPrimitiveBackupInformationString(file.getName(), file.length());
-                // TODO: refactor this to use {@link ObjectCollectionSerializer#fromDirectory}
-            else if (file.getName().toLowerCase().endsWith(".kbi"))
-                return getIncrementalBackupInformationString(file);
-            return file.getName();
-        };
+//        Function<File, String> backupInformationProvider = file -> {
+//            Objects.requireNonNull(file);
+//            if (file.getName().toLowerCase().endsWith(".zip"))
+//                return getPrimitiveBackupInformationString(file.getName(), file.length());
+//                // TODO: refactor this to use {@link ObjectCollectionSerializer#fromDirectory}
+//            else if (file.getName().toLowerCase().endsWith(".kbi"))
+//                return getIncrementalBackupInformationString(file);
+//            return file.getName();
+//        };
 
-        synchronized (backupFileNameList) {
-            backupFileNameList.clear();
-            if (files != null) {
-                if (files.length != 0) {
-                    msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
-                } else {
-                    msgInfo(context, "There are no available backups. To make a new backup, run /kb backup.");
-                }
-                int i = 0;
-                for (File file : files) {
-                    ++i;
-                    String backupFileName = file.getName();
-                    msgInfo(context, String.format("[%d] %s", i, backupInformationProvider.apply(file)));
-                    backupFileNameList.add(backupFileName);
-                }
-            } else {
-                msgErr(context, "Error: failed to list files in backup folder.");
+        updateBackupList();
+        synchronized (backupList) {
+            if (backupList.isEmpty())
+                msgInfo(context, "There is no backup available. To make a new backup, use `/kb backup`.");
+            else
+                msgInfo(context, "Available backups:");
+            for (int i = backupList.size() - 1; i >= 0; --i) {
+                BackupInfo info = backupList.get(i);
+                printBackupInfo(context, info, i);
             }
+//            if (files != null) {
+//                if (files.length != 0) {
+//                    msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
+//                } else {
+//                    msgInfo(context, "There are no available backups. To make a new backup, run /kb backup.");
+//                }
+//                int i = 0;
+//                for (File file : files) {
+//                    ++i;
+//                    String backupFileName = file.getName();
+//                    msgInfo(context, String.format("[%d] %s", i, backupInformationProvider.apply(file)));
+//                    backupFileNameList.add(backupFileName);
+//                }
+//            } else {
+//                msgErr(context, "Error: failed to list files in backup folder.");
+//            }
         }
         return SUCCESS;
+    }
+
+    /**
+     * Print backup information.
+     *
+     * @param context the context.
+     * @param info    the info.
+     * @param i       the index, starting from 0.
+     */
+    private static void printBackupInfo(CommandContext<ServerCommandSource> context, BackupInfo info, int i) {
+        msgInfo(context, String.format(
+                "[%d] (%s) %s (%s) %s",
+                i + 1,
+                info.getType(),
+                info.getName(),
+                DateUtil.getPrettyString(info.getCreationTime()),
+                (info.getSizeBytes() > 0) ? BackupFilesystemUtil.getFriendlyFileSizeString(info.getSizeBytes()) : ""
+        ));
     }
 
     /**
@@ -244,7 +301,6 @@ public final class KBCommands {
             }
 
             // Detect backup type
-
 
             // Update pending task
             //pendingOperation = AbstractConfirmableOperation.createRestoreOperation(context, backupName);
@@ -365,29 +421,32 @@ public final class KBCommands {
         // FIXME: This breaks after adding incremental backup
         try {
             // List all backups
-            MinecraftServer server = context.getSource().getMinecraftServer();
-            List<File> files = Arrays.asList(Objects.requireNonNull(getBackupSaveDirectory(server).listFiles()));
-            files.removeIf(f -> !f.getName().startsWith(BackupFilesystemUtil.getBackupFileNamePrefix()));
-            files.sort((x, y) -> (int) (BackupFilesystemUtil.getBackupTimeFromBackupFileName(y.getName()) - BackupFilesystemUtil.getBackupTimeFromBackupFileName(x.getName())));
-            File prevBackupFile = files.get(0);
-            String backupFileName = prevBackupFile.getName();
-            int i;
-            synchronized (backupFileNameList) {
-                i = backupFileNameList.indexOf(backupFileName);
-                if (i == -1) {
-                    backupFileNameList.add(backupFileName);
-                    i = backupFileNameList.size();
+            updateBackupList();
+//            MinecraftServer server = context.getSource().getMinecraftServer();
+//            List<File> files = Arrays.asList(Objects.requireNonNull(getBackupSaveDirectory(server).listFiles()));
+//            files.removeIf(f -> !f.getName().startsWith(BackupFilesystemUtil.getBackupFileNamePrefix()));
+//            files.sort((x, y) -> (int) (BackupFilesystemUtil.getBackupTimeFromBackupFileName(y.getName()) - BackupFilesystemUtil.getBackupTimeFromBackupFileName(x.getName())));
+//            File prevBackupFile = files.get(0);
+//            String backupFileName = prevBackupFile.getName();
+//            int i;
+//            synchronized (backupList) {
+//                i = backupList.indexOf(backupFileName);
+//                if (i == -1) {
+//                    backupList.add(backupFileName);
+//                    i = backupList.size();
+//                } else {
+//                    ++i;
+//                }
+//            }
+            synchronized (backupList) {
+                if (!backupList.isEmpty()) {
+                    BackupInfo info = backupList.get(0);
+                    msgInfo(context, "The most recent backup:");
+                    printBackupInfo(context, info, 0);
                 } else {
-                    ++i;
+                    msgInfo(context, "There is no backup available.");
                 }
             }
-            msgInfo(context, String.format(
-                    "The most recent backup: [%d] %s",
-                    i,
-                    getPrimitiveBackupInformationString(backupFileName, prevBackupFile.length())
-            ));
-        } catch (NullPointerException e) {
-            msgInfo(context, "There are no backups available.");
         } catch (SecurityException ignored) {
             msgErr(context, "Failed to read file.");
             return FAILED;
@@ -395,26 +454,26 @@ public final class KBCommands {
         return SUCCESS;
     }
 
-    private static String getPrimitiveBackupInformationString(String backupFileName, long backupFileSizeBytes) {
-        return String.format(
-                "(ZIP) %s , size: %s",
-                PrimitiveBackupFileNameEncoder.INSTANCE.decode(backupFileName),
-                getFriendlyFileSizeString(backupFileSizeBytes)
-        );
-    }
+//    private static String getPrimitiveBackupInformationString(String backupFileName, long backupFileSizeBytes) {
+//        return String.format(
+//                "(ZIP) %s , size: %s",
+//                PrimitiveBackupFileNameEncoder.INSTANCE.decode(backupFileName),
+//                getFriendlyFileSizeString(backupFileSizeBytes)
+//        );
+//    }
 
-    private static String getIncrementalBackupInformationString(File backupFile) {
-        try {
-            SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(backupFile);
-            return "(Incremental) " + info.getBackupName()
-                    + ", " + DateUtil.getString(info.getBackupTime())
-                    + ((info.getTotalSizeBytes() > 0) ?
-                    (" size: " + BackupFilesystemUtil.getFriendlyFileSizeString(info.getTotalSizeBytes())) : "");
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "(Incremental) " + backupFile.getName();
-        }
-    }
+//    private static String getIncrementalBackupInformationString(File backupFile) {
+//        try {
+//            SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(backupFile);
+//            return "(Incremental) " + info.getBackupName()
+//                    + ", " + DateUtil.getString(info.getBackupTime())
+//                    + ((info.getTotalSizeBytes() > 0) ?
+//                    (" size: " + BackupFilesystemUtil.getFriendlyFileSizeString(info.getTotalSizeBytes())) : "");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return "(Incremental) " + backupFile.getName();
+//        }
+//    }
 
 //    /**
 //     * Select the backup method we use.
@@ -444,8 +503,8 @@ public final class KBCommands {
             if (backupName.matches("[0-9]*")) {
                 // If numeric input
                 int index = Integer.parseInt(backupName) - 1;
-                synchronized (backupFileNameList) {
-                    return backupFileNameList.get(index); // Replace input number with real backup file name.
+                synchronized (backupList) {
+                    return backupList.get(index).getBackupFileName(); // Replace input number with real backup file name.
                 }
             }
         } catch (NumberFormatException | IndexOutOfBoundsException ignored) {
