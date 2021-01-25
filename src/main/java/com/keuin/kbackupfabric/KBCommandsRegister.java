@@ -1,6 +1,7 @@
 package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.backup.suggestion.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.ui.KBCommands;
 import com.keuin.kbackupfabric.util.PermissionValidator;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;

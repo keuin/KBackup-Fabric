@@ -15,19 +15,22 @@ public class FilesystemUtil {
      */
     public static long getFileSizeBytes(String parentDirectory, String fileName) {
         long fileSize = -1;
-        try{
+        try {
             File backupZipFile = new File(parentDirectory, fileName);
             fileSize = backupZipFile.length();
-        } catch (SecurityException ignored){
+        } catch (SecurityException ignored) {
         }
         return fileSize;
     }
 
     public static long getFileSizeBytes(String filePath) {
+        return getFileSizeBytes(new File(filePath));
+    }
+
+    public static long getFileSizeBytes(File file) {
         long fileSize = -1;
         try {
-            File backupZipFile = new File(filePath);
-            fileSize = backupZipFile.length();
+            fileSize = file.length();
         } catch (SecurityException ignored) {
         }
         return fileSize;

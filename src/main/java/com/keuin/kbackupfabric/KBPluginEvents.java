@@ -4,6 +4,8 @@ import com.keuin.kbackupfabric.backup.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.backup.suggestion.BackupNameSuggestionProvider;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
+import com.keuin.kbackupfabric.ui.KBCommands;
+import com.keuin.kbackupfabric.util.DateUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.server.ServerStartCallback;
@@ -15,8 +17,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
 
@@ -39,10 +39,13 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
     public void onStartServer(MinecraftServer server) {
 
         if (!(server instanceof MinecraftDedicatedServer))
-            throw new RuntimeException("KBackup is a server-side-only plugin. Please do not use it in Minecraft client.");
+            throw new RuntimeException("KBackup is a server-side-only plugin. Please do not use it in client-side.");
 
         // Initialize player manager reference
         PrintUtil.setPlayerManager(server.getPlayerManager());
+
+        // Initialize backup manager server reference
+        KBCommands.setServer(server);
 
         // Update backup suggestion list
         BackupNameSuggestionProvider.setBackupSaveDirectory(BackupFilesystemUtil.getBackupSaveDirectory(server).getPath());
@@ -64,7 +67,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
                 MetadataHolder.setMetadata(metadata);
                 PrintUtil.info("Restored world from a previous backup:");
                 PrintUtil.info("Backup Name: " + metadata.getBackupName());
-                PrintUtil.info("Create Time: " + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date(metadata.getBackupTime())));
+                PrintUtil.info("Create Time: " + DateUtil.fromEpochMillis(metadata.getBackupTime()));
 
                 // Delete metadata file
                 if (!metadataFile.delete()) {
