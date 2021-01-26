@@ -24,7 +24,7 @@ public class IncrementalBackupFeedback implements BackupFeedback {
     @Override
     public String getFeedback() {
         if (success && copyResult != null)
-            return String.format("File(s) added: %s.", copyResult);
+            return copyResult.toString();
         else
             return "Backup failed.";
     }
