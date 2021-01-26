@@ -15,7 +15,7 @@ Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5
 - **/kb**  or **/kb help**: show command list
 - **/kb list**: show existing backups
 - **/kb backup \[backup_name\]**: make a backup with given name or with the current system time by default
-- **/kb incbak \[backup_name\]**: make an incremental backup which will be saved in `incremental` folder. (However, the index file will be saved in `backups` folder)
+- **/kb incbak \[backup_name\]**: make an incremental backup which will be saved in `incremental` folder. (Incremental backup will create an index file which has an ext name of `.kbi`, and it will be saved in `backups` folder, which is the same with where `.zip` resides)
 - **/kb restore \<backup_name\>**: restore to a certain backup. This command needs a confirmation to execute.
 - **/kb confirm**: confirm executing restore operation. The operation is irreversible.
 - **/kb delete**: delete an existing backup.
@@ -26,7 +26,7 @@ Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5
 - **/kb**  or **/kb help**: 显示命令列表
 - **/kb list**: 显示所有已有的备份
 - **/kb backup \[backup_name\]**: 以给定名字创建一个新备份，缺省的名字是“noname”
-- **/kb incbak \[backup_name\]**: 创建一个增量备份，保存在 `incremental` 目录下。 (目录树的整体结构仍然被保存在 `backups` 目录下)
+- **/kb incbak \[backup_name\]**: 创建一个增量备份，保存在 `incremental` 目录下。 (增量备份会创建扩展名为`.kbi`的一个索引文件，该文件仍被保存在 `backups` 目录下，与`.zip`文件的保存位置相同)
 - **/kb restore \<backup_name\>**: 还原到指定的备份。该命令需要二次确认才会真正被执行
 - **/kb confirm**: 二次确认，一旦确认，等待确认的命令会立刻被执行。这个命令是不可逆的
 - **/kb delete**: 删除一个现有的备份
