@@ -95,11 +95,12 @@ public class IncCopyResult {
     @Override
     public String toString() {
         return String.format(
-                "File(s) added: %d (%s in size, totally %d files). Total backup-ed files size: %s",
+                "File(s) added: %d (%s in size, totally %d files). Total backup-ed files size: %s (%.2f%% reused)",
                 filesCopied,
                 BackupFilesystemUtil.getFriendlyFileSizeString(bytesCopied),
                 totalFiles,
-                BackupFilesystemUtil.getFriendlyFileSizeString(bytesTotal)
+                BackupFilesystemUtil.getFriendlyFileSizeString(bytesTotal),
+                (1 - 1.0f * bytesCopied / bytesTotal) * 100
         );
     }
 }
