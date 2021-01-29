@@ -71,3 +71,4 @@ done
 - A more friendly help menu (colored command help menu)
 - New version checker
 - Code refactor for maintainability
+- Decoupling of plugin core and fabric api (preparing for Bukkit version)
