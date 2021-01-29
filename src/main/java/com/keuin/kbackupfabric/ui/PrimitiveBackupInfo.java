@@ -73,6 +73,6 @@ public class PrimitiveBackupInfo implements BackupInfo {
 
     @Override
     public String getBackupFileName() {
-        return null;
+        return fileName;
     }
 }
