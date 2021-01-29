@@ -3,6 +3,7 @@ package com.keuin.kbackupfabric.notification;
 import net.minecraft.network.MessageType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
 
 /**
  * Decouple from ServerPlayerEntity, in case further migration to other APIs.
@@ -33,7 +34,7 @@ public interface DistinctNotifiable {
 
             @Override
             public void notify(Text text) {
-                serverPlayerEntity.sendChatMessage(text, MessageType.SYSTEM);
+                serverPlayerEntity.sendMessage(text, MessageType.SYSTEM, Util.NIL_UUID);
             }
 
             @Override
