@@ -6,7 +6,9 @@ import net.minecraft.server.command.ServerCommandSource;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class BackupNameSuggestionProvider {
 
@@ -34,8 +36,10 @@ public class BackupNameSuggestionProvider {
                     File[] files = file.listFiles();
                     if (files == null)
                         return;
-                    for (File f : files)
-                        candidateCacheList.add(f.getName());
+                    Arrays.stream(files).map(File::getName).filter(
+                            ((Predicate<String>) s -> s.toLowerCase().endsWith(".zip"))
+                                    .or(s -> s.toLowerCase().endsWith(".kbi"))
+                    ).forEach(candidateCacheList::add);
                     cacheUpdateTime = (int) System.currentTimeMillis();
                 } catch (NullPointerException ignored) {
                 }
