@@ -37,7 +37,7 @@ public class NotificationManager {
         if (MetadataHolder.hasMetadata()) {
             BackupMetadata backup = MetadataHolder.getMetadata();
             notifiable.notify(
-                    new LiteralText("The server has been restored to backup ")
+                    new LiteralText("The world has been restored to backup ")
                             .append(new LiteralText("[" + backup.getBackupName() + "]").setStyle(new Style().setColor(Formatting.GREEN)))
                             .append(new LiteralText(" (created at "))
                             .append(new LiteralText("[" + DateUtil.fromEpochMillis(backup.getBackupTime()) + "]").setStyle(new Style().setColor(Formatting.GREEN)))
