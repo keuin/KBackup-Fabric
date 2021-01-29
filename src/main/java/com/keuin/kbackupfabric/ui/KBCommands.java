@@ -288,7 +288,7 @@ public final class KBCommands {
             //KBMain.restore("name")
             MinecraftServer server = context.getSource().getMinecraftServer();
             String backupFileName = parseBackupFileName(context, StringArgumentType.getString(context, "backupName"));
-            backupFileName = parseBackupFileName(context, backupFileName);
+//            backupFileName = parseBackupFileName(context, backupFileName);
 
             if (backupFileName == null)
                 return list(context); // Show the list and return
@@ -501,7 +501,7 @@ public final class KBCommands {
             String backupName = StringArgumentType.getString(context, "backupName");
 
             if (backupName.matches("[0-9]*")) {
-                // If numeric input
+                // treat numeric input as backup index number in list
                 int index = Integer.parseInt(backupName) - 1;
                 synchronized (backupList) {
                     return backupList.get(index).getBackupFileName(); // Replace input number with real backup file name.

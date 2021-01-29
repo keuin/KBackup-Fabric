@@ -67,7 +67,6 @@ done
 
 ## 3. To-Do List:
 
-- Op login hint in the next start after restoring
 - A more friendly help menu (colored command help menu)
 - New version checker
 - Code refactor for maintainability

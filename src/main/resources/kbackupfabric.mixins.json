@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "com.keuin.kbackupfabric.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "PlayerManagerMixin"
+  ],
+  "client": [
+  ],
+  "server": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "verbose": true
+}

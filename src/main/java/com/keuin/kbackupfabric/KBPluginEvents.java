@@ -2,8 +2,11 @@ package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.backup.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.backup.suggestion.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.event.OnPlayerConnect;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
+import com.keuin.kbackupfabric.notification.DistinctNotifiable;
+import com.keuin.kbackupfabric.notification.NotificationManager;
 import com.keuin.kbackupfabric.ui.KBCommands;
 import com.keuin.kbackupfabric.util.DateUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
@@ -40,6 +43,11 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
 
         if (!(server instanceof MinecraftDedicatedServer))
             throw new RuntimeException("KBackup is a server-side-only plugin. Please do not use it in client-side.");
+
+        // Bind fabric events
+
+        OnPlayerConnect.ON_PLAYER_CONNECT.register((connection, player)
+                -> NotificationManager.INSTANCE.notifyPlayer(DistinctNotifiable.fromServerPlayerEntity(player)));
 
         // Initialize player manager reference
         PrintUtil.setPlayerManager(server.getPlayerManager());
