@@ -8,10 +8,9 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.UUID;
 
 
 public final class PrintUtil {
@@ -37,7 +36,7 @@ public final class PrintUtil {
         synchronized (syncBroadcast) {
             if (fuckingPlayerManager != null)
 //                fuckingPlayerManager.sendToAll(new LiteralText(message).setStyle(broadcastStyle));
-                fuckingPlayerManager.broadcastChatMessage(new LiteralText(message).setStyle(broadcastStyle), MessageType.GAME_INFO, UUID.randomUUID());
+                fuckingPlayerManager.broadcastChatMessage(new LiteralText(message).setStyle(broadcastStyle), MessageType.SYSTEM, Util.NIL_UUID);
             else
                 PrintUtil.error("Error in PrintUtil.broadcast: PlayerManager is not initialized.");
         }
