@@ -9,6 +9,9 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 
 public final class PrintUtil {
@@ -23,65 +26,75 @@ public final class PrintUtil {
     private static final Style errorStyle = new Style().setColor(Formatting.DARK_RED);
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static PlayerManager fuckMojang = null;
+    private static PlayerManager playerManager = null;
 
     public static void setPlayerManager(PlayerManager playerManager) {
-        if (fuckMojang == null)
-            fuckMojang = playerManager;
+        if (PrintUtil.playerManager == null)
+            PrintUtil.playerManager = playerManager;
     }
 
     public static void broadcast(String message) {
+        broadcast(message, broadcastStyle);
+    }
+
+    public static void broadcast(String message, Style style) {
         synchronized (syncBroadcast) {
-            if (fuckMojang != null)
-                fuckMojang.sendToAll(new LiteralText(message).setStyle(broadcastStyle));
-            else
-                PrintUtil.error("Error in PrintUtil.broadcast: PlayerManager is not initialized.");
+            Optional.ofNullable(playerManager)
+                    .ifPresent(pm ->
+                            pm.sendToAll(new LiteralText(message).setStyle(style)));
         }
     }
 
-    public static CommandContext<ServerCommandSource> msgStress(CommandContext<ServerCommandSource> context, String messageText) {
+    public static CommandContext<ServerCommandSource> msgStress(@Nullable CommandContext<ServerCommandSource> context, String messageText) {
         return msgStress(context, messageText, false);
     }
 
-    public static CommandContext<ServerCommandSource> msgInfo(CommandContext<ServerCommandSource> context, String messageText) {
+    public static CommandContext<ServerCommandSource> msgInfo(@Nullable CommandContext<ServerCommandSource> context, String messageText) {
         return msgInfo(context, messageText, false);
     }
 
-    public static CommandContext<ServerCommandSource> msgWarn(CommandContext<ServerCommandSource> context, String messageText) {
+    public static CommandContext<ServerCommandSource> msgWarn(@Nullable CommandContext<ServerCommandSource> context, String messageText) {
         return msgWarn(context, messageText, false);
     }
 
-    public static CommandContext<ServerCommandSource> msgErr(CommandContext<ServerCommandSource> context, String messageText) {
+    public static CommandContext<ServerCommandSource> msgErr(@Nullable CommandContext<ServerCommandSource> context, String messageText) {
         return msgErr(context, messageText, false);
     }
 
-    public static CommandContext<ServerCommandSource> msgStress(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
+    public static CommandContext<ServerCommandSource> msgStress(@Nullable CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
         return message(context, messageText, broadcastToOps, stressStyle);
     }
 
-    public static CommandContext<ServerCommandSource> msgInfo(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
+    public static CommandContext<ServerCommandSource> msgInfo(@Nullable CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
         return message(context, messageText, broadcastToOps, infoStyle);
     }
 
-    public static CommandContext<ServerCommandSource> msgWarn(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
+    public static CommandContext<ServerCommandSource> msgWarn(@Nullable CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
         return message(context, messageText, broadcastToOps, warnStyle);
     }
 
-    public static CommandContext<ServerCommandSource> msgErr(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
+    public static CommandContext<ServerCommandSource> msgErr(@Nullable CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps) {
         return message(context, messageText, broadcastToOps, errorStyle);
     }
 
-    private static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps, Style style) {
-        synchronized (syncMessage) {
-            Text text = new LiteralText(messageText);
-            text.setStyle(style);
-            context.getSource().sendFeedback(text, broadcastToOps);
+    private static CommandContext<ServerCommandSource> message(@Nullable CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps, Style style) {
+        if (context != null) {
+            synchronized (syncMessage) {
+                Text text = new LiteralText(messageText);
+                text.setStyle(style);
+                context.getSource().sendFeedback(text, broadcastToOps);
+            }
+            return context;
+        } else {
+            // if context is null, then `broadcastToOps` will be ignored for simplicity
+            broadcast(messageText, style);
+            return null;
         }
-        return context;
     }
 
     /**
      * Print debug message on the server console.
+     *
      * @param string the message.
      */
     public static void debug(String string) {
@@ -90,6 +103,7 @@ public final class PrintUtil {
 
     /**
      * Print informative message on the server console.
+     *
      * @param string the message.
      */
     public static void info(String string) {
@@ -98,6 +112,7 @@ public final class PrintUtil {
 
     /**
      * Print warning message on the server console.
+     *
      * @param string the message.
      */
     public static void warn(String string) {
@@ -106,6 +121,7 @@ public final class PrintUtil {
 
     /**
      * Print error message on the server console.
+     *
      * @param string the message.
      */
     public static void error(String string) {
