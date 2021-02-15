@@ -11,17 +11,17 @@ import java.util.Objects;
 public class IncCopyResult {
 
     private final int totalFiles;
-    private final int filesCopied;
-    private final long bytesCopied;
-    private final long bytesTotal;
+    private final int copiedFiles;
+    private final long copiedBytes;
+    private final long totalBytes;
 
     public static final IncCopyResult ZERO = new IncCopyResult(0, 0, 0, 0);
 
-    public IncCopyResult(int totalFiles, int filesCopied, long bytesCopied, long bytesTotal) {
+    public IncCopyResult(int totalFiles, int copiedFiles, long copiedBytes, long totalBytes) {
         this.totalFiles = totalFiles;
-        this.filesCopied = filesCopied;
-        this.bytesCopied = bytesCopied;
-        this.bytesTotal = bytesTotal;
+        this.copiedFiles = copiedFiles;
+        this.copiedBytes = copiedBytes;
+        this.totalBytes = totalBytes;
     }
 
     /**
@@ -38,8 +38,8 @@ public class IncCopyResult {
      *
      * @return file count.
      */
-    public int getFilesCopied() {
-        return filesCopied;
+    public int getCopiedFiles() {
+        return copiedFiles;
     }
 
     /**
@@ -47,8 +47,8 @@ public class IncCopyResult {
      *
      * @return bytes.
      */
-    public long getBytesCopied() {
-        return bytesCopied;
+    public long getCopiedBytes() {
+        return copiedBytes;
     }
 
     /**
@@ -56,8 +56,8 @@ public class IncCopyResult {
      *
      * @return bytes.
      */
-    public long getBytesTotal() {
-        return bytesTotal;
+    public long getTotalBytes() {
+        return totalBytes;
     }
 
     /**
@@ -70,9 +70,9 @@ public class IncCopyResult {
         Objects.requireNonNull(a);
         return new IncCopyResult(
                 totalFiles + a.totalFiles,
-                filesCopied + a.filesCopied,
-                bytesCopied + a.bytesCopied,
-                bytesTotal + a.bytesTotal
+                copiedFiles + a.copiedFiles,
+                copiedBytes + a.copiedBytes,
+                totalBytes + a.totalBytes
         );
     }
 
@@ -82,25 +82,25 @@ public class IncCopyResult {
         if (o == null || getClass() != o.getClass()) return false;
         IncCopyResult that = (IncCopyResult) o;
         return totalFiles == that.totalFiles &&
-                filesCopied == that.filesCopied &&
-                bytesCopied == that.bytesCopied &&
-                bytesTotal == that.bytesTotal;
+                copiedFiles == that.copiedFiles &&
+                copiedBytes == that.copiedBytes &&
+                totalBytes == that.totalBytes;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(totalFiles, filesCopied, bytesCopied, bytesTotal);
+        return Objects.hash(totalFiles, copiedFiles, copiedBytes, totalBytes);
     }
 
     @Override
     public String toString() {
         return String.format(
                 "File(s) added: %d (%s in size, totally %d files). Total backup-ed files size: %s (%.2f%% reused)",
-                filesCopied,
-                BackupFilesystemUtil.getFriendlyFileSizeString(bytesCopied),
+                copiedFiles,
+                BackupFilesystemUtil.getFriendlyFileSizeString(copiedBytes),
                 totalFiles,
-                BackupFilesystemUtil.getFriendlyFileSizeString(bytesTotal),
-                (1 - 1.0f * bytesCopied / bytesTotal) * 100
+                BackupFilesystemUtil.getFriendlyFileSizeString(totalBytes),
+                (1 - 1.0f * copiedBytes / totalBytes) * 100
         );
     }
 }

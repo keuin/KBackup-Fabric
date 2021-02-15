@@ -75,6 +75,13 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
             // legacy index file
 //            ObjectCollectionSerializer.toFile(collection, new File(backupIndexFileSaveDirectory, backupIndexFileName));
 
+            // create directory
+            final File indexDirectoryFile = new File(backupIndexFileSaveDirectory);
+            if (indexDirectoryFile.isFile())
+                throw new IOException("There is a file which has the same name with index directory");
+            if (!indexDirectoryFile.isDirectory() && !indexDirectoryFile.mkdirs())
+                throw new IOException("Backup index save directory does not exist and we failed to create it");
+
             // newer saved info (with metadata)
             File indexFile = new File(backupIndexFileSaveDirectory, backupIndexFileName);
             BackupFileNameEncoder.BackupBasicInformation info = IncrementalBackupFileNameEncoder.INSTANCE.decode(backupIndexFileName);
@@ -82,9 +89,9 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
                     collection,
                     info.customName,
                     info.time.atZone(ZoneId.systemDefault()),
-                    copyResult.getBytesTotal(),
-                    copyResult.getBytesCopied(),
-                    copyResult.getFilesCopied(),
+                    copyResult.getTotalBytes(),
+                    copyResult.getCopiedBytes(),
+                    copyResult.getCopiedFiles(),
                     copyResult.getTotalFiles()
             ));
 
