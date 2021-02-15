@@ -31,3 +31,4 @@ logs/
 
 # testfile
 testfile/ConfiguredIncrementalBackupMethodTest
+testfile/IncrementalBackupStorageManagerTest
