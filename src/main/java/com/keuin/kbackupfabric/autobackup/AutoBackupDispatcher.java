@@ -5,14 +5,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
-public class AutoBackupScheduler {
+public class AutoBackupDispatcher {
 
     private Timer timer = null;
-    private final Logger logger = Logger.getLogger(AutoBackupScheduler.class.getName());
+    private final Logger logger = Logger.getLogger(AutoBackupDispatcher.class.getName());
     private boolean skipIfNoPlayerLoggedIn;
     private final PlayerActivityTracker playerActivityTracker;
 
-    public AutoBackupScheduler(int intervalSeconds, boolean skipIfNoPlayerLoggedIn, PlayerActivityTracker playerActivityTracker) {
+    public AutoBackupDispatcher(int intervalSeconds, boolean skipIfNoPlayerLoggedIn, PlayerActivityTracker playerActivityTracker) {
         this.skipIfNoPlayerLoggedIn = skipIfNoPlayerLoggedIn;
         this.playerActivityTracker = playerActivityTracker;
         if (intervalSeconds > 0)
