@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
@@ -25,6 +24,7 @@ import static org.apache.commons.io.FileUtils.forceDelete;
  */
 public class IncrementalBackupStorageManager {
 
+    private final Logger logger = Logger.getLogger(IncrementalBackupStorageManager.class.getName());
     private final Path backupStorageBase;
     private final Logger LOGGER = Logger.getLogger(IncrementalBackupStorageManager.class.getName());
 
@@ -82,8 +82,9 @@ public class IncrementalBackupStorageManager {
             File copyDestination = new File(backupStorageBase.toFile(), entry.getValue().getIdentifier().getIdentification());
             File copySourceFile = new File(collectionBasePath.getAbsolutePath(), entry.getKey());
             final long fileBytes = FilesystemUtil.getFileSizeBytes(copySourceFile.getAbsolutePath());
-            if (!baseContainsObject(entry.getValue())) {
+            if (!contains(entry.getValue())) {
                 // element does not exist. copy.
+                logger.info("Copy new file `" + copySourceFile.getName() + "`.");
                 Files.copy(copySourceFile.toPath(), copyDestination.toPath());
                 copyCount = copyCount.addWith(new IncCopyResult(1, 1, fileBytes, fileBytes));
             } else {
@@ -174,7 +175,7 @@ public class IncrementalBackupStorageManager {
             File copySource = new File(backupStorageBase.toFile(), entry.getValue().getIdentifier().getIdentification());
             File copyTarget = new File(collectionBasePath.getAbsolutePath(), entry.getKey());
 
-            if (!baseContainsObject(entry.getValue())) {
+            if (!contains(entry.getValue())) {
                 throw new IOException(String.format("File %s is missing in the backup storage. Cannot restore.", copySource.getName()));
             }
             if (copyTarget.exists()) {
@@ -216,9 +217,10 @@ public class IncrementalBackupStorageManager {
      * @param objectElement the element.
      * @return true or false.
      */
-    private boolean baseContainsObject(ObjectElement objectElement) {
+    private boolean contains(@NotNull ObjectElement objectElement) {
         // This can be extended to use more variants of hash functions and combinations of other attributes (such as file size)
-        return (new File(backupStorageBase.toFile(), objectElement.getIdentifier().getIdentification())).exists();
+        Objects.requireNonNull(objectElement);
+        return contains(objectElement.getIdentifier());
     }
 
 }
