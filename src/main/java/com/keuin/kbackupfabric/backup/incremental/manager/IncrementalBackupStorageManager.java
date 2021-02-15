@@ -3,8 +3,10 @@ package com.keuin.kbackupfabric.backup.incremental.manager;
 import com.keuin.kbackupfabric.backup.incremental.ObjectCollection2;
 import com.keuin.kbackupfabric.backup.incremental.ObjectCollectionIterator;
 import com.keuin.kbackupfabric.backup.incremental.ObjectElement;
+import com.keuin.kbackupfabric.backup.incremental.identifier.ObjectIdentifier;
 import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -31,7 +33,34 @@ public class IncrementalBackupStorageManager {
     }
 
     /**
-     * Add a object collection to storage base.
+     * Check whether the storage contains a copy of file with given identifier.
+     *
+     * @param identifier the identifier.
+     * @return whether the file exists.
+     */
+    public boolean contains(@NotNull ObjectIdentifier identifier) {
+        Objects.requireNonNull(identifier);
+        return new File(backupStorageBase.toFile(), identifier.getIdentification()).isFile();
+    }
+
+    /**
+     * Check whether the storage contains all files in the given collection.
+     *
+     * @param collection the collection.
+     * @return whether all files exists.
+     */
+    public boolean contains(@NotNull ObjectCollection2 collection) {
+        Objects.requireNonNull(collection);
+        for (ObjectCollectionIterator it = new ObjectCollectionIterator(collection); it.hasNext(); ) {
+            ObjectElement ele = it.next();
+            if (!contains(ele.getIdentifier()))
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Add a object collection to storage base and copy files to the storage.
      *
      * @param collection the collection.
      * @return objects copied to the base.
@@ -93,20 +122,22 @@ public class IncrementalBackupStorageManager {
                                       Iterable<ObjectCollection2> otherExistingCollections) {
         // TODO: test this
         Iterator<ObjectElement> iter = new ObjectCollectionIterator(collection);
-        Set<ObjectElement> unusedElementSet = new HashSet<>();
-        iter.forEachRemaining(unusedElementSet::add);
-        otherExistingCollections.forEach(col -> new ObjectCollectionIterator(col).forEachRemaining(unusedElementSet::remove));
-        AtomicInteger deleteCount = new AtomicInteger();
-        unusedElementSet.forEach(ele -> {
-            File file = new File(backupStorageBase.toFile(), ele.getIdentifier().getIdentification());
+        Set<ObjectIdentifier> identifierSet = new HashSet<>();
+        iter.forEachRemaining(ele -> identifierSet.add(ele.getIdentifier()));
+        otherExistingCollections.forEach(col -> new ObjectCollectionIterator(col)
+                .forEachRemaining(ele -> identifierSet.remove(ele.getIdentifier())));
+        int deleteCount = 0;
+        for (ObjectIdentifier id : identifierSet) {
+            Objects.requireNonNull(id);
+            File file = new File(backupStorageBase.toFile(), id.getIdentification());
             if (file.exists()) {
                 if (file.delete())
-                    deleteCount.incrementAndGet();
+                    ++deleteCount;
                 else
                     LOGGER.warning("Failed to delete unused file " + file.getName());
             }
-        });
-        return deleteCount.get();
+        }
+        return deleteCount;
     }
 
     /**

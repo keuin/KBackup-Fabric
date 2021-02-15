@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 public class ObjectCollectionIterator implements Iterator<ObjectElement> {
-
-    // TODO: test this
-
     private Iterator<ObjectElement> currentIterator;
     private final List<ObjectCollection2> cols = new LinkedList<>();
 

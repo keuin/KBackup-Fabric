@@ -37,11 +37,11 @@ public abstract class SingleHashIdentifier implements ObjectIdentifier {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof SingleHashIdentifier)) {
-            return false;
-        }
-        return Arrays.equals(hash, ((SingleHashIdentifier) obj).hash);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SingleHashIdentifier that = (SingleHashIdentifier) o;
+        return Arrays.equals(hash, that.hash) && type.equals(that.type);
     }
 
     @Override
