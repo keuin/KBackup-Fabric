@@ -41,11 +41,11 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
     @Override
     public void onStartServer(MinecraftServer server) {
 
+        // Buggy: this does not work
         if (!(server instanceof MinecraftDedicatedServer))
             throw new RuntimeException("KBackup is a server-side-only plugin. Please do not use it in client-side.");
 
         // Bind fabric events
-
         OnPlayerConnect.ON_PLAYER_CONNECT.register((connection, player)
                 -> NotificationManager.INSTANCE.notifyPlayer(DistinctNotifiable.fromServerPlayerEntity(player)));
 
