@@ -65,11 +65,23 @@ public class ObjectCollectionFactoryTest {
     }
 
     public void fromDirectory(int threads, int multiThreadThreshold) {
+
+        final String testRoot = "./testfile/ObjectCollectionFactoryTest";
+        File[] paths = new File[]{
+                new File(testRoot + "/1/12"),
+                new File(testRoot + "/2"),
+                new File(testRoot + "/3")
+        };
+        for (File f : paths) {
+            assertTrue("Failed to create directory: " + f.getAbsolutePath(),
+                    f.isDirectory() || f.mkdirs());
+        }
+
         try {
             ObjectCollectionFactory<Sha256Identifier> factory =
                     new ObjectCollectionFactory<>(Sha256Identifier.getFactory(), threads, multiThreadThreshold);
             ObjectCollection2 collection =
-                    factory.fromDirectory(new File("./testfile/ObjectCollectionFactoryTest"));
+                    factory.fromDirectory(new File(testRoot));
 
             assertEquals("ObjectCollectionFactoryTest", collection.getName());
             assertEquals(3, collection.getSubCollectionMap().size());
