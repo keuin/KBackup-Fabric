@@ -99,8 +99,8 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
             PrintUtil.info("Incremental backup finished.");
             feedback = new IncrementalBackupFeedback(true, copyResult);
         } catch (IOException e) {
-            e.printStackTrace(); // at least we should print it out if we discard the exception... Better than doing nothing.
-            feedback = new IncrementalBackupFeedback(false, null);
+//            e.printStackTrace(); // stack trace has been passed to backup feedback. No need to print here.
+            feedback = new IncrementalBackupFeedback(e);
         }
 
         // do clean-up if failed

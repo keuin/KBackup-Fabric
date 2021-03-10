@@ -56,7 +56,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
                 PrintUtil.msgInfo(context, msgText, true);
             } else {
                 // failed
-                PrintUtil.msgErr(context, "Backup operation failed. No further information.");
+                PrintUtil.msgErr(context, "Backup operation failed: " + result.getFeedback());
             }
         } catch (SecurityException e) {
             msgInfo(context, String.format("Failed to create backup saving directory: %s. Failed to backup.", backupSaveDirectory));
