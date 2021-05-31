@@ -84,7 +84,7 @@ public class IncrementalBackupStorageManager {
             final long fileBytes = FilesystemUtil.getFileSizeBytes(copySourceFile.getAbsolutePath());
             if (!contains(entry.getValue())) {
                 // element does not exist. copy.
-                logger.info("Copy new file `" + copySourceFile.getName() + "`.");
+                logger.fine("Copy new file `" + copySourceFile.getName() + "`.");
                 Files.copy(copySourceFile.toPath(), copyDestination.toPath());
                 copyCount = copyCount.addWith(new IncCopyResult(1, 1, fileBytes, fileBytes));
             } else {
