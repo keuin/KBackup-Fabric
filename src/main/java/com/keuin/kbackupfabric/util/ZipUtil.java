@@ -127,8 +127,9 @@ public final class ZipUtil {
                  ObjectOutputStream oos = new ObjectOutputStream(baos)) {
                 oos.writeObject(backupMetadata);
                 zipOutputStream.write(baos.toByteArray());
+            } finally {
+                zipOutputStream.closeEntry();
             }
-            zipOutputStream.closeEntry();
 
             //如果只是压缩一个文件，则需要截取该文件的父目录
             String srcRootDir = srcPath;
