@@ -12,6 +12,7 @@ import com.keuin.kbackupfabric.util.ZipUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.logging.Logger;
@@ -47,20 +48,26 @@ public class ConfiguredPrimitiveBackupMethod implements ConfiguredBackupMethod {
             PrintUtil.info(String.format("zip(srcPath=%s, destPath=%s)", levelPath, backupSavePath));
             PrintUtil.info("Compressing level ...");
             ZipUtil.makeBackupZip(levelPath, backupSavePath, backupFileName, backupMetadata);
-            feedback = new PrimitiveBackupFeedback(true, FilesystemUtil.getFileSizeBytes(backupSavePath, backupFileName));
+            feedback = PrimitiveBackupFeedback.createSuccessFeedback(
+                    FilesystemUtil.getFileSizeBytes(backupSavePath, backupFileName));
         } catch (ZipUtilException exception) {
-            PrintUtil.info("Infinite recursive of directory tree detected, backup was aborted.");
-            feedback = new PrimitiveBackupFeedback(false, 0);
+            String msg = "Infinite recursive of directory tree detected, backup was aborted.";
+            PrintUtil.info(msg);
+            feedback = PrimitiveBackupFeedback.createFailFeedback(msg);
         } catch (IOException e) {
-            feedback = new PrimitiveBackupFeedback(false, 0);
+            feedback = PrimitiveBackupFeedback.createFailFeedback(e.getMessage());
         }
 
         if (!feedback.isSuccess()) {
             // do clean-up if failed
             File backupFile = new File(backupSavePath, backupFileName);
             if (backupFile.exists()) {
-                if (!backupFile.delete()) {
-                    LOGGER.warning("Failed to clean up: cannot delete file " + backupFile.getName());
+                LOGGER.info(String.format("Deleting incomplete backup file \"%s\"...", backupFile.getPath()));
+                try {
+                    Files.delete(backupFile.toPath());
+                    LOGGER.info("Failed to backup, all files are cleaned up.");
+                } catch (IOException e) {
+                    LOGGER.warning("Cannot delete: " + e.getMessage());
                 }
             }
         }

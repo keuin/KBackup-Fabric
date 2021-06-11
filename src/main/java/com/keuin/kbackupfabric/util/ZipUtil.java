@@ -46,12 +46,13 @@ public final class ZipUtil {
             ZipEntry entry = new ZipEntry(subPath);
             zipOutputStream.putNextEntry(entry);
 //            BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-            InputStream inputStream = new FileInputStream(file);
-            while ((count = inputStream.read(buffer, 0, zipBufferSize)) != -1) {
-                zipOutputStream.write(buffer, 0, count);
+            try (InputStream inputStream = new FileInputStream(file)) {
+                while ((count = inputStream.read(buffer, 0, zipBufferSize)) != -1) {
+                    zipOutputStream.write(buffer, 0, count);
+                }
+            } finally {
+                zipOutputStream.closeEntry();
             }
-            inputStream.close();
-            zipOutputStream.closeEntry();
         } else {
             // 如果是目录，则压缩整个目录
             // 压缩目录中的文件或子目录
@@ -88,49 +89,45 @@ public final class ZipUtil {
             throw new IllegalArgumentException("zipFileName cannot be empty");
         }
 
-        CheckedOutputStream checkedOutputStream;
-        ZipOutputStream zipOutputStream = null;
-        try {
-            File srcFile = new File(srcPath);
+        File srcFile = new File(srcPath);
 
-            //判断压缩文件保存的路径是否为源文件路径的子文件夹，如果是，则抛出异常（防止无限递归压缩的发生）
-            if (srcFile.isDirectory() && zipPath.contains(srcPath)) {
-                throw new ZipUtilException("Detected loop recursion in directory structure, please check symlink linking to parent directories.");
+        //判断压缩文件保存的路径是否为源文件路径的子文件夹，如果是，则抛出异常（防止无限递归压缩的发生）
+        if (srcFile.isDirectory() && zipPath.contains(srcPath)) {
+            throw new ZipUtilException("Detected loop recursion in directory structure, please check symlink linking to parent directories.");
+        }
+
+        //判断压缩文件保存的路径是否存在，如果不存在，则创建目录
+        File zipDir = new File(zipPath);
+        if (!zipDir.exists() || !zipDir.isDirectory()) {
+            if (!zipDir.mkdirs()) {
+                throw new IOException(String.format("Failed to make directory tree %s", zipDir.toString()));
             }
+        }
 
-            //判断压缩文件保存的路径是否存在，如果不存在，则创建目录
-            File zipDir = new File(zipPath);
-            if (!zipDir.exists() || !zipDir.isDirectory()) {
-                if (!zipDir.mkdirs()) {
-                    throw new IOException(String.format("Failed to make directory tree %s", zipDir.toString()));
-                }
+        //创建压缩文件保存的文件对象
+        String zipFilePath = zipPath + File.separator + zipFileName;
+        File zipFile = new File(zipFilePath);
+        if (zipFile.exists()) {
+            //删除已存在的目标文件
+            if (!zipFile.delete()) {
+                throw new IOException(String.format("Failed to delete existing file %s", zipFile.toString()));
             }
+        }
 
-            //创建压缩文件保存的文件对象
-            String zipFilePath = zipPath + File.separator + zipFileName;
-            File zipFile = new File(zipFilePath);
-            if (zipFile.exists()) {
-                //检测文件是否允许删除，如果不允许删除，将会抛出SecurityException
-                SecurityManager securityManager = new SecurityManager();
-                securityManager.checkDelete(zipFilePath);
-                //删除已存在的目标文件
-                if (!zipFile.delete()) {
-                    throw new IOException(String.format("Failed to delete existing file %s", zipFile.toString()));
-                }
-            }
-
-            checkedOutputStream = new CheckedOutputStream(new FileOutputStream(zipFile), new CRC32());
-            zipOutputStream = new ZipOutputStream(checkedOutputStream);
+        try (FileOutputStream fileOutputStream = new FileOutputStream(zipFile);
+             CheckedOutputStream checkedOutputStream = new CheckedOutputStream(fileOutputStream, new CRC32());
+             ZipOutputStream zipOutputStream = new ZipOutputStream(checkedOutputStream)) {
             zipOutputStream.setLevel(zipLevel);
 
             // If with backup metadata, we serialize it and write it into file "kbackup_metadata"
             ZipEntry metadataEntry = new ZipEntry(BackupMetadata.metadataFileName);
+
             zipOutputStream.putNextEntry(metadataEntry);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(backupMetadata);
-            oos.close();
-            zipOutputStream.write(baos.toByteArray());
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                 ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+                oos.writeObject(backupMetadata);
+                zipOutputStream.write(baos.toByteArray());
+            }
             zipOutputStream.closeEntry();
 
             //如果只是压缩一个文件，则需要截取该文件的父目录
@@ -145,14 +142,6 @@ public final class ZipUtil {
             //调用递归压缩方法进行目录或文件压缩
             zip(srcRootDir, srcFile, zipOutputStream, Collections.singleton("session.lock"), new byte[zipBufferSize]);
             zipOutputStream.flush();
-        } finally {
-            try {
-                if (zipOutputStream != null) {
-                    zipOutputStream.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -193,56 +182,54 @@ public final class ZipUtil {
         String entryFilePath, entryDirPath;
         File entryFile, entryDir;
         int index, count;
-        ZipFile zip = new ZipFile(zipFile);
-        Enumeration<? extends ZipEntry> entries = zip.entries();
-        // 循环对压缩包里的每一个文件进行解压
-        while (entries.hasMoreElements()) {
-            entry = entries.nextElement();
-            // 构建压缩包中一个文件解压后保存的文件全路径
-            entryFilePath = unzipFilePath + File.separator + entry.getName();
+        try (ZipFile zip = new ZipFile(zipFile)) {
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            // 循环对压缩包里的每一个文件进行解压
+            while (entries.hasMoreElements()) {
+                entry = entries.nextElement();
+                // 构建压缩包中一个文件解压后保存的文件全路径
+                entryFilePath = unzipFilePath + File.separator + entry.getName();
 
-            // 构建解压后保存的文件夹路径
-            index = entryFilePath.lastIndexOf(File.separator);
-            if (index != -1) {
-                entryDirPath = entryFilePath.substring(0, index);
-            } else {
-                entryDirPath = "";
-            }
-            entryDir = new File(entryDirPath);
-            // 如果文件夹路径不存在，则创建文件夹
-            if (!entryDir.exists() || !entryDir.isDirectory()) {
-                if (!entryDir.mkdirs())
-                    throw new IOException(String.format("Failed to make directory tree %s", entryDir.toString()));
-            }
-
-            // 创建解压文件
-            entryFile = new File(entryFilePath);
-            if (entryFile.exists()) {
-                // 检测文件是否允许删除，如果不允许删除，将会抛出SecurityException
-                SecurityManager securityManager = new SecurityManager();
-                securityManager.checkDelete(entryFilePath);
-                // 删除已存在的目标文件
-                if (!entryFile.delete())
-                    throw new IOException(String.format("Failed to delete existing file %s", entryFile.toString()));
-            }
-            if (entry.isDirectory()) {
-                // If the entry is a directory, we make its corresponding directory.
-                if (!entryFile.mkdir())
-                    throw new IOException(String.format("Failed to create directory %s", entryFile.toString()));
-            } else {
-                // Is a file, we write the data
-                // 写入文件
-                OutputStream outputStream = new FileOutputStream(entryFile);
-                InputStream inputStream = zip.getInputStream(entry);
-                while ((count = inputStream.read(buffer, 0, unzipBufferSize)) != -1) {
-                    outputStream.write(buffer, 0, count);
+                // 构建解压后保存的文件夹路径
+                index = entryFilePath.lastIndexOf(File.separator);
+                if (index != -1) {
+                    entryDirPath = entryFilePath.substring(0, index);
+                } else {
+                    entryDirPath = "";
                 }
-                outputStream.flush();
-                outputStream.close();
+                entryDir = new File(entryDirPath);
+                // 如果文件夹路径不存在，则创建文件夹
+                if (!entryDir.exists() || !entryDir.isDirectory()) {
+                    if (!entryDir.mkdirs())
+                        throw new IOException(String.format("Failed to make directory tree %s", entryDir.toString()));
+                }
+
+                // 创建解压文件
+                entryFile = new File(entryFilePath);
+                if (entryFile.exists()) {
+                    // 检测文件是否允许删除，如果不允许删除，将会抛出SecurityException
+                    SecurityManager securityManager = new SecurityManager();
+                    securityManager.checkDelete(entryFilePath);
+                    // 删除已存在的目标文件
+                    if (!entryFile.delete())
+                        throw new IOException(String.format("Failed to delete existing file %s", entryFile.toString()));
+                }
+                if (entry.isDirectory()) {
+                    // If the entry is a directory, we make its corresponding directory.
+                    if (!entryFile.mkdir())
+                        throw new IOException(String.format("Failed to create directory %s", entryFile.toString()));
+                } else {
+                    // Is a file, we write the data
+                    // 写入文件
+                    try (OutputStream outputStream = new FileOutputStream(entryFile);
+                         InputStream inputStream = zip.getInputStream(entry)) {
+                        while ((count = inputStream.read(buffer, 0, unzipBufferSize)) != -1) {
+                            outputStream.write(buffer, 0, count);
+                        }
+                        outputStream.flush();
+                    }
+                }
             }
-
-
         }
-        zip.close();
     }
 }
