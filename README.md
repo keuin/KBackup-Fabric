@@ -1,3 +1,19 @@
+# Depreciation Notice (废弃声明)
+
+**This project is DISCONTINUED. New commits will only deal with bugs. Only bug reporting issues will be accepted.**
+
+I decide to discontinue my development in this project. There are some major reasons:
+
+1. As one of my toy projects, its code quality is not satisfying and refactoring takes too much effort. The git history is bad too.
+2. The Mod is proven to be working well (at least the latest version on my server, with Minecraft 1.16.5) as a basic backup and rollback tool for the game.
+3. The homemade incremental backup method is less flexible than other time-proven projects (like *rsync* or *git*).
+4. I need a tool which backs up the save to the filesystem on another computer, via network. 
+
+To solve these problems, I'm working on a new backup and rollback tool for Minecraft, which is based on [rdiff-backup](https://github.com/rdiff-backup/rdiff-backup).
+
+As a general incremental backup tool, it tends to be more solid and well-designed. It is compliant with most popular operating systems and it is able to transfer backup files over network.
+Thus, I believe it is a good start point to reimplement an incremental backup Mod for Minecraft.
+
 # KBackup-Fabric
 
 A simple backup mod for **fabric** Minecraft server, which makes **normal `.zip` backup** of your world, or self-implemented **incremental backup**, with slower increasing disk usage.
