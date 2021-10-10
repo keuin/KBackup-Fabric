@@ -32,8 +32,22 @@ public class BackupManager {
             @NotNull
             @Override
             public Iterator<BackupInfo> iterator() {
+                if (backupStorageDirectory.exists()) {
+                    if (!backupStorageDirectory.isDirectory()) {
+                        throw new RuntimeException("Backup directory is not a directory.");
+                    }
+                } else {
+                    if (!backupStorageDirectory.mkdirs()) {
+                        throw new RuntimeException("Backup directory does not exist and cannot be created.");
+                    }
+                }
+                File[] backupFiles = backupStorageDirectory.listFiles();
+                if (backupFiles == null) {
+                    throw new RuntimeException("Cannot list files in backup directory.");
+                }
+
                 return new Iterator<BackupInfo>() {
-                    private final Iterator<File> fileIterator = Arrays.stream(backupStorageDirectory.listFiles()).filter(file -> {
+                    private final Iterator<File> fileIterator = Arrays.stream(backupFiles).filter(file -> {
                         String name = file.getName().toLowerCase();
                         return name.endsWith(".zip") || name.endsWith(".kbi");
                     }).iterator();
