@@ -1,18 +1,29 @@
 # Depreciation Notice (废弃声明)
 
-**This project is DISCONTINUED. New commits will only deal with bugs. Only bug reporting issues will be accepted.**
+**This project is DISCONTINUED. Only bug reporting issues will be accepted.**
+
+**However, it is still a good choice for single-machine backup.**
 
 I decide to discontinue my development in this project. There are some major reasons:
 
 1. As one of my toy projects, its code quality is not satisfying and refactoring takes too much effort. The git history is bad too.
-2. The Mod is proven to be working well (at least the latest version on my server, with Minecraft 1.16.5) as a basic backup and rollback tool for the game.
-3. The homemade incremental backup method is less flexible than other time-proven projects (like *rsync* or *git*).
-4. I need a tool which backs up the save to the filesystem on another computer, via network. 
+2. The Mod is proven to be working well (at least the latest version on my server, with Minecraft 1.16.5) as a basic backup and rollback tool for the game. All important features for a backup Mod are implemented.
+3. I need a tool which backs up the save to the filesystem on another computer, via network.
 
 To solve these problems, I'm working on a new backup and rollback tool for Minecraft, which is based on [rdiff-backup](https://github.com/rdiff-backup/rdiff-backup).
 
-As a general incremental backup tool, it tends to be more solid and well-designed. It is compliant with most popular operating systems and it is able to transfer backup files over network.
+As a general incremental backup tool, it tends to be more solid and well-designed. Moreover, it is able to transfer backup files over network.
 Thus, I believe it is a good start point to reimplement an incremental backup Mod for Minecraft.
+
+However, this tool is still a good choice for any Minecraft server (from 1.14.4 to 1.17.1) who wants to back up its world locally.
+
+(in simplified Chinese)
+
+由于我想实现一个可以将存档备份到网络上另一台计算机上的备份Mod，而如果要给这个项目增加此功能且保证可靠，需要做大量的修改和测试，这个工作量是我无法承受的。
+因此，我打算废弃这个项目，开始基于[rdiff-backup](https://github.com/rdiff-backup/rdiff-backup)开发一个新的备份Mod。
+
+在新Mod完善之前，这个Mod仍会继续更新，不过只是在修复Bug方面。这个Mod已经持续开发了一年半，基本功能是十分可靠的，因此，如果你只是需要一个将存档
+备份到本地的Mod，那么这仍然是一个可靠的选择。
 
 # KBackup-Fabric
 
