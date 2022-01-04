@@ -19,7 +19,7 @@ public class RestoreOperation extends InvokableBlockingOperation {
     private final ConfiguredBackupMethod configuredBackupMethod;
 
     public RestoreOperation(CommandContext<ServerCommandSource> context, ConfiguredBackupMethod configuredBackupMethod) {
-        server = Objects.requireNonNull(context.getSource().getMinecraftServer());
+        server = Objects.requireNonNull(context.getSource().getServer());
         this.serverThread = Objects.requireNonNull(server.getThread());
         this.context = Objects.requireNonNull(context);
         this.configuredBackupMethod = Objects.requireNonNull(configuredBackupMethod);

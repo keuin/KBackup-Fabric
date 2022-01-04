@@ -48,7 +48,7 @@ public class DeleteOperation extends InvokableAsyncBlockingOperation {
 
     private void delete() {
         try {
-            MinecraftServer server = context.getSource().getMinecraftServer();
+            MinecraftServer server = context.getSource().getServer();
             PrintUtil.info("Deleting backup file " + this.backupFileName);
             File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
             SavedIncrementalBackup incrementalBackup = null;
@@ -82,7 +82,7 @@ public class DeleteOperation extends InvokableAsyncBlockingOperation {
                         new IncrementalBackupStorageManager(getIncrementalBackupBaseDirectory(server).toPath());
                 Iterable<ObjectCollection2> backups = ObjectCollectionSerializer
                         .fromDirectory(BackupFilesystemUtil
-                                .getBackupSaveDirectory(context.getSource().getMinecraftServer()));
+                                .getBackupSaveDirectory(context.getSource().getServer()));
                 int deleted = manager.deleteObjectCollection(incrementalBackup.getObjectCollection(), backups);
                 PrintUtil.info("Deleted " + deleted + " unused file(s).");
             }

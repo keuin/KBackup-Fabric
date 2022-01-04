@@ -32,7 +32,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
     @Override
     protected void async() {
         String backupSaveDirectory = "";
-        MinecraftServer server = context.getSource().getMinecraftServer();
+        MinecraftServer server = context.getSource().getServer();
         boolean success = false; // only success when everything is done
         try {
             //// Do our main backup logic
@@ -72,7 +72,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
         PrintUtil.broadcast("Making backup, please wait ...");
 
         // Get server
-        MinecraftServer server = context.getSource().getMinecraftServer();
+        MinecraftServer server = context.getSource().getServer();
 
         // Save old auto-save switch state for restoration after finished
         oldWorldsSavingDisabled.clear();
