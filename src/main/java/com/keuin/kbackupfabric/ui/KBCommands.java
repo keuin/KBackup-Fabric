@@ -255,7 +255,7 @@ public final class KBCommands {
     public static int delete(CommandContext<ServerCommandSource> context) {
 
         String backupFileName = parseBackupFileName(context, StringArgumentType.getString(context, "backupName"));
-        MinecraftServer server = context.getSource().getMinecraftServer();
+        MinecraftServer server = context.getSource().getServer();
 
         if (backupFileName == null)
             return list(context); // Show the list and return
@@ -286,7 +286,7 @@ public final class KBCommands {
     public static int restore(CommandContext<ServerCommandSource> context) {
         try {
             //KBMain.restore("name")
-            MinecraftServer server = context.getSource().getMinecraftServer();
+            MinecraftServer server = context.getSource().getServer();
             String backupFileName = parseBackupFileName(context, StringArgumentType.getString(context, "backupName"));
 //            backupFileName = parseBackupFileName(context, backupFileName);
 
@@ -344,7 +344,7 @@ public final class KBCommands {
             PrintUtil.info("Start backup...");
 
             // configure backup method
-            MinecraftServer server = context.getSource().getMinecraftServer();
+            MinecraftServer server = context.getSource().getServer();
             ConfiguredBackupMethod method = !incremental ? new ConfiguredPrimitiveBackupMethod(
                     PrimitiveBackupFileNameEncoder.INSTANCE.encode(customBackupName, LocalDateTime.now()),
                     getLevelPath(server),
