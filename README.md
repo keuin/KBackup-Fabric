@@ -90,7 +90,7 @@ exit code and restart Minecraft server if the code is `111`.
 I will give examples for some popular operating systems. To use these scripts, you should replace your start.bat or
 start.sh script with given code lines.
 
-### 2.2.1 Script for Windows
+### 2.2.1 Script for Windows (Batch script)
 
 ```batch
 @echo off
@@ -102,7 +102,7 @@ rem kbackup restore auto restart
 pause
 ```
 
-### 2.2.2 Script for Linux or U\*ix using shell (Not tested, I use Windows for the most time, test it on your own)
+### 2.2.2 Script for Linux (Shell script)
 
 ```shell
 #!/bin/sh
