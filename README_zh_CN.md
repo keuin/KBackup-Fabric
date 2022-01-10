@@ -92,3 +92,25 @@ do
     STATUS=$?
 done
 ```
+
+## 2.3 定时自动备份
+
+KBackup目前没有内置的定时备份功能，不过如果你可以使用操作系统或者其他计划任务程序提供的定时任务的话，可以用像[mcrcon](https://github.com/Tiiffi/mcrcon)之类的CRON客户端来定时运行Minecraft命令。
+
+### 2.3.1 Linux
+
+如果你是Linux用户，首先将mcrcon可执行文件下载到合适的地方（比如`/usr/bin`），然后运行`crontab -e`，在配置文件末尾添加一条计划任务：
+
+```shell
+0 */6 * * * mcrcon -P <RCON port> -p <RCON password> "kb backup"
+```
+
+这条任务会每隔6小时运行一次`/kb backup`命令，如果你需要增量备份，只需要把`kb backup`改为`kb incbak`。
+
+RCON的端口和密码可以在`server.properties`文件设置。
+
+可以参考man手册的条目[crontab(5)](https://man7.org/linux/man-pages/man5/crontab.5.html)来获得更多crontab的用法。
+
+### 2.3.2 Windows
+
+如果你是Windows用户，可以用系统自带的“计划任务”功能。mcrcon也有Windows版，你可以参考任何一篇Windows计划任务的教程，仿照Linux上的配置方法来定时执行备份命令。
