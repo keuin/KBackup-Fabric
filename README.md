@@ -46,8 +46,6 @@ Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5, 1.17.1, 1.18.1
 
 ## 2.1 Commands
 
-(In English)
-
 - **/kb**  or **/kb help**: show command list
 - **/kb list**: show existing backups
 - **/kb backup \[backup_name\]**: make a backup with given name or with the current system time by default
