@@ -361,7 +361,7 @@ public final class KBCommands {
             if (operation.invoke()) {
                 return SUCCESS;
             } else if (operation.isBlocked()) {
-                msgWarn(context, "Another task is running, cannot issue new backup at once.");
+                msgWarn(context, "Another task is running, cannot start making backup at this time.");
                 return FAILED;
             }
         } catch (IOException e) {
