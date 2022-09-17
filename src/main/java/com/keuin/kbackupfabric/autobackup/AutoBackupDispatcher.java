@@ -8,27 +8,28 @@ import java.util.logging.Logger;
 public class AutoBackupDispatcher {
 
     private Timer timer = null;
-    private final Logger logger = Logger.getLogger(AutoBackupDispatcher.class.getName());
+    private final Logger logger = Logger.getLogger("KBackup-AutoBackup");
     private boolean skipIfNoPlayerLoggedIn;
     private final PlayerActivityTracker playerActivityTracker;
 
     public AutoBackupDispatcher(int intervalSeconds, boolean skipIfNoPlayerLoggedIn, PlayerActivityTracker playerActivityTracker) {
+        if (intervalSeconds < 1)
+            throw new IllegalArgumentException("interval is too small");
         this.skipIfNoPlayerLoggedIn = skipIfNoPlayerLoggedIn;
         this.playerActivityTracker = playerActivityTracker;
-        if (intervalSeconds > 0)
-            setInterval(intervalSeconds);
-    }
-
-    public synchronized void setInterval(int intervalSeconds) {
+        // start timer
         Optional.ofNullable(timer).ifPresent(Timer::cancel);
-        Timer newTimer = new Timer("AutoBackupTimer");
-        newTimer.schedule(new TimerTask() {
+        Timer timer = new Timer("AutoBackupTimer");
+        timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                toggleBackup();
+                if (playerActivityTracker.getCheckpoint() || !skipIfNoPlayerLoggedIn) {
+                    logger.info("Making regular backup...");
+                    // TODO: perform a backup
+                }
             }
         }, 0L, intervalSeconds * 1000L);
-        timer = newTimer;
+        this.timer = timer;
     }
 
     public void setSkipIfNoPlayerLoggedIn(boolean skipIfNoPlayerLoggedIn) {
@@ -39,12 +40,4 @@ public class AutoBackupDispatcher {
         timer.cancel();
         timer = null;
     }
-
-    private void toggleBackup() {
-        if (playerActivityTracker.getCheckpoint() || !skipIfNoPlayerLoggedIn) {
-            logger.info("Interval backup event is triggered.");
-            // TODO: perform a backup
-        }
-    }
-
 }

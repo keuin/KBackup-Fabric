@@ -1,0 +1,2 @@
+- gzip incremental backup
+- bugfix (minor): PlayerManagerMixin does not support jre17 (broken in 1.7.0_mc1.18.1)

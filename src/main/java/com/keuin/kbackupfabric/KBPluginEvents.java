@@ -7,6 +7,7 @@ import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.notification.DistinctNotifiable;
 import com.keuin.kbackupfabric.notification.NotificationManager;
+import com.keuin.kbackupfabric.singleton.MinecraftServerInstance;
 import com.keuin.kbackupfabric.ui.KBCommands;
 import com.keuin.kbackupfabric.util.DateUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
@@ -40,6 +41,9 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
 
     @Override
     public void onStartServer(MinecraftServer server) {
+
+        // Set singleton holder, so in other place we can use MinecraftServerInstance to get a reference
+        MinecraftServerInstance.setInstance(server);
 
         // Buggy: this does not work
         if (!(server instanceof MinecraftDedicatedServer))
