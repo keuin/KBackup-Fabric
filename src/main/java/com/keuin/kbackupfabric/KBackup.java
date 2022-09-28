@@ -27,7 +27,7 @@ import static org.apache.commons.io.FileUtils.forceDelete;
  * This is the Main file of this plugin.
  * It contains all events, including the init event.
  */
-public final class KBPluginEvents implements ModInitializer {
+public final class KBackup implements ModInitializer {
 
     //private static final Logger LOGGER = LogManager.getLogger();
 

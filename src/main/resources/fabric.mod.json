@@ -16,7 +16,7 @@
   "environment": "server",
   "entrypoints": {
     "main": [
-      "com.keuin.kbackupfabric.KBPluginEvents"
+      "com.keuin.kbackupfabric.KBackup"
     ]
   },
   "mixins": [

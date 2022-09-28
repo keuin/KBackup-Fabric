@@ -1,6 +1,6 @@
 package com.keuin.kbackupfabric.util;
 
-import com.keuin.kbackupfabric.KBPluginEvents;
+import com.keuin.kbackupfabric.KBackup;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -23,7 +23,7 @@ public final class PrintUtil {
     private static final Style warnStyle = Style.EMPTY.withColor(Formatting.YELLOW);
     private static final Style errorStyle = Style.EMPTY.withColor(Formatting.DARK_RED);
 
-    private static final Logger LOGGER = LogManager.getLogger(KBPluginEvents.class);
+    private static final Logger LOGGER = LogManager.getLogger(KBackup.class);
     private static PlayerManager fuckingPlayerManager = null;
 
     public static void setPlayerManager(PlayerManager playerManager) {
