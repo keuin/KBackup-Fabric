@@ -17,13 +17,13 @@ import java.util.regex.Pattern;
  */
 public final class BackupFilesystemUtil {
 
-    private static final String BACKUP_SAVE_DIRECTORY_NAME = "backups";
+    private static final String BACKUP_SAVE_DIRECTORY_NAME = "backup";
     private static final String INCREMENTAL_BASE_DIRECTORY_NAME = "incremental";
-    private static final String backupFileNamePrefix = "kbackup-";
+    private static final String BACKUP_FILE_NAME_PREFIX = "kbackup-";
 
     @Deprecated
     public static String getBackupFileNamePrefix() {
-        return backupFileNamePrefix;
+        return BACKUP_FILE_NAME_PREFIX;
     }
 
 
