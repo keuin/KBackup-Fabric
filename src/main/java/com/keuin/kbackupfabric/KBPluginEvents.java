@@ -11,8 +11,8 @@ import com.keuin.kbackupfabric.ui.KBCommands;
 import com.keuin.kbackupfabric.util.DateUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.server.ServerStartCallback;
-import net.fabricmc.fabric.api.registry.CommandRegistry;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 
@@ -27,18 +27,21 @@ import static org.apache.commons.io.FileUtils.forceDelete;
  * This is the Main file of this plugin.
  * It contains all events, including the init event.
  */
-public final class KBPluginEvents implements ModInitializer, ServerStartCallback {
+public final class KBPluginEvents implements ModInitializer {
 
     //private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
     public void onInitialize() {
         System.out.println("Binding events and commands ...");
-        CommandRegistry.INSTANCE.register(false, KBCommandsRegister::registerCommands);
-        ServerStartCallback.EVENT.register(this);
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            KBCommandsRegister.registerCommands(dispatcher);
+        });
+        ServerLifecycleEvents.SERVER_STARTED.register(
+                this::onStartServer
+        );
     }
 
-    @Override
     public void onStartServer(MinecraftServer server) {
 
         // Buggy: this does not work

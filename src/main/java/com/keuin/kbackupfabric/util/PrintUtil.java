@@ -1,10 +1,8 @@
 package com.keuin.kbackupfabric.util;
 
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.network.MessageType;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -44,7 +42,7 @@ public final class PrintUtil {
         synchronized (syncBroadcast) {
             if (fuckingPlayerManager != null)
 //                fuckingPlayerManager.sendToAll(new LiteralText(message).setStyle(broadcastStyle));
-                fuckingPlayerManager.broadcast(new LiteralText(message).setStyle(broadcastStyle), MessageType.GAME_INFO, UUID.randomUUID());
+                fuckingPlayerManager.broadcast(Text.literal(message).setStyle(broadcastStyle), true);
             else
                 PrintUtil.error("Error in PrintUtil.broadcast: PlayerManager is not initialized.");
         }
@@ -85,7 +83,7 @@ public final class PrintUtil {
     private static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps, Style style) {
         if (context != null) {
             synchronized (syncMessage) {
-                Text text = new LiteralText(messageText).setStyle(style);
+                Text text = Text.literal(messageText).setStyle(style);
                 context.getSource().sendFeedback(text, broadcastToOps);
             }
         } else {
