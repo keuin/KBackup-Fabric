@@ -40,7 +40,7 @@ world locally.
 A server-only backup mod for **fabric** Minecraft server, which makes **normal `.zip` backup** of your world, or
 self-implemented **incremental backup**, with slower increasing disk usage.
 
-Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5, 1.17.1, 1.18.1
+Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5, 1.17.1, 1.18.1, **1.19.2(active)**
 
 [Fabric API](https://minecraft.curseforge.com/projects/fabric/files) is required!
 
@@ -48,14 +48,14 @@ Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5, 1.17.1, 1.18.1
 
 - **/kb**  or **/kb help**: show command list
 - **/kb list**: show existing backups
-- **/kb backup \[backup_name\]**: make a backup with given name or with the current system time by default
-- **/kb incbak \[backup_name\]**: make an incremental backup which will be saved in `incremental` folder. (Incremental
-  backup will create an index file which has an ext name of `.kbi`, and it will be saved in `backups` folder, which is
+- **/kb backup full \[backup_name\]**: make a backup with given name or with the current system time by default
+- **/kb backup incremental \[backup_name\]**: make an incremental backup which will be saved in `incremental` folder. (Incremental
+  backup will create an index file which has an ext name of `.kbi`, and it will be saved in `backup` folder, which is
   the same with where `.zip` resides)
 - **/kb restore \<backup_name\>**: restore to a certain backup. This command needs a confirmation to execute.
 - **/kb confirm**: confirm executing restore operation. The operation is irreversible.
 - **/kb delete**: delete an existing backup.
-- **/kb prev**: Find and select the most recent backup file. After executing this command, you can use `/kb restore 1`
+- **/kb recent**: Find and select the most recent backup file. After executing this command, you can use `/kb restore 1`
   to restore to this backup.
 
 Only OPs can make backups and restore by default.
@@ -63,18 +63,18 @@ Only OPs can make backups and restore by default.
 However, you can use permission management mods like [LuckPerms](https://luckperms.net/) to configure exactly what
 permissions normal players can use. Permission nodes of each command are listed below:
 
-| Command    | Permission Required |
-|------------|---------------------|
-| /kb        | kb.root             |
-| /kb help   | kb.help             |
-| /kb list   | kb.list             |
-| /kb backup | kb.backup           |
-| /kb incbak | kb.incbak           |
-| /kb restore | kb.restore          |
-| /kb delete | kb.delete           |
-| /kb confirm | kb.confirm          |
-| /kb cancel | kb.cancel           |
-| /kb prev   | kb.prev             |
+| Command                | Permission Required |
+|------------------------|---------------------|
+| /kb                    | kb.root             |
+| /kb help               | kb.help             |
+| /kb list               | kb.list             |
+| /kb backup full        | kb.backup           |
+| /kb backup incremental | kb.backup           |
+| /kb restore            | kb.restore          |
+| /kb delete             | kb.delete           |
+| /kb confirm            | kb.confirm          |
+| /kb cancel             | kb.cancel           |
+| /kb recent             | kb.recent           |
 
 ## 2.2 Script for auto-restart after restoring
 
@@ -116,19 +116,19 @@ done
 
 Currently KBackup does not support automatic backup by itself. However, If application level scheduled tasks are available to you, such as *crontab* in Linux and *Task Scheduler* in Windows, you can use that to trigger backup tasks regularly.
 
-### 2.3.1 On Linux
+### 2.3.1 On Linux/macOS
 
 In order to run Minecraft command on your server as a Shell command, you need RCON client like [mcrcon](https://github.com/Tiiffi/mcrcon). You can get the binary executable from its homepage and put it into anywhere like `/usr/bin`.
 
 Let's assume you are under Linux, run `crontab -e` and append this line to the configuration:
 
 ```shell
-0 */6 * * * mcrcon -P <RCON port> -p <RCON password> "kb backup"
+0 */6 * * * mcrcon -P <RCON port> -p <RCON password> "kb backup full"
 ```
 
 You can specify RCON port and password in `server.properties`.
 
-This will cause `cron` to run `kb backup` for every 6 hours. To make incremental backups, simply replace `kb backup` to `kb incbak`.
+This will cause `cron` to run `/kb backup full` for every 6 hours. To make incremental backups, simply replace `full` to `incremental`.
 
 The man page [crontab(5)](https://man7.org/linux/man-pages/man5/crontab.5.html) also contains many useful information about using cron.
 

@@ -72,10 +72,11 @@ public final class KBCommands {
      * @return stat code.
      */
     public static int help(CommandContext<ServerCommandSource> context) {
+        // TODO: 28/9/22 add help menu
         msgInfo(context, "==== KBackup Manual ====");
         msgInfo(context, "/kb , /kb help - Print help menu.");
         msgInfo(context, "/kb list - Show all backups.");
-        msgInfo(context, "/kb backup [incremental/zip] [backup_name] - Backup the whole level to backup_name. The default name is current system time.");
+        msgInfo(context, "/kb backup [full/incremental] [backup_name] - Backup the whole level to backup_name. The default name is current system time.");
         msgInfo(context, "/kb restore <backup_name> - Delete the whole current level and restore from given backup. /kb restore is identical with /kb list.");
         msgInfo(context, "/kb confirm - Confirm and start restoring.");
         msgInfo(context, "/kb cancel - Cancel the restoration to be confirmed. If cancelled, /kb confirm will not run.");

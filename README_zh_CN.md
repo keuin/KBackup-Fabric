@@ -24,9 +24,9 @@
 
 # 2. 使用说明
 
-一个仅服务端的Fabric备份Mod，支持普通备份（将存档整体压缩为 `.zip` 文件，保存在 `backups` 目录下）和增量备份（按需保存到 `incremental` 目录下，并将目录树结构保存在 `backups` 目录下）
+一个仅服务端的Fabric备份Mod，支持普通备份（将存档整体压缩为 `.zip` 文件，保存在 `backup` 目录下）和增量备份（按需保存到 `incremental` 目录下，并将目录树结构保存在 `backup` 目录下）
 
-支持的Minecraft版本：1.14.4、1.15.2、1.16.4/1.16.5、1.17.1、1.18.1
+支持的Minecraft版本：1.14.4、1.15.2、1.16.4/1.16.5、1.17.1、1.18.1、**1.19.2(active)**
 
 需要安装[Fabric API](https://minecraft.curseforge.com/projects/fabric/files)模组才可使用！
 
@@ -34,30 +34,30 @@
 
 - **/kb**  or **/kb help**: 显示命令列表
 - **/kb list**: 显示所有已有的备份
-- **/kb backup \[backup_name\]**: 以给定名字创建一个新备份，缺省的名字是“noname”
-- **/kb incbak \[backup_name\]**: 创建一个增量备份，保存在 `incremental` 目录下。 (增量备份会创建扩展名为`.kbi`的一个索引文件，该文件仍被保存在 `backups`
+- **/kb backup full \[backup_name\]**: 以给定名字创建一个新备份，缺省的名字是“noname”
+- **/kb backup incremental \[backup_name\]**: 创建一个增量备份，保存在 `incremental` 目录下。 (增量备份会创建扩展名为`.kbi`的一个索引文件，该文件仍被保存在 `backup`
   目录下，与`.zip`文件的保存位置相同)
 - **/kb restore \<backup_name\>**: 还原到指定的备份。该命令需要二次确认才会真正被执行
 - **/kb confirm**: 二次确认，一旦确认，等待确认的命令会立刻被执行。这个命令是不可逆的
 - **/kb delete**: 删除一个现有的备份
-- **/kb prev**: 显示并且选中最近的一个备份，执行这个命令后，可以直接使用 `/kb restore 1` 进行还原
+- **/kb recent**: 显示并且选中最近的一个备份，执行这个命令后，可以直接使用 `/kb restore 1` 进行还原
 
 默认情况下，只有OP才能备份和回档。
 
 如果要详细配置你的玩家可以使用哪些命令，可以用像 [LuckPerms](https://luckperms.net/) 之类的权限管理插件来配置。KBackup的指令权限节点如下表所示：
 
-| 指令          | 需要的权限      |
-|-------------|------------|
-| /kb         | kb.root    |
-| /kb help    | kb.help    |
-| /kb list    | kb.list    |
-| /kb backup  | kb.backup  |
-| /kb incbak  | kb.incbak  |
-| /kb restore | kb.restore |
-| /kb delete  | kb.delete  |
-| /kb confirm | kb.confirm |
-| /kb cancel  | kb.cancel  |
-| /kb prev    | kb.prev    |
+| 指令                     | 需要的权限      |
+|------------------------|------------|
+| /kb                    | kb.root    |
+| /kb help               | kb.help    |
+| /kb list               | kb.list    |
+| /kb backup full        | kb.backup  |
+| /kb backup incremental | kb.backup  |
+| /kb restore            | kb.restore |
+| /kb delete             | kb.delete  |
+| /kb confirm            | kb.confirm |
+| /kb cancel             | kb.cancel  |
+| /kb recent             | kb.recent  |
 
 ## 2.2 如何在回档后自动重启服务端
 
@@ -97,15 +97,15 @@ done
 
 KBackup目前没有内置的定时备份功能，不过如果你可以使用操作系统或者其他计划任务程序提供的定时任务的话，可以用像[mcrcon](https://github.com/Tiiffi/mcrcon)之类的CRON客户端来定时运行Minecraft命令。
 
-### 2.3.1 Linux
+### 2.3.1 Linux/macOS
 
-如果你是Linux用户，首先将mcrcon可执行文件下载到合适的地方（比如`/usr/bin`），然后运行`crontab -e`，在配置文件末尾添加一条计划任务：
+如果你是Linux或macOS用户，首先将mcrcon可执行文件下载到合适的地方（比如`/usr/bin`），然后运行`crontab -e`，在配置文件末尾添加一条计划任务：
 
 ```shell
-0 */6 * * * mcrcon -P <RCON port> -p <RCON password> "kb backup"
+0 */6 * * * mcrcon -P <RCON port> -p <RCON password> "kb backup full"
 ```
 
-这条任务会每隔6小时运行一次`/kb backup`命令，如果你需要增量备份，只需要把`kb backup`改为`kb incbak`。
+这条任务会每隔6小时运行一次`/kb backup full`命令，如果你需要增量备份，只需要把`full`改为`incremental`。
 
 RCON的端口和密码可以在`server.properties`文件设置。
 
