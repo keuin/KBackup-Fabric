@@ -3,8 +3,8 @@ package com.keuin.kbackupfabric.notification;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.util.DateUtil;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 import java.util.HashSet;
@@ -37,11 +37,11 @@ public class NotificationManager {
         if (MetadataHolder.hasMetadata()) {
             BackupMetadata backup = MetadataHolder.getMetadata();
             notifiable.notify(
-                    new LiteralText("The world has been restored to backup ")
-                            .append(new LiteralText("[" + backup.getBackupName() + "]").setStyle(Style.EMPTY.withColor(Formatting.GREEN)))
-                            .append(new LiteralText(" (created at "))
-                            .append(new LiteralText("[" + DateUtil.fromEpochMillis(backup.getBackupTime()) + "]").setStyle(Style.EMPTY.withColor(Formatting.GREEN)))
-                            .append(new LiteralText(")"))
+                    Text.literal("The world has been restored to backup ")
+                            .append(Text.literal("[" + backup.getBackupName() + "]").setStyle(Style.EMPTY.withColor(Formatting.GREEN)))
+                            .append(Text.literal(" (created at "))
+                            .append(Text.literal("[" + DateUtil.fromEpochMillis(backup.getBackupTime()) + "]").setStyle(Style.EMPTY.withColor(Formatting.GREEN)))
+                            .append(Text.literal(")"))
             );
         }
     }
