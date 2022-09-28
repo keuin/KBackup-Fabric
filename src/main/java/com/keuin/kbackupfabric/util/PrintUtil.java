@@ -1,20 +1,15 @@
 package com.keuin.kbackupfabric.util;
 
+import com.keuin.kbackupfabric.KBPluginEvents;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.network.MessageType;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
-
-import java.util.UUID;
 
 
 public final class PrintUtil {
@@ -28,7 +23,7 @@ public final class PrintUtil {
     private static final Style warnStyle = Style.EMPTY.withColor(Formatting.YELLOW);
     private static final Style errorStyle = Style.EMPTY.withColor(Formatting.DARK_RED);
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger(KBPluginEvents.class);
     private static PlayerManager fuckingPlayerManager = null;
 
     public static void setPlayerManager(PlayerManager playerManager) {
@@ -41,10 +36,13 @@ public final class PrintUtil {
     }
 
     public static void broadcast(String message, Style style) {
+        broadcast(Text.literal(message).setStyle(broadcastStyle));
+    }
+    public static void broadcast(Text text) {
         synchronized (syncBroadcast) {
             if (fuckingPlayerManager != null)
-//                fuckingPlayerManager.sendToAll(new LiteralText(message).setStyle(broadcastStyle));
-                fuckingPlayerManager.broadcast(new LiteralText(message).setStyle(broadcastStyle), MessageType.GAME_INFO, UUID.randomUUID());
+
+                fuckingPlayerManager.broadcast(text, true);
             else
                 PrintUtil.error("Error in PrintUtil.broadcast: PlayerManager is not initialized.");
         }
@@ -83,13 +81,13 @@ public final class PrintUtil {
     }
 
     private static CommandContext<ServerCommandSource> message(CommandContext<ServerCommandSource> context, String messageText, boolean broadcastToOps, Style style) {
+        Text text = Text.literal(Formatting.GOLD + "[KBackup]" + Formatting.RESET + " ").append(Text.literal(messageText).setStyle(style));
         if (context != null) {
             synchronized (syncMessage) {
-                Text text = new LiteralText(messageText).setStyle(style);
                 context.getSource().sendFeedback(text, broadcastToOps);
             }
         } else {
-            broadcast(messageText, style);
+            broadcast(text);
         }
         return context;
     }
@@ -100,7 +98,7 @@ public final class PrintUtil {
      * @param string the message.
      */
     public static void debug(String string) {
-        LOGGER.debug("[KBackup] " + string);
+        LOGGER.debug(string);
     }
 
     /**
@@ -109,7 +107,7 @@ public final class PrintUtil {
      * @param string the message.
      */
     public static void info(String string) {
-        LOGGER.info("[KBackup] " + string);
+        LOGGER.info(string);
     }
 
     /**
@@ -118,7 +116,7 @@ public final class PrintUtil {
      * @param string the message.
      */
     public static void warn(String string) {
-        LOGGER.warn("[KBackup] " + string);
+        LOGGER.warn(string);
     }
 
     /**
@@ -127,6 +125,6 @@ public final class PrintUtil {
      * @param string the message.
      */
     public static void error(String string) {
-        LOGGER.error("[KBackup] " + string);
+        LOGGER.error(string);
     }
 }

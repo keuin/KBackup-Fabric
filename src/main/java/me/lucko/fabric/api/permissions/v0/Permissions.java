@@ -26,8 +26,8 @@
 package me.lucko.fabric.api.permissions.v0;
 
 import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
-import net.minecraft.server.command.CommandSource;
 import net.minecraft.server.command.ServerCommandSource;
 import org.jetbrains.annotations.NotNull;
 
