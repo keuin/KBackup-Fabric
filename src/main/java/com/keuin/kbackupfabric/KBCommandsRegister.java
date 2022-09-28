@@ -30,23 +30,22 @@ public final class KBCommandsRegister {
                         .requires(Permissions.require("kb.list", DEFAULT_REQUIRED_LEVEL))
                         .executes(KBCommands::list)));
 
-        // register /kb backup [name] for performing backup. OP is required.
-        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("backup").then(
+        // register /kb backup full [name] for performing a full backup. OP is required.
+        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("backup").then(CommandManager.literal("full").then(
                         CommandManager.argument("backupName", StringArgumentType.greedyString())
                                 .requires(Permissions.require("kb.backup", DEFAULT_REQUIRED_LEVEL))
                                 .executes(KBCommands::primitiveBackup)
                 ).requires(Permissions.require("kb.backup", DEFAULT_REQUIRED_LEVEL))
-                .executes(KBCommands::primitiveBackupWithDefaultName)));
+                .executes(KBCommands::primitiveBackupWithDefaultName))));
 
-        // register /kb incbak [name] for performing incremental backup. OP is required.
-        dispatcher.register(CommandManager.literal("kb")
-                .then(CommandManager.literal("incbak")
+        // register /kb backup incremental [name] for performing an incremental backup. OP is required.
+        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("backup").then(CommandManager.literal("incremental")
                         .then(CommandManager.argument("backupName", StringArgumentType.greedyString())
-                                .requires(Permissions.require("kb.incbak", DEFAULT_REQUIRED_LEVEL))
+                                .requires(Permissions.require("kb.backup", DEFAULT_REQUIRED_LEVEL))
                                 .executes(KBCommands::incrementalBackup))
-                        .requires(Permissions.require("kb.incbak", DEFAULT_REQUIRED_LEVEL))
+                        .requires(Permissions.require("kb.backup", DEFAULT_REQUIRED_LEVEL))
                         .executes(KBCommands::incrementalBackupWithDefaultName)
-                ));
+                )));
 
         // register /kb restore <name> for performing restore. OP is required.
         dispatcher.register(CommandManager.literal("kb")
@@ -79,10 +78,10 @@ public final class KBCommandsRegister {
                         .requires(Permissions.require("kb.cancel", DEFAULT_REQUIRED_LEVEL))
                         .executes(KBCommands::cancel)));
 
-        // register /kb prev for showing the latest backup. OP is required.
+        // register /kb recent for showing the most recent backup. OP is required.
         dispatcher.register(CommandManager.literal("kb")
-                .then(CommandManager.literal("prev")
-                        .requires(Permissions.require("kb.prev", DEFAULT_REQUIRED_LEVEL))
+                .then(CommandManager.literal("recent")
+                        .requires(Permissions.require("kb.recent", DEFAULT_REQUIRED_LEVEL))
                         .executes(KBCommands::prev)));
 
 //        // register /kb setMethod for selecting backup method (zip, incremental)
