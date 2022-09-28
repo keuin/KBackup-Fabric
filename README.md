@@ -46,8 +46,6 @@ Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5, 1.17.1, 1.18.1
 
 ## 2.1 Commands
 
-(In English)
-
 - **/kb**  or **/kb help**: show command list
 - **/kb list**: show existing backups
 - **/kb backup \[backup_name\]**: make a backup with given name or with the current system time by default
@@ -90,7 +88,7 @@ exit code and restart Minecraft server if the code is `111`.
 I will give examples for some popular operating systems. To use these scripts, you should replace your start.bat or
 start.sh script with given code lines.
 
-### 2.2.1 Script for Windows
+### 2.2.1 Script for Windows (Batch script)
 
 ```batch
 @echo off
@@ -102,7 +100,7 @@ rem kbackup restore auto restart
 pause
 ```
 
-### 2.2.2 Script for Linux or U\*ix using shell (Not tested, I use Windows for the most time, test it on your own)
+### 2.2.2 Script for Linux (Shell script)
 
 ```shell
 #!/bin/sh
@@ -113,6 +111,30 @@ do
     STATUS=$?
 done
 ```
+
+## 2.3 Automatic Regular Backup
+
+Currently KBackup does not support automatic backup by itself. However, If application level scheduled tasks are available to you, such as *crontab* in Linux and *Task Scheduler* in Windows, you can use that to trigger backup tasks regularly.
+
+### 2.3.1 On Linux
+
+In order to run Minecraft command on your server as a Shell command, you need RCON client like [mcrcon](https://github.com/Tiiffi/mcrcon). You can get the binary executable from its homepage and put it into anywhere like `/usr/bin`.
+
+Let's assume you are under Linux, run `crontab -e` and append this line to the configuration:
+
+```shell
+0 */6 * * * mcrcon -P <RCON port> -p <RCON password> "kb backup"
+```
+
+You can specify RCON port and password in `server.properties`.
+
+This will cause `cron` to run `kb backup` for every 6 hours. To make incremental backups, simply replace `kb backup` to `kb incbak`.
+
+The man page [crontab(5)](https://man7.org/linux/man-pages/man5/crontab.5.html) also contains many useful information about using cron.
+
+### 2.3.2 On Windows
+
+For Windows users, please refer to [tutorials available on Google](https://www.google.com/search?q=create+scheduled+task+in+windows) for creating scheduled tasks. Note that mcrcon is also available on Windows.
 
 # 3. To-Do List
 

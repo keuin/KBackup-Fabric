@@ -26,10 +26,9 @@
 package me.lucko.fabric.api.permissions.v0;
 
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
+import net.minecraft.server.command.CommandSource;
 import net.minecraft.server.command.ServerCommandSource;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -43,7 +42,7 @@ public interface Permissions {
     /**
      * Gets the {@link TriState state} of a {@code permission} for the given source.
      *
-     * @param source the source
+     * @param source     the source
      * @param permission the permission
      * @return the state of the permission
      */
@@ -57,45 +56,54 @@ public interface Permissions {
      * Performs a permission check, falling back to the {@code defaultValue} if the resultant
      * state is {@link TriState#DEFAULT}.
      *
-     * @param source the source to perform the check for
-     * @param permission the permission to check
+     * @param source       the source to perform the check for
+     * @param permission   the permission to check
      * @param defaultValue the default value to use if nothing has been set
      * @return the result of the permission check
      */
     static boolean check(@NotNull CommandSource source, @NotNull String permission, boolean defaultValue) {
-        return getPermissionValue(source, permission).orElse(defaultValue);
+        TriState value = getPermissionValue(source, permission);
+        if (value == TriState.DEFAULT) {
+            return defaultValue;
+        }
+        return value == TriState.TRUE;
     }
 
     /**
      * Performs a permission check, falling back to requiring the {@code defaultRequiredLevel}
      * if the resultant state is {@link TriState#DEFAULT}.
      *
-     * @param source the source to perform the check for
-     * @param permission the permission to check
+     * @param source               the source to perform the check for
+     * @param permission           the permission to check
      * @param defaultRequiredLevel the required permission level to check for as a fallback
      * @return the result of the permission check
      */
     static boolean check(@NotNull CommandSource source, @NotNull String permission, int defaultRequiredLevel) {
-        return getPermissionValue(source, permission).orElseGet(() -> source.hasPermissionLevel(defaultRequiredLevel));
+        TriState value = getPermissionValue(source, permission);
+        if (value == TriState.DEFAULT) {
+            return source.hasPermissionLevel(defaultRequiredLevel);
+        }
+        return value == TriState.TRUE;
     }
 
     /**
      * Performs a permission check, falling back to {@code false} if the resultant state
      * is {@link TriState#DEFAULT}.
      *
-     * @param source the source to perform the check for
+     * @param source     the source to perform the check for
      * @param permission the permission to check
      * @return the result of the permission check
      */
     static boolean check(@NotNull CommandSource source, @NotNull String permission) {
-        return getPermissionValue(source, permission).orElse(false);
+        TriState value = getPermissionValue(source, permission);
+        return value == TriState.TRUE;
     }
 
     /**
      * Creates a predicate which returns the result of performing a permission check,
      * falling back to the {@code defaultValue} if the resultant state is {@link TriState#DEFAULT}.
      *
-     * @param permission the permission to check
+     * @param permission   the permission to check
      * @param defaultValue the default value to use if nothing has been set
      * @return a predicate that will perform the permission check
      */
@@ -109,7 +117,7 @@ public interface Permissions {
      * falling back to requiring the {@code defaultRequiredLevel} if the resultant state is
      * {@link TriState#DEFAULT}.
      *
-     * @param permission the permission to check
+     * @param permission           the permission to check
      * @param defaultRequiredLevel the required permission level to check for as a fallback
      * @return a predicate that will perform the permission check
      */
@@ -133,7 +141,7 @@ public interface Permissions {
     /**
      * Gets the {@link TriState state} of a {@code permission} for the given entity.
      *
-     * @param entity the entity
+     * @param entity     the entity
      * @param permission the permission
      * @return the state of the permission
      */
@@ -146,8 +154,8 @@ public interface Permissions {
      * Performs a permission check, falling back to the {@code defaultValue} if the resultant
      * state is {@link TriState#DEFAULT}.
      *
-     * @param entity the entity to perform the check for
-     * @param permission the permission to check
+     * @param entity       the entity to perform the check for
+     * @param permission   the permission to check
      * @param defaultValue the default value to use if nothing has been set
      * @return the result of the permission check
      */
@@ -160,8 +168,8 @@ public interface Permissions {
      * Performs a permission check, falling back to requiring the {@code defaultRequiredLevel}
      * if the resultant state is {@link TriState#DEFAULT}.
      *
-     * @param entity the entity to perform the check for
-     * @param permission the permission to check
+     * @param entity               the entity to perform the check for
+     * @param permission           the permission to check
      * @param defaultRequiredLevel the required permission level to check for as a fallback
      * @return the result of the permission check
      */
@@ -174,7 +182,7 @@ public interface Permissions {
      * Performs a permission check, falling back to {@code false} if the resultant state
      * is {@link TriState#DEFAULT}.
      *
-     * @param entity the entity to perform the check for
+     * @param entity     the entity to perform the check for
      * @param permission the permission to check
      * @return the result of the permission check
      */
