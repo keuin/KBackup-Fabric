@@ -33,7 +33,7 @@ public interface DistinctNotifiable {
 
             @Override
             public void notify(Text text) {
-                serverPlayerEntity.sendChatMessage(text, MessageType.SYSTEM);
+                serverPlayerEntity.sendMessage(text);
             }
 
             @Override
