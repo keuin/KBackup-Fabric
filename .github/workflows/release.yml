@@ -1,10 +1,6 @@
 name: release
 
-on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+on: [ push ]
 
 jobs:
   release:
@@ -38,6 +34,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file_glob: true
           file: build/libs/kbackup-fabric*
-          tag: ${{ env.VERSION }}
+          tag: 1.7.1
           release_name: ${{ env.VERSION }}
           prerelease: true
