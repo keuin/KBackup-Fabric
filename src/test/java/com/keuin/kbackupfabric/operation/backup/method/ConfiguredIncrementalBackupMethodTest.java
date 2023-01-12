@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.junit.Assert.*;
@@ -135,13 +136,15 @@ public class ConfiguredIncrementalBackupMethodTest {
 
         int[] success = new int[1];
         if (fake) {
-            Files.walk(sourcePath).filter(path -> path.toFile().isFile()).limit(4).forEach(path -> {
-                System.out.println("Deleted file `" + path.toFile().getName() + "`.");
-                if (!path.toFile().delete())
-                    fail();
-                if (!Objects.equals(path.toFile().getName(), BackupMetadata.metadataFileName))
-                    success[0]++;
-            });
+            try (Stream<Path> walk = Files.walk(sourcePath)) {
+                walk.filter(path -> path.toFile().isFile()).limit(4).forEach(path -> {
+                    System.out.println("Deleted file `" + path.toFile().getName() + "`.");
+                    if (!path.toFile().delete())
+                        fail();
+                    if (!Objects.equals(path.toFile().getName(), BackupMetadata.metadataFileName))
+                        success[0]++;
+                });
+            }
             if (success[0] == 0)
                 fake = false;
         }
@@ -244,12 +247,11 @@ public class ConfiguredIncrementalBackupMethodTest {
                                      Set<String> ignoredFiles) {
 
         File[] fileList = dir.listFiles();
-        Arrays.sort(fileList,               // Need in reproducible order
-                new Comparator<File>() {
-                    public int compare(File f1, File f2) {
-                        return f1.getName().compareTo(f2.getName());
-                    }
-                });
+        if (fileList == null) {
+            throw new RuntimeException("Failed to list files in directory " + dir);
+        }
+        // Need in reproducible order
+        Arrays.sort(fileList, Comparator.comparing(File::getName));
 
         for (File f : fileList) {
             if (!includeHiddenFiles && f.getName().startsWith(".") ||
