@@ -1,5 +1,6 @@
 package com.keuin.kbackupfabric.operation.backup.method;
 
+import com.keuin.kbackupfabric.TestUtils;
 import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.operation.backup.feedback.IncrementalBackupFeedback;
@@ -23,8 +24,6 @@ import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.junit.Assert.*;
 
 public class ConfiguredIncrementalBackupMethodTest {
-
-    public static final String SUBDIRECTORY = "kb_temp";
     private String testTempPath;
     private final String sourceDirectoryName = "source";
     private final String destDirectoryName = "destination";
@@ -41,40 +40,13 @@ public class ConfiguredIncrementalBackupMethodTest {
     @Before
     public void setUp() throws IOException {
         // select temporary directory
-        String path = System.getenv("KB_TEMP_DIR");
-        if (path != null && !path.isEmpty() && new File(path).isDirectory()) {
-            testTempPath = Paths.get(path, SUBDIRECTORY).toString();
-        } else {
-            testTempPath = findTempPath();
-        }
+        testTempPath = TestUtils.getTempDirectory("kb_temp");
         logger.info(String.format("Using temp path: %s", testTempPath));
-    }
-
-    private static String findTempPath() throws IOException {
-        String path;
-        if (System.getProperty("os.name").startsWith("Windows")) {
-            // Windows
-            path = System.getProperty("java.io.tmpdir");
-        } else {
-            // Unix
-            path = System.getenv("XDG_RUNTIME_DIR");
-            if (!new File(path).isDirectory()) {
-                path = "/tmp";
-            }
-        }
-        if (!new File(path).isDirectory()) {
-            throw new IOException("Cannot find suitable temporary path");
-        }
-        path = Paths.get(path, SUBDIRECTORY).toString();
-        return path;
     }
 
     @After
     public void tearDown() throws IOException {
-        if (testTempPath.endsWith(SUBDIRECTORY)) {
-            // recursive delete with safeguard
-            FileUtils.deleteDirectory(new File(testTempPath));
-        }
+        FileUtils.deleteDirectory(new File(testTempPath));
     }
 
     @Test
