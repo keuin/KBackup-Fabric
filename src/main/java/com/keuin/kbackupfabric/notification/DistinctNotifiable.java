@@ -17,7 +17,7 @@ public interface DistinctNotifiable {
     void notify(Text text);
 
     /**
-     * Get an unique, non-null object that identifies this notifiable instance.
+     * Get a unique, non-null object that identifies this notifiable instance.
      * The identifier must be immutable and implement their own equals method.
      *
      * @return the identifier.

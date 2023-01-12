@@ -12,11 +12,7 @@ import java.lang.reflect.Method;
 public final class ReflectionUtils {
 
     /**
-     * 获取私有成员变量的值
-     *
-     * @param instance
-     * @param filedName
-     * @return
+     * Read private fields.
      */
     public static Object getPrivateField(Object instance, String filedName) throws NoSuchFieldException, IllegalAccessException {
         Field field = instance.getClass().getDeclaredField(filedName);
@@ -25,13 +21,7 @@ public final class ReflectionUtils {
     }
 
     /**
-     * 设置私有成员的值
-     *
-     * @param instance
-     * @param fieldName
-     * @param value
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * Modify private fields.
      */
     public static void setPrivateField(Object instance, String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
         Field field = instance.getClass().getDeclaredField(fieldName);
@@ -40,18 +30,10 @@ public final class ReflectionUtils {
     }
 
     /**
-     * 访问私有方法
-     *
-     * @param instance
-     * @param methodName
-     * @param classes
-     * @param objects
-     * @return
-     * @throws NoSuchMethodException
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
+     * Call private methods.
      */
-    public static Object invokePrivateMethod(Object instance, String methodName, Class[] classes, String objects) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static Object invokePrivateMethod(Object instance, String methodName, Class<?>[] classes, String objects)
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Method method = instance.getClass().getDeclaredMethod(methodName, classes);
         method.setAccessible(true);
         return method.invoke(instance, objects);

@@ -40,12 +40,8 @@ public final class KBCommands {
     private static MinecraftServer server;
     private static BackupManager backupManager;
     private static final Object managerCreatorLock = new Object();
-
-    //private static final Logger LOGGER = LogManager.getLogger();
-
     private static final List<BackupInfo> backupList = new ArrayList<>(); // index -> backupName
     private static Invokable pendingOperation = null;
-    //private static BackupMethod activatedBackupMethod = new PrimitiveBackupMethod(); // The backup method we currently using
 
     public static void setServer(MinecraftServer server) {
         KBCommands.server = server;
@@ -124,21 +120,6 @@ public final class KBCommands {
         // TODO: Show concrete info from metadata for `.zip` backup
 //        MinecraftServer server = context.getSource().getMinecraftServer();
         // TODO: refactor this to use {@link ObjectCollectionSerializer#fromDirectory}
-//        File[] files = getBackupSaveDirectory(server).listFiles(
-//                (dir, name) -> dir.isDirectory() &&
-//                        (name.toLowerCase().endsWith(".zip") && name.toLowerCase().startsWith(getBackupFileNamePrefix())
-//                                || name.toLowerCase().endsWith(".kbi"))
-//        );
-
-//        Function<File, String> backupInformationProvider = file -> {
-//            Objects.requireNonNull(file);
-//            if (file.getName().toLowerCase().endsWith(".zip"))
-//                return getPrimitiveBackupInformationString(file.getName(), file.length());
-//                // TODO: refactor this to use {@link ObjectCollectionSerializer#fromDirectory}
-//            else if (file.getName().toLowerCase().endsWith(".kbi"))
-//                return getIncrementalBackupInformationString(file);
-//            return file.getName();
-//        };
 
         updateBackupList();
         synchronized (backupList) {
@@ -150,22 +131,6 @@ public final class KBCommands {
                 BackupInfo info = backupList.get(i);
                 printBackupInfo(context, info, i);
             }
-//            if (files != null) {
-//                if (files.length != 0) {
-//                    msgInfo(context, "Available backups: (file is not checked, manipulation may affect this plugin)");
-//                } else {
-//                    msgInfo(context, "There are no available backups. To make a new backup, run /kb backup.");
-//                }
-//                int i = 0;
-//                for (File file : files) {
-//                    ++i;
-//                    String backupFileName = file.getName();
-//                    msgInfo(context, String.format("[%d] %s", i, backupInformationProvider.apply(file)));
-//                    backupFileNameList.add(backupFileName);
-//                }
-//            } else {
-//                msgErr(context, "Error: failed to list files in backup folder.");
-//            }
         }
         return SUCCESS;
     }
@@ -229,21 +194,6 @@ public final class KBCommands {
         return doBackup(context, DEFAULT_BACKUP_NAME, true);
     }
 
-
-//    public static int incrementalBackup(CommandContext<ServerCommandSource> context) {
-//        //KBMain.backup("name")
-//        String backupName = StringArgumentType.getString(context, "backupName");
-//        if (backupName.matches("[0-9]*")) {
-//            // Numeric param is not allowed
-//            backupName = String.format("a%s", backupName);
-//            msgWarn(context, String.format("Pure numeric name is not allowed. Renaming to %s", backupName));
-//        }
-//        return doBackup(context, backupName, IncrementalBackupMethod.getInstance());
-//    }
-//
-//    public static int incrementalBackupWithDefaultName(CommandContext<ServerCommandSource> context) {
-//        return doBackup(context, DEFAULT_BACKUP_NAME, IncrementalBackupMethod.getInstance());
-//    }
 
     /**
      * Delete an existing backup with context parameter backupName.
@@ -390,7 +340,7 @@ public final class KBCommands {
         // By the way, update suggestion list.
         BackupNameSuggestionProvider.updateCandidateList();
 
-        return returnValue ? SUCCESS : FAILED; // block compiler's complain.
+        return returnValue ? SUCCESS : FAILED; // block compiler's complaint.
     }
 
     /**
@@ -401,7 +351,7 @@ public final class KBCommands {
      */
     public static int cancel(CommandContext<ServerCommandSource> context) {
         if (pendingOperation != null) {
-            PrintUtil.msgInfo(context, String.format("The %s has been cancelled.", pendingOperation.toString()), true);
+            PrintUtil.msgInfo(context, String.format("The %s has been cancelled.", pendingOperation), true);
             pendingOperation = null;
             return SUCCESS;
         } else {
@@ -422,22 +372,6 @@ public final class KBCommands {
         try {
             // List all backups
             updateBackupList();
-//            MinecraftServer server = context.getSource().getMinecraftServer();
-//            List<File> files = Arrays.asList(Objects.requireNonNull(getBackupSaveDirectory(server).listFiles()));
-//            files.removeIf(f -> !f.getName().startsWith(BackupFilesystemUtil.getBackupFileNamePrefix()));
-//            files.sort((x, y) -> (int) (BackupFilesystemUtil.getBackupTimeFromBackupFileName(y.getName()) - BackupFilesystemUtil.getBackupTimeFromBackupFileName(x.getName())));
-//            File prevBackupFile = files.get(0);
-//            String backupFileName = prevBackupFile.getName();
-//            int i;
-//            synchronized (backupList) {
-//                i = backupList.indexOf(backupFileName);
-//                if (i == -1) {
-//                    backupList.add(backupFileName);
-//                    i = backupList.size();
-//                } else {
-//                    ++i;
-//                }
-//            }
             synchronized (backupList) {
                 if (!backupList.isEmpty()) {
                     BackupInfo info = backupList.get(0);
@@ -453,47 +387,6 @@ public final class KBCommands {
         }
         return SUCCESS;
     }
-
-//    private static String getPrimitiveBackupInformationString(String backupFileName, long backupFileSizeBytes) {
-//        return String.format(
-//                "(ZIP) %s , size: %s",
-//                PrimitiveBackupFileNameEncoder.INSTANCE.decode(backupFileName),
-//                getFriendlyFileSizeString(backupFileSizeBytes)
-//        );
-//    }
-
-//    private static String getIncrementalBackupInformationString(File backupFile) {
-//        try {
-//            SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(backupFile);
-//            return "(Incremental) " + info.getBackupName()
-//                    + ", " + DateUtil.getString(info.getBackupTime())
-//                    + ((info.getTotalSizeBytes() > 0) ?
-//                    (" size: " + BackupFilesystemUtil.getFriendlyFileSizeString(info.getTotalSizeBytes())) : "");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return "(Incremental) " + backupFile.getName();
-//        }
-//    }
-
-//    /**
-//     * Select the backup method we use.
-//     * @param context the context.
-//     * @return stat code.
-//     */
-//    public static int setMethod(CommandContext<ServerCommandSource> context) {
-//        String desiredMethodName = StringArgumentType.getString(context, "backupMethod");
-//        List<BackupType> backupMethods = Arrays.asList(BackupType.PRIMITIVE_ZIP_BACKUP, BackupType.OBJECT_TREE_BACKUP);
-//        for (BackupType method : backupMethods) {
-//            if(method.getName().equals(desiredMethodName)) {
-//                // Incremental backup
-////                activatedBackupMethod =
-//                msgInfo(context, String.format("Backup method is set to: %s", desiredMethodName));
-//                return SUCCESS;
-//            }
-//        }
-//
-//        return SUCCESS;
-//    }
 
 
     private static String parseBackupFileName(CommandContext<ServerCommandSource> context, String userInput) {

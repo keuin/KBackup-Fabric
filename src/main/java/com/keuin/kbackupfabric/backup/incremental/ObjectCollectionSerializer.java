@@ -21,17 +21,6 @@ public class ObjectCollectionSerializer {
     @Deprecated
     public static ObjectCollection2 fromFile(File file) throws IOException {
         throw new RuntimeException("This method has been depreciated.");
-//        Objects.requireNonNull(file);
-//        ObjectCollection2 collection;
-//        try (FileInputStream fileInputStream = new FileInputStream(file)) {
-//            try (ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
-//                collection = (ObjectCollection2) objectInputStream.readObject();
-//            } catch (ClassNotFoundException ignored) {
-//                // this should not happen
-//                return null;
-//            }
-//        }
-//        return collection;
     }
 
     /**

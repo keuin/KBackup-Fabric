@@ -4,6 +4,7 @@ import com.keuin.kbackupfabric.exception.ZipUtilException;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.zip.*;
 
@@ -46,7 +47,7 @@ public final class ZipUtil {
             ZipEntry entry = new ZipEntry(subPath);
             zipOutputStream.putNextEntry(entry);
 //            BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-            try (InputStream inputStream = new FileInputStream(file)) {
+            try (InputStream inputStream = Files.newInputStream(file.toPath())) {
                 while ((count = inputStream.read(buffer, 0, zipBufferSize)) != -1) {
                     zipOutputStream.write(buffer, 0, count);
                 }
@@ -100,7 +101,7 @@ public final class ZipUtil {
         File zipDir = new File(zipPath);
         if (!zipDir.exists() || !zipDir.isDirectory()) {
             if (!zipDir.mkdirs()) {
-                throw new IOException(String.format("Failed to make directory tree %s", zipDir.toString()));
+                throw new IOException(String.format("Failed to make directory tree %s", zipDir));
             }
         }
 
@@ -110,7 +111,7 @@ public final class ZipUtil {
         if (zipFile.exists()) {
             //删除已存在的目标文件
             if (!zipFile.delete()) {
-                throw new IOException(String.format("Failed to delete existing file %s", zipFile.toString()));
+                throw new IOException(String.format("Failed to delete existing file %s", zipFile));
             }
         }
 
@@ -175,7 +176,7 @@ public final class ZipUtil {
         File unzipFileDir = new File(unzipFilePath);
         if (!unzipFileDir.exists() || !unzipFileDir.isDirectory()) {
             if (!unzipFileDir.mkdirs())
-                throw new IOException(String.format("Failed to make directory tree %s", unzipFileDir.toString()));
+                throw new IOException(String.format("Failed to make directory tree %s", unzipFileDir));
         }
 
         // 开始解压
@@ -202,7 +203,7 @@ public final class ZipUtil {
                 // 如果文件夹路径不存在，则创建文件夹
                 if (!entryDir.exists() || !entryDir.isDirectory()) {
                     if (!entryDir.mkdirs())
-                        throw new IOException(String.format("Failed to make directory tree %s", entryDir.toString()));
+                        throw new IOException(String.format("Failed to make directory tree %s", entryDir));
                 }
 
                 // 创建解压文件
@@ -213,16 +214,16 @@ public final class ZipUtil {
                     securityManager.checkDelete(entryFilePath);
                     // 删除已存在的目标文件
                     if (!entryFile.delete())
-                        throw new IOException(String.format("Failed to delete existing file %s", entryFile.toString()));
+                        throw new IOException(String.format("Failed to delete existing file %s", entryFile));
                 }
                 if (entry.isDirectory()) {
                     // If the entry is a directory, we make its corresponding directory.
                     if (!entryFile.mkdir())
-                        throw new IOException(String.format("Failed to create directory %s", entryFile.toString()));
+                        throw new IOException(String.format("Failed to create directory %s", entryFile));
                 } else {
                     // Is a file, we write the data
                     // 写入文件
-                    try (OutputStream outputStream = new FileOutputStream(entryFile);
+                    try (OutputStream outputStream = Files.newOutputStream(entryFile.toPath());
                          InputStream inputStream = zip.getInputStream(entry)) {
                         while ((count = inputStream.read(buffer, 0, unzipBufferSize)) != -1) {
                             outputStream.write(buffer, 0, count);

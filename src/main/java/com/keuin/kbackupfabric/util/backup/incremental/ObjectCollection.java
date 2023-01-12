@@ -8,7 +8,7 @@ import java.util.*;
  * or it will not be compatible with old backups.
  * It remains only to keep a backward compatibility, and should be converted to `ObjectCollection2` as soon as possible.
  * Thus, this class is marked as `Depreciated`. However, it should not be removed since it is needed to read legacy
- * backups correctly. But new codes should not use this class any more.
+ * backups correctly. But new codes should not use this class anymore.
  */
 @Deprecated
 public class ObjectCollection implements Serializable {

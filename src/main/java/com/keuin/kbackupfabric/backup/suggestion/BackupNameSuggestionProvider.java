@@ -47,11 +47,6 @@ public class BackupNameSuggestionProvider {
         }
     }
 
-//    private static void updateCandidateList(Collection<String> stringCollection) {
-//        candidateList.clear();
-//        candidateList.addAll(stringCollection);
-//    }
-
     public static SuggestionProvider<ServerCommandSource> getProvider() {
 //        return (context, builder) -> getCompletableFuture(builder);
         return (context, builder) -> {
@@ -60,24 +55,6 @@ public class BackupNameSuggestionProvider {
             return CommandSource.suggestMatching(candidateCacheList, builder);
         };
     }
-
-//    private static CompletableFuture<Suggestions> getCompletableFuture(SuggestionsBuilder builder) {
-//        if (isCacheExpired())
-//            updateCandidateList();
-//        String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
-//        synchronized (syncCache) {
-//            if (candidateCacheList.isEmpty()) { // If the list is empty then return no suggestions
-//                return Suggestions.empty(); // No suggestions
-//            }
-//
-//            for (String string : candidateCacheList) { // Iterate through the supplied list
-//                if (string.toLowerCase(Locale.ROOT).startsWith(remaining)) {
-//                    builder.suggest(string); // Add every single entry to suggestions list.
-//                }
-//            }
-//        }
-//        return builder.buildFuture(); // Create the CompletableFuture containing all the suggestions
-//    }
 
     private static boolean isCacheExpired() {
         return ((int) System.currentTimeMillis()) - cacheUpdateTime > CACHE_TTL || cacheUpdateTime == 0;

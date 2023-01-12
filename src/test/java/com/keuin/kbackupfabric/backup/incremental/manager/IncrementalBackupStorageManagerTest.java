@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -71,13 +72,16 @@ public class IncrementalBackupStorageManagerTest {
             throw new IllegalArgumentException("negative count");
         int[] c = new int[]{0};
         Random rnd = new Random();
-        Files.walk(new File(srcRoot).toPath(), 1).map(p -> rnd.nextBoolean() ? p : null)
-                .filter(Objects::nonNull).forEach(p -> {
-            if (c[0]++ != count) {
-                if (!p.toFile().delete() && p.toFile().isFile())
-                    throw new RuntimeException("Failed to delete file " + p);
-            }
-        });
+        try (Stream<Path> walk = Files.walk(new File(srcRoot).toPath(), 1)) {
+            walk.map(p -> rnd.nextBoolean() ? p : null)
+                    .filter(Objects::nonNull)
+                    .forEach(p -> {
+                        if (c[0]++ != count) {
+                            if (!p.toFile().delete() && p.toFile().isFile())
+                                throw new RuntimeException("Failed to delete file " + p);
+                        }
+                    });
+        }
     }
 
     private static String getRandomString(int length) {

@@ -60,7 +60,7 @@ public final class KBPluginEvents implements ModInitializer, ServerStartCallback
 
         // Check if we have just recovered from a previous backup. If so, print message.
         try {
-            File levelDirectory = new File(server.getRunDirectory(), ((MinecraftDedicatedServer) server).getLevelName());
+            File levelDirectory = new File(server.getRunDirectory(), server.getLevelName());
             File metadataFile = new File(levelDirectory, BackupMetadata.metadataFileName);
             if (metadataFile.exists()) {
                 // Metadata exists. Deserialize.

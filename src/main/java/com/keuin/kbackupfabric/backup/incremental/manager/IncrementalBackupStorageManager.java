@@ -47,7 +47,7 @@ public class IncrementalBackupStorageManager {
      * Check whether the storage contains all files in the given collection.
      *
      * @param collection the collection.
-     * @return whether all files exists.
+     * @return whether all files exist.
      */
     public boolean contains(@NotNull ObjectCollection2 collection) {
         Objects.requireNonNull(collection);
@@ -60,7 +60,7 @@ public class IncrementalBackupStorageManager {
     }
 
     /**
-     * Add a object collection to storage base and copy files to the storage.
+     * Add an object collection to storage base and copy files to the storage.
      *
      * @param collection the collection.
      * @return objects copied to the base.

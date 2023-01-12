@@ -6,7 +6,7 @@ package com.keuin.kbackupfabric;
 public class KBConfiguration {
     // auto backup interval in seconds. Set this to a negative value to disable auto backup.
     private final int autoBackupIntervalSeconds;
-    // name of backup created automatically. By default it is `auto-backup`
+    // name of backup created automatically. By default, it is `auto-backup`
     private final String autoBackupName;
     // if no player has logged in since previous backup, we skip this backup
     private final boolean skipAutoBackupIfNoPlayerLoggedIn;

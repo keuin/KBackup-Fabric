@@ -3,11 +3,10 @@ package com.keuin.kbackupfabric.util.backup.incremental.identifier;
 import com.keuin.kbackupfabric.util.BytesUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
+
+import static com.keuin.kbackupfabric.backup.incremental.identifier.Sha256Identifier.sha256Hash;
 
 /**
  * Identifier based on sha256.
@@ -50,35 +49,7 @@ public class Sha256Identifier extends SingleHashIdentifier {
 
     @Override
     protected byte[] hash(File file) throws IOException {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-
-            try (FileInputStream inputStream = new FileInputStream(file)) {
-                // This does not work. I don't know why
-//            FileChannel channel = inputStream.getChannel();
-//            ByteBuffer buffer = ByteBuffer.allocate(128);
-//            int readLength;
-//            while ((readLength = channel.read(buffer)) > 0)
-//                digest.update(buffer);
-
-                // This also works, without warnings
-                byte[] readBuffer = new byte[1024 * 1024];
-                int readLength;
-                while ((readLength = inputStream.read(readBuffer)) > 0)
-                    digest.update(readBuffer, 0, readLength);
-
-                // The below lines also works, but the IDE will complain about the while loop
-//            DigestInputStream digestInputStream = new DigestInputStream(inputStream, digest);
-//            while(digestInputStream.read() > 0)
-//                ;
-
-                return digest.digest();
-            }
-
-        } catch (NoSuchAlgorithmException ignored) {
-            // this shouldn't happen
-            return new byte[SHA256_LENGTH];
-        }
+        return sha256Hash(file);
     }
 
 }

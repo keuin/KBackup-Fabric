@@ -85,7 +85,5 @@ public final class KBCommandsRegister {
                         .requires(Permissions.require("kb.prev", DEFAULT_REQUIRED_LEVEL))
                         .executes(KBCommands::prev)));
 
-//        // register /kb setMethod for selecting backup method (zip, incremental)
-//        dispatcher.register(CommandManager.literal("kb").then(CommandManager.literal("setMethod").then(CommandManager.argument("backupMethod", StringArgumentType.string()).suggests(BackupMethodSuggestionProvider.getProvider()).requires(PermissionValidator::op).executes(KBCommands::setMethod))));
     }
 }

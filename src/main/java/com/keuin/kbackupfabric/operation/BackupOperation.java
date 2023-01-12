@@ -33,7 +33,7 @@ public class BackupOperation extends InvokableAsyncBlockingOperation {
     protected void async() {
         String backupSaveDirectory = "";
         MinecraftServer server = context.getSource().getMinecraftServer();
-        boolean success = false; // only success when everything is done
+        boolean success; // only success when everything is done
         try {
             //// Do our main backup logic
 

@@ -26,17 +26,6 @@ public final class BackupFilesystemUtil {
         return backupFileNamePrefix;
     }
 
-
-//    @Deprecated
-//    public static String getBackupName(String backupFileName) {
-//        try {
-//            if (backupFileName.matches(backupFileNamePrefix + ".+\\.zip"))
-//                return backupFileName.substring(backupFileNamePrefix.length(), backupFileName.length() - 4);
-//        } catch (IndexOutOfBoundsException ignored) {
-//        }
-//        return backupFileName;
-//    }
-
     public static boolean isBackupFileExists(String backupFileName, MinecraftServer server) {
         File backupFile = new File(getBackupSaveDirectory(server), backupFileName);
         return backupFile.isFile();

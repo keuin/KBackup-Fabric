@@ -2,7 +2,7 @@ package com.keuin.kbackupfabric.operation.abstracts;
 
 /**
  * The most basic operation abstraction.
- * This class represents an serial operation, which is limited in a non-public method.
+ * This class represents a serial operation, which is limited in a non-public method.
  * Note that the operation is not invokable by default, you should use InvokableOperation in order to provide a public method for users to call.
  */
 public abstract class AbstractSerialOperation {

@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Incremental backup is implemented as git-like file collection.
@@ -45,17 +46,19 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
             throw new IllegalArgumentException("given file is not a directory");
 
         Set<File> files = new HashSet<>();
-        for (Iterator<Path> iter = Files.walk(directory.toPath(), 1).iterator(); iter.hasNext(); ) {
-            Path path = iter.next();
-            if (Files.isSameFile(path, directory.toPath()))
-                continue;
-            File file = path.toFile();
-            if (file.isDirectory()) {
-                subCollections.put(file.getName(), fromDirectory(file, ignoredFiles));
-            } else if (!ignoredFiles.contains(file.getName())) {
-                files.add(file); // add to the set to be processed
-            } else {
-                PrintUtil.info(String.format("Skipping file %s.", file.getName()));
+        try (Stream<Path> walk = Files.walk(directory.toPath(), 1)) {
+            for (Iterator<Path> iter = walk.iterator(); iter.hasNext(); ) {
+                Path path = iter.next();
+                if (Files.isSameFile(path, directory.toPath()))
+                    continue;
+                File file = path.toFile();
+                if (file.isDirectory()) {
+                    subCollections.put(file.getName(), fromDirectory(file, ignoredFiles));
+                } else if (!ignoredFiles.contains(file.getName())) {
+                    files.add(file); // add to the set to be processed
+                } else {
+                    PrintUtil.info(String.format("Skipping file %s.", file.getName()));
+                }
             }
         }
 
@@ -125,7 +128,7 @@ public class ObjectCollectionFactory<T extends ObjectIdentifier> {
         public void process() {
             workers.clear();
             for (int i = 0; i < threads; i++) {
-                ParallelWorker<Res> worker = new ParallelWorker<Res>(taskList, consumer, i);
+                ParallelWorker<Res> worker = new ParallelWorker<>(taskList, consumer, i);
                 workers.add(worker);
                 worker.start();
             }

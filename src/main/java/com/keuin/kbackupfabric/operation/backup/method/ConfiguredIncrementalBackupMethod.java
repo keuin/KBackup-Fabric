@@ -99,7 +99,6 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
             PrintUtil.info("Incremental backup finished.");
             feedback = new IncrementalBackupFeedback(true, copyResult);
         } catch (IOException e) {
-//            e.printStackTrace(); // stack trace has been passed to backup feedback. No need to print here.
             feedback = new IncrementalBackupFeedback(e);
         }
 
@@ -119,7 +118,7 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
             // remove unused object files in the base
             if (collection != null) {
                 try {
-                    // collection may have been copied (partially) to the base, but we may not need them
+                    // collection may have been copied (partially) to the base, but we may not need them,
                     // so we perform a clean here
                     // perform a clean-up
                     Iterable<ObjectCollection2> backups = ObjectCollectionSerializer.fromDirectory(new File(backupIndexFileSaveDirectory));

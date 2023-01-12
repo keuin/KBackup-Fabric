@@ -138,6 +138,7 @@ For Windows users, please refer to [tutorials available on Google](https://www.g
 
 # 3. To-Do List
 
+- Legacy backup compatibility test
 - A more friendly help menu (colored command help menu)
 - New version checker
 - Code refactor for maintainability

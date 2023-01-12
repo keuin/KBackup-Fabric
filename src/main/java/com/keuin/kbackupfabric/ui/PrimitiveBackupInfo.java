@@ -38,11 +38,6 @@ public class PrimitiveBackupInfo implements BackupInfo {
 
     public static PrimitiveBackupInfo fromFile(File zipFile) {
         // TODO: fix this, use metadata file instead
-//        fileName = zipFile.getName();
-//        BackupFileNameEncoder.BackupBasicInformation info = PrimitiveBackupFileNameEncoder.INSTANCE.decode(fileName);
-//        if (info == null)
-//            throw new IllegalArgumentException("Invalid file name.");
-//        return new PrimitiveBackupInfo(info.customName, info.time, FilesystemUtil.getFileSizeBytes(zipFile));
         return new PrimitiveBackupInfo(zipFile.getName(), FilesystemUtil.getFileSizeBytes(zipFile));
     }
 

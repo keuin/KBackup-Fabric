@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class IncBackupInfoSerializer {
     /**
@@ -77,10 +78,12 @@ public class IncBackupInfoSerializer {
             throw new IllegalArgumentException("Given directory is invalid.");
         }
         List<Path> pathList = new ArrayList<>();
-        Files.walk(directory.toPath(), 1).filter(p -> {
-            File f = p.toFile();
-            return f.isFile() && f.getName().endsWith(".kbi");
-        }).forEach(pathList::add);
+        try (Stream<Path> walk = Files.walk(directory.toPath(), 1)) {
+            walk.filter(p -> {
+                File f = p.toFile();
+                return f.isFile() && f.getName().endsWith(".kbi");
+            }).forEach(pathList::add);
+        }
         List<SavedIncrementalBackup> objectList = new ArrayList<>();
         for (Path path : pathList) {
             SavedIncrementalBackup info = IncBackupInfoSerializer.fromFile(path.toFile());

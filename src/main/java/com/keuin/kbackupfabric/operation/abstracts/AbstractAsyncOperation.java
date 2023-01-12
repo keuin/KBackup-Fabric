@@ -2,7 +2,7 @@ package com.keuin.kbackupfabric.operation.abstracts;
 
 /**
  * A basic async operation, but not invokable.
- * If you want a invokable interface (InvokableOperation), use InvokableAsyncOperation instead.
+ * If you want an invokable interface (InvokableOperation), use InvokableAsyncOperation instead.
  */
 public abstract class AbstractAsyncOperation extends AbstractSerialOperation {
 

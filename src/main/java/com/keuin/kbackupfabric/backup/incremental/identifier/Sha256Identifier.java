@@ -54,27 +54,20 @@ public class Sha256Identifier extends SingleHashIdentifier {
 
     @Override
     protected byte[] hash(File file) throws IOException {
+        return sha256Hash(file);
+    }
+
+    public static byte[] sha256Hash(File file) throws IOException {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
             try (FileInputStream inputStream = new FileInputStream(file)) {
-                // This does not work. I don't know why
-//            FileChannel channel = inputStream.getChannel();
-//            ByteBuffer buffer = ByteBuffer.allocate(128);
-//            int readLength;
-//            while ((readLength = channel.read(buffer)) > 0)
-//                digest.update(buffer);
-
-                // This also works, without warnings
                 byte[] readBuffer = new byte[1024 * 1024];
-                int readLength;
-                while ((readLength = inputStream.read(readBuffer)) > 0)
-                    digest.update(readBuffer, 0, readLength);
 
-                // The below lines also works, but the IDE will complain about the while loop
-//            DigestInputStream digestInputStream = new DigestInputStream(inputStream, digest);
-//            while(digestInputStream.read() > 0)
-//                ;
+                int readLength;
+                while ((readLength = inputStream.read(readBuffer)) > 0) {
+                    digest.update(readBuffer, 0, readLength);
+                }
 
                 return digest.digest();
             }
