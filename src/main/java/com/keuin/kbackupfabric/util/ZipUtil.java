@@ -209,9 +209,6 @@ public final class ZipUtil {
                 // 创建解压文件
                 entryFile = new File(entryFilePath);
                 if (entryFile.exists()) {
-                    // 检测文件是否允许删除，如果不允许删除，将会抛出SecurityException
-                    SecurityManager securityManager = new SecurityManager();
-                    securityManager.checkDelete(entryFilePath);
                     // 删除已存在的目标文件
                     if (!entryFile.delete())
                         throw new IOException(String.format("Failed to delete existing file %s", entryFile));
