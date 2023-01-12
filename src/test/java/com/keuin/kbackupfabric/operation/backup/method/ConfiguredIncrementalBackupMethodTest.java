@@ -4,6 +4,9 @@ import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.operation.backup.feedback.IncrementalBackupFeedback;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
@@ -13,13 +16,15 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.junit.Assert.*;
 
 public class ConfiguredIncrementalBackupMethodTest {
 
-    private final String testTempPath = (new File("R:\\").isDirectory()) ? "R:\\" : ".\\testfile\\ConfiguredIncrementalBackupMethodTest";
+    public static final String SUBDIRECTORY = "kb_temp";
+    private String testTempPath;
     private final String sourceDirectoryName = "source";
     private final String destDirectoryName = "destination";
     private final String customBackupName = "index";
@@ -29,6 +34,47 @@ public class ConfiguredIncrementalBackupMethodTest {
     private final double fileFactor = 0.1;
     private final int maxRandomFileSizeBytes = 1024 * 1024;
     private final Function<Integer, Integer> scaleDecayFunc = (x) -> x - 1;
+
+    private static final Logger logger = Logger.getLogger(ConfiguredIncrementalBackupMethodTest.class.getName());
+
+    @Before
+    public void setUp() throws IOException {
+        // select temporary directory
+        String path = System.getenv("KB_TEMP_DIR");
+        if (path != null && !path.isEmpty() && new File(path).isDirectory()) {
+            testTempPath = Paths.get(path, SUBDIRECTORY).toString();
+        } else {
+            testTempPath = findTempPath();
+        }
+        logger.info(String.format("Using temp path: %s", testTempPath));
+    }
+
+    private static String findTempPath() throws IOException {
+        String path;
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            // Windows
+            path = System.getProperty("java.io.tmpdir");
+        } else {
+            // Unix
+            path = System.getenv("XDG_RUNTIME_DIR");
+            if (!new File(path).isDirectory()) {
+                path = "/tmp";
+            }
+        }
+        if (!new File(path).isDirectory()) {
+            throw new IOException("Cannot find suitable temporary path");
+        }
+        path = Paths.get(path, SUBDIRECTORY).toString();
+        return path;
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        if (testTempPath.endsWith(SUBDIRECTORY)) {
+            // recursive delete with safeguard
+            FileUtils.deleteDirectory(new File(testTempPath));
+        }
+    }
 
     @Test
     public void iterationTest() throws IOException {
