@@ -13,7 +13,7 @@ public final class KBCommandsRegister {
     public static final int DEFAULT_REQUIRED_LEVEL = 2;
 
     // First make method to register
-    public static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
+    public static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
 
         // register /kb and /kb help for help menu
         dispatcher.register(CommandManager.literal("kb")
