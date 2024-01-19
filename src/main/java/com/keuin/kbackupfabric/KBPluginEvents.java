@@ -14,6 +14,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,7 +52,7 @@ public final class KBPluginEvents implements ModInitializer {
 
         // Check if we have just recovered from a previous backup. If so, print message.
         try {
-            File levelDirectory = new File(server.getRunDirectory(), server.getLevelName());
+            File levelDirectory = new File(server.getRunDirectory(), ((MinecraftDedicatedServer) server).getLevelName());
             File metadataFile = new File(levelDirectory, BackupMetadata.metadataFileName);
             if (metadataFile.exists()) {
                 // Metadata exists. Deserialize.

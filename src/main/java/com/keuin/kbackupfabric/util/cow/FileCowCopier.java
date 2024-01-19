@@ -26,6 +26,7 @@ public final class FileCowCopier {
             FileCowCopier.init();
             PrintUtil.info("kbackup-cow version: " + FileCowCopier.getVersion());
         }
+        FileCowCopier.getVersion();
         return new FileCopier() {
             @Override
             public void copy(String dst, String src) throws IOException {

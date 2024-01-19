@@ -1,6 +1,5 @@
 package com.keuin.kbackupfabric.notification;
 
-import net.minecraft.network.MessageType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
@@ -33,7 +32,7 @@ public interface DistinctNotifiable {
 
             @Override
             public void notify(Text text) {
-                serverPlayerEntity.sendMessage(text);
+                serverPlayerEntity.sendMessage(text, false);
             }
 
             @Override

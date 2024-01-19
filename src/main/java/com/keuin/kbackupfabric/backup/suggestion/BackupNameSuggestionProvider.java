@@ -1,7 +1,7 @@
 package com.keuin.kbackupfabric.backup.suggestion;
 
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.minecraft.server.command.CommandSource;
+import net.minecraft.command.CommandSource;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.io.File;
