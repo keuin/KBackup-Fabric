@@ -46,7 +46,7 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
     @Override
     public IncrementalBackupFeedback backup() {
         final int hashFactoryThreads = ThreadingUtil.getRecommendedThreadCount(); // how many threads do we use to generate the hash tree
-        LOGGER.info("Threads: " + hashFactoryThreads);
+        PrintUtil.info("Threads: " + hashFactoryThreads);
 
         // needed in abort progress
         File levelPathFile = new File(levelPath);
