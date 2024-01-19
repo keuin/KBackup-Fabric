@@ -58,6 +58,10 @@ public final class KBCommandsRegister {
                         .requires(Permissions.require("kb.list", DEFAULT_REQUIRED_LEVEL))
                         .executes(KBCommands::list)));
 
+        dispatcher.register(CommandManager.literal("kb")
+                .then(CommandManager.literal("cow-info")
+                        .executes(KBCommands::cowInfo)));
+
         // register /kb delete [name] for deleting an existing backup. OP is required.
         dispatcher.register(CommandManager.literal("kb")
                 .then(CommandManager.literal("delete")
