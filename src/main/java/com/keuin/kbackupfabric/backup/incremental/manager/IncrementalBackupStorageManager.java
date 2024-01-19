@@ -6,13 +6,15 @@ import com.keuin.kbackupfabric.backup.incremental.ObjectElement;
 import com.keuin.kbackupfabric.backup.incremental.identifier.ObjectIdentifier;
 import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
+import com.keuin.kbackupfabric.util.cow.FileCopier;
+import com.keuin.kbackupfabric.util.cow.FileCowCopier;
+import com.keuin.kbackupfabric.util.cow.FileEagerCopier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Logger;
@@ -27,9 +29,21 @@ public class IncrementalBackupStorageManager {
     private final Logger logger = Logger.getLogger(IncrementalBackupStorageManager.class.getName());
     private final Path backupStorageBase;
     private final Logger LOGGER = Logger.getLogger(IncrementalBackupStorageManager.class.getName());
+    private FileCopier copier = null;
 
     public IncrementalBackupStorageManager(Path backupStorageBase) {
         this.backupStorageBase = backupStorageBase;
+        try {
+            this.copier = FileCowCopier.getInstance();
+        } catch (Exception | UnsatisfiedLinkError ex) {
+            PrintUtil.error("Failed to initialize kbackup-cow: " + ex + ex.getMessage());
+            this.copier = new FileEagerCopier();
+        }
+        if (this.copier.isCow()) {
+            PrintUtil.info("Copy-on-write is enabled");
+        } else {
+            PrintUtil.info("Copy-on-write is disabled");
+        }
     }
 
     /**
@@ -85,7 +99,7 @@ public class IncrementalBackupStorageManager {
             if (!contains(entry.getValue())) {
                 // element does not exist. copy.
                 logger.fine("Copy new file `" + copySourceFile.getName() + "`.");
-                Files.copy(copySourceFile.toPath(), copyDestination.toPath());
+                copier.copy(copyDestination.getAbsolutePath(), copySourceFile.getAbsolutePath());
                 copyCount = copyCount.addWith(new IncCopyResult(1, 1, fileBytes, fileBytes));
             } else {
                 // element exists (file reused). Just update the stat info
@@ -198,7 +212,7 @@ public class IncrementalBackupStorageManager {
                 }
             }
 
-            Files.copy(copySource.toPath(), copyTarget.toPath());
+            copier.copy(copyTarget.getAbsolutePath(), copySource.getAbsolutePath());
             ++copyCount;
         }
 
