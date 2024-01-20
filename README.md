@@ -92,7 +92,7 @@ The config file will be generated if not exist. The default is:
 - `incbak_cow`: (experimental) Enable filesystem CoW (copy-on-write) for incremental backup.
   **Will fall back to normal file copy if the filesystem does not support CoW.** Please read section 2.5 for more info.
 
-Note: JSON comment is **NOT** supported for now.
+Note: JSON comment **is** supported.
 
 ## 2.3 Script for auto-restart after restoring
 
