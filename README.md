@@ -57,26 +57,44 @@ Supported Minecraft version: 1.14.4, 1.15.2, 1.16.4/1.16.5, 1.17.1, 1.18.1
 - **/kb delete**: delete an existing backup.
 - **/kb prev**: Find and select the most recent backup file. After executing this command, you can use `/kb restore 1`
   to restore to this backup.
+- **/kb cow-info**: Check if copy-on-write backup is activated.
 
 Only OPs can make backups and restore by default.
 
 However, you can use permission management mods like [LuckPerms](https://luckperms.net/) to configure exactly what
 permissions normal players can use. Permission nodes of each command are listed below:
 
-| Command    | Permission Required |
-|------------|---------------------|
-| /kb        | kb.root             |
-| /kb help   | kb.help             |
-| /kb list   | kb.list             |
-| /kb backup | kb.backup           |
-| /kb incbak | kb.incbak           |
+| Command     | Permission Required |
+|-------------|---------------------|
+| /kb         | kb.root             |
+| /kb help    | kb.help             |
+| /kb list    | kb.list             |
+| /kb backup  | kb.backup           |
+| /kb incbak  | kb.incbak           |
 | /kb restore | kb.restore          |
-| /kb delete | kb.delete           |
+| /kb delete  | kb.delete           |
 | /kb confirm | kb.confirm          |
-| /kb cancel | kb.cancel           |
-| /kb prev   | kb.prev             |
+| /kb cancel  | kb.cancel           |
+| /kb prev    | kb.prev             |
 
-## 2.2 Script for auto-restart after restoring
+## 2.2 Configurations
+
+Since version `1.8.0`, plugin-wide config file `kbackup.json` is added in the server root directory (workdir).
+
+The config file will be generated if not exist. The default is:
+
+```json
+{
+  "incbak_cow": false
+}
+```
+
+- `incbak_cow`: (experimental) Enable filesystem CoW (copy-on-write) for incremental backup.
+  **Will fall back to normal file copy if the filesystem does not support CoW.** Please read section 2.5 for more info.
+
+Note: JSON comment is **NOT** supported for now.
+
+## 2.3 Script for auto-restart after restoring
 
 Due to the nature of JVM: the Java language's running environment, there is no elegant way to restart Minecraft server
 in a server plugin. In order to auto restart after restoring, an outer system-based script is required, i.e. a batch or
@@ -88,7 +106,7 @@ exit code and restart Minecraft server if the code is `111`.
 I will give examples for some popular operating systems. To use these scripts, you should replace your start.bat or
 start.sh script with given code lines.
 
-### 2.2.1 Script for Windows (Batch script)
+### 2.3.1 Script for Windows (Batch script)
 
 ```batch
 @echo off
@@ -100,7 +118,7 @@ rem kbackup restore auto restart
 pause
 ```
 
-### 2.2.2 Script for Linux (Shell script)
+### 2.3.2 Script for Linux (Shell script)
 
 ```shell
 #!/bin/sh
@@ -112,13 +130,17 @@ do
 done
 ```
 
-## 2.3 Automatic Regular Backup
+## 2.4 Automatic Regular Backup
 
-Currently KBackup does not support automatic backup by itself. However, If application level scheduled tasks are available to you, such as *crontab* in Linux and *Task Scheduler* in Windows, you can use that to trigger backup tasks regularly.
+Currently, KBackup does not support automatic backup by itself. However, If application level scheduled tasks are
+available to you, such as *crontab* in Linux and *Task Scheduler* in Windows, you can use that to trigger backup tasks
+regularly.
 
-### 2.3.1 On Linux
+### 2.4.1 On Linux
 
-In order to run Minecraft command on your server as a Shell command, you need RCON client like [mcrcon](https://github.com/Tiiffi/mcrcon). You can get the binary executable from its homepage and put it into anywhere like `/usr/bin`.
+In order to run Minecraft command on your server as a Shell command, you need RCON client
+like [mcrcon](https://github.com/Tiiffi/mcrcon). You can get the binary executable from its homepage and put it into
+anywhere like `/usr/bin`.
 
 Let's assume you are under Linux, run `crontab -e` and append this line to the configuration:
 
@@ -128,13 +150,34 @@ Let's assume you are under Linux, run `crontab -e` and append this line to the c
 
 You can specify RCON port and password in `server.properties`.
 
-This will cause `cron` to run `kb backup` for every 6 hours. To make incremental backups, simply replace `kb backup` to `kb incbak`.
+This will cause `cron` to run `kb backup` for every 6 hours. To make incremental backups, simply replace `kb backup`
+to `kb incbak`.
 
-The man page [crontab(5)](https://man7.org/linux/man-pages/man5/crontab.5.html) also contains many useful information about using cron.
+The man page [crontab(5)](https://man7.org/linux/man-pages/man5/crontab.5.html) also contains useful information
+about using cron.
 
-### 2.3.2 On Windows
+### 2.4.2 On Windows
 
-For Windows users, please refer to [tutorials available on Google](https://www.google.com/search?q=create+scheduled+task+in+windows) for creating scheduled tasks. Note that mcrcon is also available on Windows.
+For Windows users, please refer
+to [tutorials available on Google](https://www.google.com/search?q=create+scheduled+task+in+windows) for creating
+scheduled tasks. Note that mcrcon is also available on Windows.
+
+## 2.5 Copy-on-write (CoW) backup
+
+CoW will save even more disk space when making backups.
+
+This feature requires platform-specific library [KBackup-cow](https://github.com/keuin/KBackup-cow).
+Currently only Linux on x86_64 platform is supported.
+Please create a GitHub issue if you want other platforms.
+
+This is an experimental feature. Please report if you encountered any error.
+
+Requirements:
+
+1. The server is running Linux on amd64.
+2. Filesystem should support CoW (e.g. Bcachefs, Btrfs, XFS, OCFS2, ReFSv2). Please
+   read <https://www.ctrl.blog/entry/file-cloning.html> for more info about CoW filesystems.
+3. Backup directory and server world directory should on the same disk partition. This is required to clone a file.
 
 # 3. To-Do List
 

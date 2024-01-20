@@ -14,6 +14,7 @@ import com.keuin.kbackupfabric.operation.backup.method.ConfiguredIncrementalBack
 import com.keuin.kbackupfabric.operation.backup.method.ConfiguredPrimitiveBackupMethod;
 import com.keuin.kbackupfabric.util.DateUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
+import com.keuin.kbackupfabric.util.cow.FileCowCopier;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
@@ -75,6 +76,7 @@ public final class KBCommands {
         msgInfo(context, "/kb restore <backup_name> - Delete the whole current level and restore from given backup. /kb restore is identical with /kb list.");
         msgInfo(context, "/kb confirm - Confirm and start restoring.");
         msgInfo(context, "/kb cancel - Cancel the restoration to be confirmed. If cancelled, /kb confirm will not run.");
+        msgInfo(context, "/kb cow-info - Display copy-on-write support info (Experimental)");
         return SUCCESS;
     }
 
@@ -131,6 +133,15 @@ public final class KBCommands {
                 BackupInfo info = backupList.get(i);
                 printBackupInfo(context, info, i);
             }
+        }
+        return SUCCESS;
+    }
+
+    public static int cowInfo(CommandContext<ServerCommandSource> context) {
+        try {
+            msgInfo(context, "KBackup-cow library version: " + FileCowCopier.getVersion());
+        } catch (Exception | UnsatisfiedLinkError ignored) {
+            msgErr(context, "KBackup-cow library is not loaded");
         }
         return SUCCESS;
     }

@@ -2,6 +2,7 @@ package com.keuin.kbackupfabric;
 
 import com.keuin.kbackupfabric.backup.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.backup.suggestion.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.config.KBackupConfig;
 import com.keuin.kbackupfabric.event.OnPlayerConnect;
 import com.keuin.kbackupfabric.metadata.BackupMetadata;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
@@ -32,7 +33,15 @@ public final class KBPluginEvents implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        System.out.println("Binding events and commands ...");
+        PrintUtil.info("Reading config...");
+        try {
+            KBackupConfig.load();
+        } catch (IOException e) {
+            PrintUtil.error("Failed to read config file, using default values: " + e + e.getMessage());
+        }
+        boolean incCow = KBackupConfig.getInstance().getIncbakCow();
+        PrintUtil.info("Incremental backup CoW: " + (incCow ? "enabled" : "disabled"));
+        PrintUtil.info("Binding events and commands...");
         CommandRegistrationCallback.EVENT.register(KBCommandsRegister::registerCommands);
         OnPlayerConnect.ON_PLAYER_CONNECT.register((connection, player)
                 -> NotificationManager.INSTANCE.notifyPlayer(DistinctNotifiable.fromServerPlayerEntity(player)));

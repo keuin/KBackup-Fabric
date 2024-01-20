@@ -99,6 +99,7 @@ public class ConfiguredIncrementalBackupMethod implements ConfiguredBackupMethod
             PrintUtil.info("Incremental backup finished.");
             feedback = new IncrementalBackupFeedback(true, copyResult);
         } catch (IOException e) {
+            PrintUtil.error("Incremental backup failed: " + e + e.getMessage());
             feedback = new IncrementalBackupFeedback(e);
         }
 
