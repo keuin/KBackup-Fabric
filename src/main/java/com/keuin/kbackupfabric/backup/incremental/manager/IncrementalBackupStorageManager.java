@@ -4,6 +4,7 @@ import com.keuin.kbackupfabric.backup.incremental.ObjectCollection2;
 import com.keuin.kbackupfabric.backup.incremental.ObjectCollectionIterator;
 import com.keuin.kbackupfabric.backup.incremental.ObjectElement;
 import com.keuin.kbackupfabric.backup.incremental.identifier.ObjectIdentifier;
+import com.keuin.kbackupfabric.config.KBackupConfig;
 import com.keuin.kbackupfabric.util.FilesystemUtil;
 import com.keuin.kbackupfabric.util.PrintUtil;
 import com.keuin.kbackupfabric.util.cow.FileCopier;
@@ -29,14 +30,19 @@ public class IncrementalBackupStorageManager {
     private final Logger logger = Logger.getLogger(IncrementalBackupStorageManager.class.getName());
     private final Path backupStorageBase;
     private final Logger LOGGER = Logger.getLogger(IncrementalBackupStorageManager.class.getName());
-    private FileCopier copier = null;
+    private FileCopier copier;
 
     public IncrementalBackupStorageManager(Path backupStorageBase) {
         this.backupStorageBase = backupStorageBase;
-        try {
-            this.copier = FileCowCopier.getInstance();
-        } catch (Exception | UnsatisfiedLinkError ex) {
-            PrintUtil.error("Failed to initialize kbackup-cow: " + ex + ex.getMessage());
+        if (KBackupConfig.getInstance().getIncbakCow()) {
+            // try to use cow copier, if failed, fallback to normal copier
+            try {
+                this.copier = FileCowCopier.getInstance();
+            } catch (Exception | UnsatisfiedLinkError ex) {
+                PrintUtil.error("Failed to initialize kbackup-cow: " + ex + ex.getMessage());
+                this.copier = new FileEagerCopier();
+            }
+        } else {
             this.copier = new FileEagerCopier();
         }
         if (this.copier.isCow()) {
