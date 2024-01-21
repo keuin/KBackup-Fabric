@@ -38,6 +38,14 @@ public class KBackupConfig {
             ObjectWriter w = om.writerWithDefaultPrettyPrinter();
             w.writeValue(file, instance);
         }
+        validate(instance);
+    }
+
+    private static void validate(KBackupConfig cfg) {
+        if (cfg.incbakCow == null) {
+            PrintUtil.warn("incbak_cow could not be null");
+            cfg.incbakCow = false;
+        }
     }
 
     public static void load() throws IOException {
