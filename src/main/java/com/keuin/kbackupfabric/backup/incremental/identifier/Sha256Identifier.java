@@ -14,6 +14,7 @@ import java.util.Objects;
  * Immutable.
  */
 public class Sha256Identifier extends SingleHashIdentifier {
+    private static final long serialVersionUID = 7151159194172573823L;
 
     private static final int SHA256_LENGTH = 32;
     private static final Sha256Identifier DUMMY = new Sha256Identifier(new byte[SHA256_LENGTH]); // only for using its hash method
