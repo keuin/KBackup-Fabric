@@ -4,6 +4,7 @@ import com.keuin.kbackupfabric.backup.BackupFilesystemUtil;
 import com.keuin.kbackupfabric.backup.name.IncrementalBackupFileNameEncoder;
 import com.keuin.kbackupfabric.backup.name.PrimitiveBackupFileNameEncoder;
 import com.keuin.kbackupfabric.backup.suggestion.BackupNameSuggestionProvider;
+import com.keuin.kbackupfabric.config.KBackupConfig;
 import com.keuin.kbackupfabric.metadata.MetadataHolder;
 import com.keuin.kbackupfabric.operation.BackupOperation;
 import com.keuin.kbackupfabric.operation.DeleteOperation;
@@ -140,6 +141,7 @@ public final class KBCommands {
     public static int cowInfo(CommandContext<ServerCommandSource> context) {
         try {
             msgInfo(context, "KBackup-cow library version: " + FileCowCopier.getVersion());
+            msgInfo(context, "CoW enabled: " + KBackupConfig.getInstance().getIncbakCow());
         } catch (Exception | UnsatisfiedLinkError ignored) {
             msgErr(context, "KBackup-cow library is not loaded");
         }
