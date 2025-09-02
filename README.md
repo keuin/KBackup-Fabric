@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/keuin/KBackup-Fabric)
+
 # 0. README in another language
 
 | Language     | File                               |
